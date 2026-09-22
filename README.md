@@ -1,32 +1,58 @@
-# Proyecto de Compra y Venta
+# Vento Marketplace (WYM)
 
-He creado los componentes básicos solicitados para iniciar tu plataforma de compra y venta.
+Plataforma de compra y venta e-commerce construida con React, Vite y Tailwind CSS, estructurada siguiendo los principios de Atomic Design.
 
-## Estructura Actual
+## 🚀 Estado Actual del Proyecto
 
-1. **`src/components/buttons/CustomButton.jsx`**: Un botón reutilizable que usa estilos de Tailwind CSS.
-2. **`src/pages/Login.jsx`**: Una vista de inicio de sesión que incluye el logo (`logo-marketschool.jpeg`) y un formulario para correo electrónico y contraseña, ideal para que los usuarios entren a tu marketplace. Esta vista utiliza el componente `CustomButton`.
+Se ha implementado el front-end con navegación real (React Router) y gestión de estado global para el carrito de compras. Las vistas principales están alineadas con los diseños proporcionados en Figma.
 
-## Cómo levantar el proyecto
+### Vistas Implementadas:
+- **Navegación Global (Navbar):** Barra de navegación con logo "Vento", enlaces, barra de anuncios y carrito dinámico.
+- **Login Modal:** Modal emergente accesible desde cualquier lugar para iniciar sesión usando **RUT** y contraseña.
+- **Inicio (`/`):** Página principal (Home) con banner promocional (Hero) y navegación por categorías (Hombre, Zapatos, Ropa).
+- **Tienda (`/tienda`):** Catálogo de productos con barra lateral de filtros y grilla de productos (ProductCards).
+- **Ficha de Producto (`/producto/:id`):** Vista detallada de cada zapatilla con galería de imágenes, selector de tallas y colores, precios dinámicos y botón funcional de "Agregar al carrito".
 
-Para ejecutar este proyecto en tu entorno local, sigue estos pasos en tu terminal (asegúrate de estar en la raíz de la carpeta `WYM`):
+### Funcionalidad Destacada:
+- **Carrito de Compras (Context API):** Al presionar "Agregar al carrito" en la ficha del producto, el contador en la barra de navegación superior se actualiza globalmente en tiempo real.
 
-1. **Instalar dependencias**:
+## 🛠️ Tecnologías Utilizadas
+
+- [React 18](https://react.dev/)
+- [Vite](https://vitejs.dev/) (Bundler ultra rápido)
+- [Tailwind CSS](https://tailwindcss.com/) (Framework de estilos)
+- [React Router DOM](https://reactrouter.com/) (Navegación entre páginas)
+- [Lucide React](https://lucide.dev/) (Iconografía moderna)
+
+## 📦 Cómo levantar el proyecto localmente
+
+Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
+
+1. **Abre tu terminal** en la raíz de la carpeta del proyecto.
+2. **Instala las dependencias** (necesitas tener Node.js instalado):
    ```bash
    npm install
    ```
-
-2. **Ejecutar el servidor de desarrollo**:
-   Ejecuta el siguiente comando (usualmente con Vite o Create React App):
+3. **Inicia el servidor de desarrollo**:
    ```bash
    npm run dev
    ```
-   *(Si estás usando Create React App y el comando anterior falla, intenta con `npm start`)*
+4. **Abre tu navegador**:
+   Ve a la URL `http://localhost:5173` para ver y navegar por la plataforma.
 
-3. **Ver en el navegador**:
-   Abre la URL que aparece en la terminal (usualmente `http://localhost:5173` o `http://localhost:3000`) para ver la página de Login en acción.
+## 🏗️ Estructura del Código (Atomic Design)
 
-## Para Avanzar
+El proyecto organiza sus componentes siguiendo el patrón de Diseño Atómico para máxima escalabilidad:
 
-1. **Revisar Estilos**: Los componentes están construidos con clases de Tailwind CSS. Si tu proyecto usa CSS estándar u otro framework, puedes ajustar el atributo `className` de ambos componentes.
-2. **Lógica de Autenticación**: En `src/pages/Login.jsx`, actualiza la función `handleSubmit` para conectar el inicio de sesión con el backend (Firebase, Node.js, etc.) que maneje los usuarios de tu plataforma de compra y venta.
+- `src/assets/`: Imágenes locales organizadas por vistas (`/inicio`, `/productos`).
+- `src/components/atoms/`: Componentes básicos irreducibles (ej: `CustomButton.jsx`).
+- `src/components/molecules/`: Grupos de átomos (ej: `ProductCard.jsx`).
+- `src/components/organisms/`: Secciones complejas e independientes (ej: `Navbar.jsx`).
+- `src/context/`: Contextos globales de React (ej: `CartContext.jsx`).
+- `src/pages/`: Las vistas completas mapeadas a las rutas (Home, Tienda, ProductDetail, Login).
+
+## 🔮 Siguientes Pasos Recomendados
+
+1. **Checkout (Caja):** Crear un panel lateral (Drawer) que muestre los ítems exactos agregados al carrito para proceder al pago.
+2. **Lógica de Autenticación:** Conectar el formulario de Login (RUT) con un Backend o BaaS (como Firebase o Supabase) para registrar sesiones reales.
+3. **Filtros Dinámicos:** Hacer que la barra lateral de la Tienda filtre los productos reales renderizados en pantalla.

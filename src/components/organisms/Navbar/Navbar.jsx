@@ -1,35 +1,60 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Search } from 'lucide-react';
 import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
 
 const Navbar = ({ onLoginClick }) => {
+  const { cartCount } = useCart();
+
   return (
-    <nav className="bg-neutral-800 py-3 px-6">
-      <div className="container mx-auto flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex items-center">
-          <img src={ventoLogo} alt="Vento" className="h-10 object-contain" />
-        </div>
-
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center space-x-6">
-          <a href="#" className="text-white text-sm font-medium hover:text-gray-300 transition-colors">INICIO</a>
-          <a href="#" className="text-white text-sm font-medium hover:text-gray-300 transition-colors">TIENDA</a>
-          <a href="#" className="text-white text-sm font-medium hover:text-gray-300 transition-colors">CONTACTO</a>
-          <a href="#" className="text-white text-sm font-medium hover:text-gray-300 transition-colors flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
-            0 PRODUCTOS
-          </a>
-        </div>
-
-        {/* Login Button */}
-        <CustomButton variant="navbar" onClick={onLoginClick} className="rounded-md text-sm">
-          Iniciar Sesión
-        </CustomButton>
+    <header className="w-full flex flex-col font-sans border-b border-gray-200">
+      
+      {/* Announcement bar */}
+      <div className="bg-black text-white text-center py-2 text-xs font-semibold tracking-wider">
+        DESPACHO GRATIS POR COMPRAS SOBRE $50.000
       </div>
-    </nav>
+
+      <div className="w-full bg-white flex flex-col sm:flex-row items-center justify-between px-6 py-4">
+        
+        {/* Left Side: Logo */}
+        <div className="flex items-center mb-4 sm:mb-0">
+          <Link to="/">
+            <img src={ventoLogo} alt="Vento Logo" className="h-10 w-auto" />
+          </Link>
+        </div>
+
+        {/* Center: Navigation Links */}
+        <nav className="flex space-x-6 text-sm font-bold text-gray-800 tracking-wide mb-4 sm:mb-0">
+          <Link to="/" className="hover:text-gray-500 transition-colors uppercase">Inicio</Link>
+          <Link to="/tienda" className="hover:text-gray-500 transition-colors uppercase">Tienda</Link>
+          <Link to="#" className="hover:text-gray-500 transition-colors uppercase">Contacto</Link>
+        </nav>
+
+        {/* Right Side: Cart & Auth */}
+        <div className="flex items-center space-x-6">
+          
+          <div className="flex items-center text-gray-800 hover:text-gray-500 cursor-pointer transition-colors group">
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            <span className="text-xs font-bold uppercase tracking-wider">{cartCount} Producto{cartCount !== 1 ? 's' : ''}</span>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={onLoginClick}
+              className="text-xs font-bold text-gray-800 uppercase tracking-wider hover:text-gray-500 transition-colors"
+            >
+              Iniciar Sesión
+            </button>
+            <button className="text-xs font-bold text-white bg-black px-4 py-2 rounded-sm uppercase tracking-wider hover:bg-gray-800 transition-colors">
+              Regístrate
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </header>
   );
 };
 
