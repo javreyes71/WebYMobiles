@@ -5,6 +5,7 @@ import Login from './pages/Login/Login';
 import Home from './pages/Home/Home';
 import Tienda from './pages/Tienda/Tienda';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
+import Cart from './pages/Cart/Cart';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/tienda" element={<Tienda />} />
               <Route path="/producto/:id" element={<ProductDetail />} />
+              <Route path="/carrito" element={<Cart />} />
             </Routes>
           </main>
           

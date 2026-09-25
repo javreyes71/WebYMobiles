@@ -1,23 +1,33 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Search, ChevronDown } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-
-import imgMain from '../../assets/productos/retro4_main.png'; 
-import imgThumb1 from '../../assets/productos/retro4_thumb1.png'; 
-import imgThumb2 from '../../assets/productos/retro4_thumb2.png'; 
+import { mockProducts } from '../../data/products';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   
+  // Find product by id from URL
+  const product = mockProducts.find(p => p.id === parseInt(id));
+
   // States for dropdowns
   const [talla, setTalla] = useState('11 US');
   const [color, setColor] = useState('Rojo');
 
+  if (!product) {
+    return <div className="text-center py-20 text-xl font-bold">Producto no encontrado</div>;
+  }
+
   const handleAddToCart = () => {
-    addToCart({ id, title: 'Air Jordan 4 Retro OG SP', price: 56325, talla, color });
+    addToCart({ id: product.id, title: product.title, price: product.price, talla, color, image: product.image || product.mainImage });
     alert("Producto agregado al carrito");
+  };
+
+  const handleBuyNow = () => {
+    addToCart({ id: product.id, title: product.title, price: product.price, talla, color, image: product.image || product.mainImage });
+    navigate('/carrito');
   };
 
   return (
@@ -63,24 +73,25 @@ const ProductDetail = () => {
           <div className="w-full lg:w-3/5 flex flex-col md:flex-row gap-4">
             {/* Main Big Image */}
             <div className="w-full md:w-3/4 rounded-lg flex items-center justify-center p-8 border border-gray-100">
-              <img src={imgMain} alt="Air Jordan 4" className="w-full h-auto object-contain max-h-[400px]" />
+              <img src={product.mainImage || product.image} alt={product.title} className="w-full h-auto object-contain max-h-[400px]" />
             </div>
             
             {/* Thumbnails */}
-            <div className="w-full md:w-1/4 flex md:flex-col gap-4">
-              <div className="rounded-lg flex items-center justify-center p-4 border border-gray-100 h-[190px] cursor-pointer hover:border-gray-300 transition-colors">
-                <img src={imgThumb1} alt="Thumbnail 1" className="max-h-full object-contain" />
+            {product.thumbnails && product.thumbnails.length > 0 && (
+              <div className="w-full md:w-1/4 flex md:flex-col gap-4">
+                {product.thumbnails.map((thumb, idx) => (
+                  <div key={idx} className="rounded-lg flex items-center justify-center p-4 border border-gray-100 h-[190px] cursor-pointer hover:border-gray-300 transition-colors">
+                    <img src={thumb} alt={`Thumbnail ${idx + 1}`} className="max-h-full object-contain" />
+                  </div>
+                ))}
               </div>
-              <div className="rounded-lg flex items-center justify-center p-4 border border-gray-100 h-[190px] cursor-pointer hover:border-gray-300 transition-colors">
-                <img src={imgThumb2} alt="Thumbnail 2" className="max-h-full object-contain" />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Details Section */}
           <div className="w-full lg:w-2/5 flex flex-col">
             <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-6">
-              Air Jordan 4 Retro OG SP<br />Nigel Sylvester Brick by Brick
+              {product.title}
             </h1>
 
             {/* Dropdowns */}
@@ -125,12 +136,17 @@ const ProductDetail = () => {
             {/* Pricing & Buttons */}
             <div className="flex items-end justify-between mt-auto pt-6 border-t border-gray-100">
               <div>
-                <span className="block text-sm text-gray-400 line-through mb-1">$75.100</span>
-                <span className="block text-3xl font-bold text-gray-900">$56.325</span>
+                {product.originalPrice && (
+                  <span className="block text-sm text-gray-400 line-through mb-1">${product.originalPrice.toLocaleString('es-CL')}</span>
+                )}
+                <span className="block text-3xl font-bold text-gray-900">${product.price.toLocaleString('es-CL')}</span>
               </div>
               
               <div className="flex flex-col gap-2">
-                <button className="bg-cyan-200 text-cyan-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-cyan-300 transition-colors">
+                <button 
+                  className="bg-cyan-200 text-cyan-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-cyan-300 transition-colors"
+                  onClick={handleBuyNow}
+                >
                   Comprar ahora
                 </button>
                 <button 
@@ -147,9 +163,7 @@ const ProductDetail = () => {
         {/* Description Section */}
         <div className="mt-8 bg-gray-100 p-8 rounded-lg text-sm text-gray-700 leading-relaxed shadow-inner">
           <p className="font-bold mb-2">Descripción:</p>
-          <p>
-            Inspired by the red bricks of NYC, the Air Jordan 4 "Brick by Brick" reflects Nigel's BMX roots and dedication to progress. The Firewood Orange leather upper embodies his fearless approach, while rich Cinnabar underlays add depth and energy. A crisp Sail midsole grounds the vibrant hues, keeping the look balanced while maintaining the signature AJ4 silhouette with mesh-inspired panels and floating eyestays. In a nod to Nigel's passion, the traditional "Nike Air" branding on the heel is replaced with "Bike Air," blending sneaker culture with his BMX legacy.
-          </p>
+          <p>{product.description}</p>
         </div>
 
       </div>

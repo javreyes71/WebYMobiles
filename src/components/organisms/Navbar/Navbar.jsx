@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Search } from 'lucide-react';
 import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
+import { useCart } from '../../../context/CartContext';
 
 const Navbar = ({ onLoginClick }) => {
   const { cartCount } = useCart();
@@ -34,10 +35,10 @@ const Navbar = ({ onLoginClick }) => {
         {/* Right Side: Cart & Auth */}
         <div className="flex items-center space-x-6">
           
-          <div className="flex items-center text-gray-800 hover:text-gray-500 cursor-pointer transition-colors group">
+          <Link to="/carrito" className="flex items-center text-gray-800 hover:text-gray-500 cursor-pointer transition-colors group">
             <ShoppingCart className="w-5 h-5 mr-2" />
             <span className="text-xs font-bold uppercase tracking-wider">{cartCount} Producto{cartCount !== 1 ? 's' : ''}</span>
-          </div>
+          </Link>
 
           <div className="flex items-center space-x-4">
             <button 
