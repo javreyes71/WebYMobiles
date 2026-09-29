@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CustomButton from '../../components/atoms/Button/CustomButton';
 
-const Login = ({ isOpen, onClose }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
   const [rut, setRut] = useState('');
   const [password, setPassword] = useState('');
 
@@ -9,6 +9,7 @@ const Login = ({ isOpen, onClose }) => {
     e.preventDefault();
     // TODO: Implement login logic here
     console.log('Login attempt with:', { rut, password });
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -76,9 +77,13 @@ const Login = ({ isOpen, onClose }) => {
 
         {/* Register Link */}
         <div className="text-center mt-4">
-          <a href="#" className="text-sm font-semibold text-neutral-800 hover:underline">
+          <button 
+            type="button" 
+            onClick={onSwitchToRegister} 
+            className="text-sm font-semibold text-neutral-800 hover:underline"
+          >
             Registrarte
-          </a>
+          </button>
         </div>
       </div>
     </div>

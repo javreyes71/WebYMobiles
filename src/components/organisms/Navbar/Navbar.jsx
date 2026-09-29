@@ -5,7 +5,7 @@ import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
 import { useCart } from '../../../context/CartContext';
 
-const Navbar = ({ onLoginClick }) => {
+const Navbar = ({ onLoginClick, onRegisterClick }) => {
   const { cartCount } = useCart();
 
   return (
@@ -47,7 +47,10 @@ const Navbar = ({ onLoginClick }) => {
             >
               Iniciar Sesión
             </button>
-            <button className="text-xs font-bold text-white bg-black px-4 py-2 rounded-sm uppercase tracking-wider hover:bg-gray-800 transition-colors">
+            <button 
+              onClick={onRegisterClick}
+              className="text-xs font-bold text-white bg-black px-4 py-2 rounded-sm uppercase tracking-wider hover:bg-gray-800 transition-colors"
+            >
               Regístrate
             </button>
           </div>
