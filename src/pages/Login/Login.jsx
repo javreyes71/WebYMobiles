@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import CustomButton from '../../components/atoms/Button/CustomButton';
 
-const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
   const [rut, setRut] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Implement login logic here
     console.log('Login attempt with:', { rut, password });
-    onClose();
+    if (onLoginSuccess) {
+      onLoginSuccess();
+    } else {
+      onClose();
+    }
   };
 
   if (!isOpen) return null;

@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Search } from 'lucide-react';
 import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
 import { useCart } from '../../../context/CartContext';
+import { Menu, MenuItem, IconButton, Avatar, Divider } from '@mui/material';
 
-const Navbar = ({ onLoginClick, onRegisterClick }) => {
+const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
   const { cartCount } = useCart();
+  
+  // Estado para el menú desplegable del perfil
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  
+  const handleProfileClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogoutClick = () => {
+    handleCloseMenu();
+    if (onLogout) onLogout();
+  };
 
   return (
     <header className="w-full flex flex-col font-sans border-b border-gray-200">
@@ -41,18 +59,40 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
           </Link>
 
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={onLoginClick}
-              className="text-xs font-bold text-gray-800 uppercase tracking-wider hover:text-gray-500 transition-colors"
-            >
-              Iniciar Sesión
-            </button>
-            <button 
-              onClick={onRegisterClick}
-              className="text-xs font-bold text-white bg-black px-4 py-2 rounded-sm uppercase tracking-wider hover:bg-gray-800 transition-colors"
-            >
-              Regístrate
-            </button>
+            {isLoggedIn ? (
+              <>
+                <IconButton onClick={handleProfileClick} size="small">
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#000' }}>U</Avatar>
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={openMenu}
+                  onClose={handleCloseMenu}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                  <MenuItem onClick={handleCloseMenu}>Mi Perfil</MenuItem>
+                  <MenuItem onClick={handleCloseMenu}>Mis Pedidos</MenuItem>
+                  <Divider />
+                  <MenuItem onClick={handleLogoutClick}>Cerrar sesión</MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={onLoginClick}
+                  className="text-xs font-bold text-gray-800 uppercase tracking-wider hover:text-gray-500 transition-colors"
+                >
+                  Iniciar Sesión
+                </button>
+                <button 
+                  onClick={onRegisterClick}
+                  className="text-xs font-bold text-white bg-black px-4 py-2 rounded-sm uppercase tracking-wider hover:bg-gray-800 transition-colors"
+                >
+                  Regístrate
+                </button>
+              </>
+            )}
           </div>
 
         </div>

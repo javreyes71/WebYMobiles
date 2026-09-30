@@ -12,6 +12,7 @@ import { CartProvider } from './context/CartContext';
 function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Simulación de sesión
 
   const openLogin = () => {
     setIsRegisterOpen(false);
@@ -23,6 +24,15 @@ function App() {
     setIsRegisterOpen(true);
   };
 
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+    setIsLoginOpen(false);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
   return (
     <CartProvider>
       <Router>
@@ -30,6 +40,8 @@ function App() {
           <Navbar 
             onLoginClick={openLogin} 
             onRegisterClick={openRegister}
+            isLoggedIn={isLoggedIn}
+            onLogout={handleLogout}
           />
           
           <main className="flex-1 bg-gray-50">
@@ -45,6 +57,7 @@ function App() {
             isOpen={isLoginOpen} 
             onClose={() => setIsLoginOpen(false)} 
             onSwitchToRegister={openRegister}
+            onLoginSuccess={handleLoginSuccess}
           />
           
           <Register 
