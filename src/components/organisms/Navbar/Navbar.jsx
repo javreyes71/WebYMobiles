@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Search } from 'lucide-react';
 import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
@@ -8,6 +8,7 @@ import { Menu, MenuItem, IconButton, Avatar, Divider } from '@mui/material';
 
 const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
   const { cartCount } = useCart();
+  const navigate = useNavigate();
   
   // Estado para el menú desplegable del perfil
   const [anchorEl, setAnchorEl] = useState(null);
@@ -21,8 +22,14 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
     setAnchorEl(null);
   };
 
+  const handleAdminClick = () => {
+    handleCloseMenu();
+    navigate('/admin/productos');
+  };
+
   const handleLogoutClick = () => {
     handleCloseMenu();
+    navigate('/');
     if (onLogout) onLogout();
   };
 
@@ -72,7 +79,7 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem onClick={handleCloseMenu}>Mi Perfil</MenuItem>
-                  <MenuItem onClick={handleCloseMenu}>Mis Pedidos</MenuItem>
+                  <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
                   <Divider />
                   <MenuItem onClick={handleLogoutClick}>Cerrar sesión</MenuItem>
                 </Menu>
