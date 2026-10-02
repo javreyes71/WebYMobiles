@@ -27,6 +27,11 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
     navigate('/admin/productos');
   };
 
+  const handleAdminUsersClick = () => {
+    handleCloseMenu();
+    navigate('/admin/usuarios');
+  };
+
   const handleLogoutClick = () => {
     handleCloseMenu();
     navigate('/');
@@ -80,6 +85,7 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
                 >
                   <MenuItem onClick={handleCloseMenu}>Mi Perfil</MenuItem>
                   <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
+                  <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
                   <Divider />
                   <MenuItem onClick={handleLogoutClick}>Cerrar sesión</MenuItem>
                 </Menu>
