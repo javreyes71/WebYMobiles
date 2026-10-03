@@ -22,7 +22,6 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addToCart({ id: product.id, title: product.title, price: product.price, talla, color, image: product.image || product.mainImage });
-    alert("Producto agregado al carrito");
   };
 
   const handleBuyNow = () => {

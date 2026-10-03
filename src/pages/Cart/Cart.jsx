@@ -96,7 +96,7 @@ const Cart = () => {
 
                 <button 
                   className="w-full py-4 border-2 border-gray-900 text-gray-900 font-bold text-lg rounded hover:bg-gray-900 hover:text-white transition-colors"
-                  onClick={() => alert("Procesando pago seguro...")}
+                  onClick={() => window.open('https://www.webpay.cl', '_blank')}
                 >
                   Pagar Ahora
                 </button>
