@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import CustomButton from '../../components/atoms/Button/CustomButton';
+import { validateRUT } from '../../utils/validators';
 
-const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
+const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
   const [correo, setCorreo] = useState('');
@@ -9,9 +10,27 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Requisito: console.log de datos capturados
+
+    // 1. Validar RUT
+    if (!validateRUT(rut)) {
+      alert("El RUT ingresado no es válido. Verifica el dígito verificador.");
+      return;
+    }
+
+    // 2. Validar contraseña
+    if (password.length <= 8) {
+      alert("La contraseña debe tener más de 8 caracteres.");
+      return;
+    }
+
+    // Si todo es válido
     console.log('Registro exitoso con datos:', { nombre, rut, correo, password });
-    onClose();
+    alert("Su perfil se ha registrado correctamente");
+    
+    // Auto-login pasando el nombre
+    if (onRegisterSuccess) {
+      onRegisterSuccess({ nombre, rut, correo });
+    }
   };
 
   if (!isOpen) return null;

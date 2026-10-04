@@ -15,6 +15,7 @@ function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Simulación de sesión
+  const [currentUser, setCurrentUser] = useState(null);
 
   const openLogin = () => {
     setIsRegisterOpen(false);
@@ -29,10 +30,18 @@ function App() {
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     setIsLoginOpen(false);
+    setCurrentUser({ nombre: 'Usuario Vento' }); // Mock para Login normal
+  };
+
+  const handleRegisterSuccess = (userData) => {
+    setIsLoggedIn(true);
+    setIsRegisterOpen(false);
+    setCurrentUser(userData); // Guarda el usuario registrado para las iniciales
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
   return (
@@ -44,6 +53,7 @@ function App() {
             onRegisterClick={openRegister}
             isLoggedIn={isLoggedIn}
             onLogout={handleLogout}
+            currentUser={currentUser}
           />
           
           <main className="flex-1 bg-gray-50">
@@ -68,6 +78,7 @@ function App() {
             isOpen={isRegisterOpen} 
             onClose={() => setIsRegisterOpen(false)} 
             onSwitchToLogin={openLogin}
+            onRegisterSuccess={handleRegisterSuccess}
           />
         </div>
       </Router>

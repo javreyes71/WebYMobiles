@@ -5,8 +5,9 @@ import CustomButton from '../../atoms/Button/CustomButton';
 import ventoLogo from '../../../assets/vento-logo.png';
 import { useCart } from '../../../context/CartContext';
 import { Menu, MenuItem, IconButton, Avatar, Divider } from '@mui/material';
+import { getInitials } from '../../../utils/validators';
 
-const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
+const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout, currentUser }) => {
   const { cartCount } = useCart();
   const navigate = useNavigate();
   
@@ -37,6 +38,9 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
     navigate('/');
     if (onLogout) onLogout();
   };
+
+  // Obtener iniciales del usuario (si no hay, muestra 'U')
+  const initials = currentUser ? getInitials(currentUser.nombre) : 'U';
 
   return (
     <header className="w-full flex flex-col font-sans border-b border-gray-200">
@@ -74,7 +78,9 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout }) => {
             {isLoggedIn ? (
               <>
                 <IconButton onClick={handleProfileClick} size="small">
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#000' }}>U</Avatar>
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#000', fontSize: '0.875rem' }}>
+                    {initials}
+                  </Avatar>
                 </IconButton>
                 <Menu
                   anchorEl={anchorEl}
