@@ -83,13 +83,21 @@ const Cart = () => {
                   <span>Subtotal</span>
                   <span className="font-medium text-gray-900">${cartTotal.toLocaleString('es-CL')}</span>
                 </div>
+                
+                {/* Costo de Envío Simulado */}
+                <div className="flex justify-between text-gray-600">
+                  <span>Costo de envío</span>
+                  <span className={`font-medium ${cartTotal >= 50000 ? 'text-green-600' : 'text-gray-900'}`}>
+                    {cartTotal >= 50000 ? 'GRATIS' : '$5.000'}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-auto border-t border-gray-200 pt-6">
                 <div className="flex justify-between items-end mb-1">
                   <span className="text-lg font-bold text-gray-900">Total a Pagar</span>
                   <span className="text-3xl font-bold text-gray-900">
-                    ${cartTotal.toLocaleString('es-CL')}
+                    ${(cartTotal + (cartTotal >= 50000 ? 0 : 5000)).toLocaleString('es-CL')}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-8 italic text-right">Impuestos incluidos</p>

@@ -50,7 +50,7 @@ const Home = () => {
             {/* Category 2 */}
             <div className="flex flex-col items-center cursor-pointer group">
               <div className="w-24 h-24 rounded-2xl bg-gray-100 mb-3 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
-                <img src={catZapatos} alt="Zapatos" className="w-full h-full object-cover" />
+                <img src={catRopa} alt="Zapatos" className="w-full h-full object-cover" />
               </div>
               <span className="text-sm font-semibold text-gray-700">Zapatos</span>
             </div>
@@ -58,7 +58,7 @@ const Home = () => {
             {/* Category 3 */}
             <div className="flex flex-col items-center cursor-pointer group">
               <div className="w-24 h-24 rounded-2xl bg-gray-100 mb-3 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
-                <img src={catRopa} alt="Ropa" className="w-full h-full object-cover" />
+                <img src={catZapatos} alt="Ropa" className="w-full h-full object-cover" />
               </div>
               <span className="text-sm font-semibold text-gray-700">Ropa</span>
             </div>

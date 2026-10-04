@@ -18,8 +18,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
     }
 
     // 2. Validar contraseña
-    if (password.length <= 8) {
-      alert("La contraseña debe tener más de 8 caracteres.");
+    if (password.length < 8) {
+      alert("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
@@ -108,6 +108,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-500 focus:border-neutral-500"
             />
+            <p className="text-xs text-gray-500 mt-1">Debe tener al menos 8 caracteres.</p>
           </div>
 
           <div className="pt-2">
