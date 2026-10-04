@@ -1,36 +1,42 @@
 import React, { useState } from 'react';
+import { CircularProgress } from '@mui/material';
 import CustomButton from '../../components/atoms/Button/CustomButton';
 import { validateRUT } from '../../utils/validators';
+import { useToast } from '../../context/ToastContext';
 
 const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Validar RUT
     if (!validateRUT(rut)) {
-      alert("El RUT ingresado no es válido. Verifica el dígito verificador.");
+      showToast("El RUT ingresado no es válido.", "error");
       return;
     }
 
-    // 2. Validar contraseña
     if (password.length < 8) {
-      alert("La contraseña debe tener al menos 8 caracteres.");
+      showToast("La contraseña debe tener al menos 8 caracteres.", "error");
       return;
     }
 
-    // Si todo es válido
-    console.log('Registro exitoso con datos:', { nombre, rut, correo, password });
-    alert("Su perfil se ha registrado correctamente");
-    
-    // Auto-login pasando el nombre
-    if (onRegisterSuccess) {
-      onRegisterSuccess({ nombre, rut, correo });
-    }
+    setIsLoading(true);
+
+    // Simular llamada asíncrona (Fase 3 del Roadmap)
+    setTimeout(() => {
+      setIsLoading(false);
+      console.log('Registro exitoso con datos:', { nombre, rut, correo, password });
+      showToast("Su perfil se ha registrado correctamente", "success");
+      
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ nombre, rut, correo });
+      }
+    }, 1500);
   };
 
   if (!isOpen) return null;
@@ -112,8 +118,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
           </div>
 
           <div className="pt-2">
-            <CustomButton type="submit" className="w-full">
-              Registrarme
+            <CustomButton type="submit" className="w-full flex justify-center items-center h-10" disabled={isLoading}>
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Registrarme'}
             </CustomButton>
           </div>
         </form>

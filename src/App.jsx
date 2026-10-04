@@ -11,6 +11,7 @@ import AdminProductos from './pages/AdminProductos/AdminProductos';
 import AdminUsuarios from './pages/AdminUsuarios/AdminUsuarios';
 import Perfil from './pages/Perfil/Perfil';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 
 function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -31,13 +32,13 @@ function App() {
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     setIsLoginOpen(false);
-    setCurrentUser({ nombre: 'Usuario Vento' }); // Mock para Login normal
+    if (!currentUser) setCurrentUser({ nombre: 'Usuario Vento' });
   };
 
   const handleRegisterSuccess = (userData) => {
     setIsLoggedIn(true);
     setIsRegisterOpen(false);
-    setCurrentUser(userData); // Guarda el usuario registrado para las iniciales
+    setCurrentUser(userData);
   };
 
   const handleLogout = () => {
@@ -46,45 +47,47 @@ function App() {
   };
 
   return (
-    <CartProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col font-sans">
-          <Navbar 
-            onLoginClick={openLogin} 
-            onRegisterClick={openRegister}
-            isLoggedIn={isLoggedIn}
-            onLogout={handleLogout}
-            currentUser={currentUser}
-          />
-          
-          <main className="flex-1 bg-gray-50">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/tienda" element={<Tienda />} />
-              <Route path="/producto/:id" element={<ProductDetail />} />
-              <Route path="/carrito" element={<Cart />} />
-              <Route path="/admin/productos" element={<AdminProductos />} />
-              <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-              <Route path="/perfil" element={<Perfil currentUser={currentUser} />} />
-            </Routes>
-          </main>
-          
-          <Login 
-            isOpen={isLoginOpen} 
-            onClose={() => setIsLoginOpen(false)} 
-            onSwitchToRegister={openRegister}
-            onLoginSuccess={handleLoginSuccess}
-          />
-          
-          <Register 
-            isOpen={isRegisterOpen} 
-            onClose={() => setIsRegisterOpen(false)} 
-            onSwitchToLogin={openLogin}
-            onRegisterSuccess={handleRegisterSuccess}
-          />
-        </div>
-      </Router>
-    </CartProvider>
+    <ToastProvider>
+      <CartProvider>
+        <Router>
+          <div className="min-h-screen flex flex-col font-sans">
+            <Navbar 
+              onLoginClick={openLogin} 
+              onRegisterClick={openRegister}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              currentUser={currentUser}
+            />
+            
+            <main className="flex-1 bg-gray-50" aria-label="Contenido Principal">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/tienda" element={<Tienda />} />
+                <Route path="/producto/:id" element={<ProductDetail />} />
+                <Route path="/carrito" element={<Cart />} />
+                <Route path="/admin/productos" element={<AdminProductos />} />
+                <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+                <Route path="/perfil" element={<Perfil currentUser={currentUser} />} />
+              </Routes>
+            </main>
+            
+            <Login 
+              isOpen={isLoginOpen} 
+              onClose={() => setIsLoginOpen(false)} 
+              onSwitchToRegister={openRegister}
+              onLoginSuccess={handleLoginSuccess}
+            />
+            
+            <Register 
+              isOpen={isRegisterOpen} 
+              onClose={() => setIsRegisterOpen(false)} 
+              onSwitchToLogin={openLogin}
+              onRegisterSuccess={handleRegisterSuccess}
+            />
+          </div>
+        </Router>
+      </CartProvider>
+    </ToastProvider>
   );
 }
 

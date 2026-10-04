@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
+import { CircularProgress } from '@mui/material';
 import CustomButton from '../../components/atoms/Button/CustomButton';
+import { useToast } from '../../context/ToastContext';
 
 const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
   const [rut, setRut] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Login attempt with:', { rut, password });
-    if (onLoginSuccess) {
-      onLoginSuccess();
-    } else {
-      onClose();
-    }
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      console.log('Login attempt with:', { rut, password });
+      showToast("Sesión iniciada correctamente", "success");
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        onClose();
+      }
+    }, 1500);
   };
 
   if (!isOpen) return null;
@@ -68,8 +78,8 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
           </div>
 
           {/* Submit Button */}
-          <CustomButton type="submit" className="w-full">
-            Ingresar
+          <CustomButton type="submit" className="w-full flex justify-center items-center h-10" disabled={isLoading}>
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Ingresar'}
           </CustomButton>
         </form>
 
