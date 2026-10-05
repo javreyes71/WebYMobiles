@@ -6,9 +6,11 @@ import ventoLogo from '../../../assets/vento-logo.png';
 import { useCart } from '../../../context/CartContext';
 import { Menu, MenuItem, IconButton, Avatar, Divider } from '@mui/material';
 import { getInitials } from '../../../utils/validators';
+import { useAuth } from '../../../context/AuthContext';
 
-const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout, currentUser }) => {
+const Navbar = ({ onLoginClick, onRegisterClick }) => {
   const { cartCount } = useCart();
+  const { isLoggedIn, currentUser, logout } = useAuth();
   const navigate = useNavigate();
   
   // Estado para el menú desplegable del perfil
@@ -41,7 +43,7 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout, currentUs
   const handleLogoutClick = () => {
     handleCloseMenu();
     navigate('/');
-    if (onLogout) onLogout();
+    logout();
   };
 
   // Obtener iniciales del usuario (si no hay, muestra 'U')

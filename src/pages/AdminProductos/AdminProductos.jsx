@@ -13,10 +13,12 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import CustomButton from '../../components/atoms/Button/CustomButton';
+import { useToast } from '../../context/ToastContext';
 
 const AdminProductos = () => {
   const [productos, setProductos] = useState([
@@ -30,51 +32,60 @@ const AdminProductos = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentProd, setCurrentProd] = useState({ nombre: '', precio: '', stock: '', categoria: '' });
   const [deleteId, setDeleteId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
-  // Abrir modal para crear
   const handleOpenCreate = () => {
     setIsEditing(false);
     setCurrentProd({ nombre: '', precio: '', stock: '', categoria: '' });
     setOpenForm(true);
   };
 
-  // Abrir modal para editar
   const handleOpenEdit = (prod) => {
     setIsEditing(true);
     setCurrentProd(prod);
     setOpenForm(true);
   };
 
-  // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCurrentProd({ ...currentProd, [name]: value });
   };
 
-  // Enviar formulario (Create / Update)
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     if (isEditing) {
       console.log('Actualizando producto (Update):', currentProd);
       setProductos(productos.map((p) => (p.id === currentProd.id ? currentProd : p)));
+      showToast("Producto actualizado correctamente", "success");
     } else {
       const nuevoProd = { ...currentProd, id: Date.now() };
-      console.log('Creando nuevo producto (Create):', nuevoProd);
+      console.log('Creando producto (Create):', nuevoProd);
       setProductos([...productos, nuevoProd]);
+      showToast("Producto creado correctamente", "success");
     }
+    
+    setIsLoading(false);
     setOpenForm(false);
   };
 
-  // Abrir confirmación de borrado
   const handleOpenDelete = (id) => {
     setDeleteId(id);
     setOpenDelete(true);
   };
 
-  // Confirmar borrado
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     console.log('Eliminando producto con ID (Delete):', deleteId);
     setProductos(productos.filter((p) => p.id !== deleteId));
+    showToast("Producto eliminado", "info");
+    
+    setIsLoading(false);
     setOpenDelete(false);
   };
 
@@ -93,7 +104,6 @@ const AdminProductos = () => {
         </Button>
       </div>
 
-      {/* READ: Tabla de productos */}
       <TableContainer component={Paper} elevation={0} variant="outlined" className="mb-8">
         <Table sx={{ minWidth: 650 }}>
           <TableHead className="bg-gray-100">
@@ -128,8 +138,7 @@ const AdminProductos = () => {
         </Table>
       </TableContainer>
 
-      {/* CREATE / UPDATE: Modal Form */}
-      <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openForm} onClose={() => !isLoading && setOpenForm(false)} maxWidth="sm" fullWidth>
         <DialogTitle className="font-bold border-b border-gray-200">
           {isEditing ? 'Editar Producto' : 'Crear Nuevo Producto'}
         </DialogTitle>
@@ -181,28 +190,27 @@ const AdminProductos = () => {
             </div>
           </DialogContent>
           <DialogActions className="p-4 border-t border-gray-200">
-            <Button onClick={() => setOpenForm(false)} color="inherit">
+            <Button onClick={() => setOpenForm(false)} color="inherit" disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" variant="contained" sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}>
-              {isEditing ? 'Guardar Cambios' : 'Crear'}
+            <Button type="submit" variant="contained" disabled={isLoading} sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}>
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : (isEditing ? 'Guardar Cambios' : 'Crear')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
-      {/* DELETE: Modal Confirmación */}
-      <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
+      <Dialog open={openDelete} onClose={() => !isLoading && setOpenDelete(false)}>
         <DialogTitle className="font-bold">Confirmar Eliminación</DialogTitle>
         <DialogContent>
           <p className="text-gray-600">¿Estás seguro que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
         </DialogContent>
         <DialogActions className="p-4">
-          <Button onClick={() => setOpenDelete(false)} color="inherit">
+          <Button onClick={() => setOpenDelete(false)} color="inherit" disabled={isLoading}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Eliminar
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" disabled={isLoading}>
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Eliminar'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,28 +1,23 @@
 import React, { useState } from 'react';
 import { CircularProgress } from '@mui/material';
 import CustomButton from '../../components/atoms/Button/CustomButton';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
-const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
   const [rut, setRut] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { showToast } = useToast();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log('Login attempt with:', { rut, password });
-      showToast("Sesión iniciada correctamente", "success");
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        onClose();
-      }
-    }, 1500);
+    console.log('Login attempt with:', { rut, password });
+    await login(rut, password);
+    
+    setIsLoading(false);
+    onClose();
   };
 
   if (!isOpen) return null;

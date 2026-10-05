@@ -17,9 +17,11 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  FormControl
+  FormControl,
+  CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
+import { useToast } from '../../context/ToastContext';
 
 const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState([
@@ -33,6 +35,8 @@ const AdminUsuarios = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState({ nombre: '', rut: '', email: '', rol: 'Cliente' });
   const [deleteId, setDeleteId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   // Abrir modal para crear
   const handleOpenCreate = () => {
@@ -54,17 +58,25 @@ const AdminUsuarios = () => {
     setCurrentUser({ ...currentUser, [name]: value });
   };
 
-  // Enviar formulario
-  const handleSubmitForm = (e) => {
+  // Enviar formulario (Simula asincronía Fase 3)
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simula latencia
+
     if (isEditing) {
       console.log('Actualizando usuario (Update):', currentUser);
       setUsuarios(usuarios.map((u) => (u.id === currentUser.id ? currentUser : u)));
+      showToast("Usuario actualizado con éxito", "success");
     } else {
       const nuevoUser = { ...currentUser, id: Date.now() };
       console.log('Creando nuevo usuario (Create):', nuevoUser);
       setUsuarios([...usuarios, nuevoUser]);
+      showToast("Usuario creado con éxito", "success");
     }
+    
+    setIsLoading(false);
     setOpenForm(false);
   };
 
@@ -74,9 +86,15 @@ const AdminUsuarios = () => {
     setOpenDelete(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simula latencia
+
     console.log('Eliminando usuario con ID (Delete):', deleteId);
     setUsuarios(usuarios.filter((u) => u.id !== deleteId));
+    showToast("Usuario eliminado correctamente", "info");
+    
+    setIsLoading(false);
     setOpenDelete(false);
   };
 
@@ -184,28 +202,28 @@ const AdminUsuarios = () => {
             </FormControl>
           </DialogContent>
           <DialogActions className="p-4 border-t border-gray-200">
-            <Button onClick={() => setOpenForm(false)} color="inherit">
+            <Button onClick={() => setOpenForm(false)} color="inherit" disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" variant="contained" sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}>
-              {isEditing ? 'Guardar Cambios' : 'Crear'}
+            <Button type="submit" variant="contained" disabled={isLoading} sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}>
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : (isEditing ? 'Guardar Cambios' : 'Crear')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* DELETE Modal */}
-      <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
+      <Dialog open={openDelete} onClose={() => !isLoading && setOpenDelete(false)}>
         <DialogTitle className="font-bold">Confirmar Eliminación</DialogTitle>
         <DialogContent>
           <p className="text-gray-600">¿Estás seguro que deseas eliminar este usuario? No podrá volver a iniciar sesión.</p>
         </DialogContent>
         <DialogActions className="p-4">
-          <Button onClick={() => setOpenDelete(false)} color="inherit">
+          <Button onClick={() => setOpenDelete(false)} color="inherit" disabled={isLoading}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Eliminar
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" disabled={isLoading}>
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Eliminar'}
           </Button>
         </DialogActions>
       </Dialog>

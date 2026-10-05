@@ -3,14 +3,16 @@ import { CircularProgress } from '@mui/material';
 import CustomButton from '../../components/atoms/Button/CustomButton';
 import { validateRUT } from '../../utils/validators';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
-const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
+const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
+  const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,16 +29,11 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
 
     setIsLoading(true);
 
-    // Simular llamada asíncrona (Fase 3 del Roadmap)
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log('Registro exitoso con datos:', { nombre, rut, correo, password });
-      showToast("Su perfil se ha registrado correctamente", "success");
-      
-      if (onRegisterSuccess) {
-        onRegisterSuccess({ nombre, rut, correo });
-      }
-    }, 1500);
+    console.log('Registro exitoso con datos:', { nombre, rut, correo, password });
+    await register({ nombre, rut, correo });
+    
+    setIsLoading(false);
+    onClose();
   };
 
   if (!isOpen) return null;

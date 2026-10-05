@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { TextField, Button, Avatar, Divider, Paper } from '@mui/material';
 import { getInitials } from '../../utils/validators';
+import { useAuth } from '../../context/AuthContext';
 
-const Perfil = ({ currentUser }) => {
+const Perfil = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const { currentUser } = useAuth();
   
   // Si no hay usuario en sesión, mostramos datos de prueba
   const user = currentUser || { 
