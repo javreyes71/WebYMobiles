@@ -69,6 +69,16 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         <ListItem button onClick={() => { toggleMobileMenu(); }}>
           <ListItemText primary="CONTACTO" primaryTypographyProps={{ className: "font-bold text-gray-800" }} />
         </ListItem>
+        {isLoggedIn && (
+          <>
+            <ListItem button onClick={() => { navigate('/admin/productos', { state: { initialView: 'form-producto' } }); toggleMobileMenu(); }}>
+              <ListItemText primary="VENDER" primaryTypographyProps={{ className: "font-bold text-green-600" }} />
+            </ListItem>
+            <ListItem button onClick={() => { navigate('/admin/productos', { state: { initialView: 'form-servicio' } }); toggleMobileMenu(); }}>
+              <ListItemText primary="PUBLICAR SERVICIO" primaryTypographyProps={{ className: "font-bold text-blue-600" }} />
+            </ListItem>
+          </>
+        )}
       </List>
       {!isLoggedIn && (
         <div className="flex flex-col space-y-3 mt-auto mb-4">
@@ -106,10 +116,28 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         </div>
 
         {/* Center: Navigation Links (Desktop Only) */}
-        <nav className="hidden md:flex space-x-6 text-sm font-bold text-gray-800 tracking-wide">
+        <nav className="hidden md:flex space-x-6 text-sm font-bold text-gray-800 tracking-wide items-center">
           <Link to="/" className="hover:text-gray-500 transition-colors uppercase">Inicio</Link>
           <Link to="/tienda" className="hover:text-gray-500 transition-colors uppercase">Tienda</Link>
           <Link to="#" className="hover:text-gray-500 transition-colors uppercase">Contacto</Link>
+          {isLoggedIn && (
+            <>
+              <Link 
+                to="/admin/productos" 
+                state={{ initialView: 'form-producto' }} 
+                className="hover:text-gray-500 transition-colors uppercase text-green-600"
+              >
+                Vender
+              </Link>
+              <Link 
+                to="/admin/productos" 
+                state={{ initialView: 'form-servicio' }} 
+                className="hover:text-gray-500 transition-colors uppercase text-blue-600"
+              >
+                Publicar Servicio
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Right Side: Cart & Auth */}
@@ -137,11 +165,9 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem onClick={handleMiPerfilClick}>Mi Perfil</MenuItem>
+                  <MenuItem onClick={handleAdminClick}>Mis Publicaciones</MenuItem>
                   {currentUser?.rol === 'Admin' && (
-                    <>
-                      <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
-                      <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
-                    </>
+                    <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
                   )}
                   <Divider />
                   <MenuItem onClick={handleLogoutClick}>Cerrar sesión</MenuItem>

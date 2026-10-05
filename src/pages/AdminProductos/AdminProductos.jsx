@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, CircularProgress,
@@ -8,6 +9,7 @@ import { Edit, Delete, Add, KeyboardArrowDown, CloudUpload } from '@mui/icons-ma
 import { useToast } from '../../context/ToastContext';
 
 const AdminProductos = () => {
+  const location = useLocation();
   const [productos, setProductos] = useState([
     { id: 1, tipo: 'Producto', nombre: 'Zapatilla Retro', sku: 'Z-001', precio: 50000, categoria: 'Zapatos', marca: 'Vento', descripcion: 'Zapatilla clásica', restriccionEdad: 'no', stock: 15 },
     { id: 2, tipo: 'Servicio', nombre: 'DJ Set Open Air', sku: 'S-001', precio: 600000, categoria: 'Servicios musicales', tiempoEstimado: '120-180 minutos', descripcion: 'DJ set profesional', restriccionEdad: 'sí', permiteCotizacion: 'sí' },
@@ -20,6 +22,18 @@ const AdminProductos = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (location.state?.initialView) {
+      setView(location.state.initialView);
+      setIsEditing(false);
+      if (location.state.initialView === 'form-servicio') {
+        setCurrentItem({ tipo: 'Servicio', nombre: '', sku: '', tiempoEstimado: '', categoria: '', descripcion: '', restriccionEdad: 'no', permiteCotizacion: 'no', precio: '' });
+      } else {
+        setCurrentItem({ tipo: 'Producto', nombre: '', sku: '', marca: '', categoria: '', descripcion: '', restriccionEdad: 'no', precio: '' });
+      }
+    }
+  }, [location.state]);
 
   // Menu "Añadir"
   const [anchorEl, setAnchorEl] = useState(null);
