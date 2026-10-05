@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import ProductCard from '../../components/molecules/ProductCard/ProductCard';
-import { mockProducts } from '../../data/products';
+import { useProducts } from '../../context/ProductContext';
 
 const FilterSection = ({ title, defaultOpen = false, children }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -24,6 +24,7 @@ const FilterSection = ({ title, defaultOpen = false, children }) => {
 };
 
 const Tienda = () => {
+  const { productos } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilters, setPriceFilters] = useState({
     range1: false, // 10k - 50k
@@ -39,10 +40,10 @@ const Tienda = () => {
   };
 
   // Filter Logic
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = productos.filter(product => {
     // 1. Search Filter
-    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = product.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
 
     // 2. Price Filter
     const activeRanges = [];

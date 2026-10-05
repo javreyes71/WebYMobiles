@@ -7,13 +7,11 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, KeyboardArrowDown, CloudUpload } from '@mui/icons-material';
 import { useToast } from '../../context/ToastContext';
+import { useProducts } from '../../context/ProductContext';
 
 const AdminProductos = () => {
   const location = useLocation();
-  const [productos, setProductos] = useState([
-    { id: 1, tipo: 'Producto', nombre: 'Zapatilla Retro', sku: 'Z-001', precio: 50000, categoria: 'Zapatos', marca: 'Vento', descripcion: 'Zapatilla clásica', restriccionEdad: 'no', stock: 15 },
-    { id: 2, tipo: 'Servicio', nombre: 'DJ Set Open Air', sku: 'S-001', precio: 600000, categoria: 'Servicios musicales', tiempoEstimado: '120-180 minutos', descripcion: 'DJ set profesional', restriccionEdad: 'sí', permiteCotizacion: 'sí' },
-  ]);
+  const { productos, addProducto, updateProducto, deleteProducto } = useProducts();
 
   const [view, setView] = useState('list'); // 'list' | 'form-producto' | 'form-servicio'
   const [isEditing, setIsEditing] = useState(false);
@@ -74,12 +72,11 @@ const AdminProductos = () => {
 
     if (isEditing) {
       console.log(`Actualizando ${currentItem.tipo}:`, currentItem);
-      setProductos(productos.map((p) => (p.id === currentItem.id ? currentItem : p)));
+      updateProducto(currentItem);
       showToast(`${currentItem.tipo} actualizado correctamente`, "success");
     } else {
-      const nuevoItem = { ...currentItem, id: Date.now() };
-      console.log(`Creando ${currentItem.tipo}:`, nuevoItem);
-      setProductos([...productos, nuevoItem]);
+      console.log(`Creando ${currentItem.tipo}:`, currentItem);
+      addProducto(currentItem);
       showToast(`${currentItem.tipo} creado correctamente`, "success");
     }
     
@@ -95,7 +92,7 @@ const AdminProductos = () => {
   const handleConfirmDelete = async () => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setProductos(productos.filter((p) => p.id !== deleteId));
+    deleteProducto(deleteId);
     showToast("Ítem eliminado", "info");
     setIsLoading(false);
     setOpenDelete(false);
