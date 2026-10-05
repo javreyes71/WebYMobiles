@@ -137,8 +137,12 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem onClick={handleMiPerfilClick}>Mi Perfil</MenuItem>
-                  <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
-                  <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
+                  {currentUser?.rol === 'Admin' && (
+                    <>
+                      <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
+                      <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
+                    </>
+                  )}
                   <Divider />
                   <MenuItem onClick={handleLogoutClick}>Cerrar sesión</MenuItem>
                 </Menu>

@@ -14,8 +14,12 @@ export const AuthProvider = ({ children }) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         setIsLoggedIn(true);
-        if (!currentUser) setCurrentUser({ nombre: 'Usuario Vento', rut, correo: 'usuario@vento.cl' });
-        showToast("Sesión iniciada correctamente", "success");
+        // Asignar rol Admin solo al RUT 12.345.678-9, el resto son Clientes
+        const rolAsignado = rut === '12.345.678-9' ? 'Admin' : 'Cliente';
+        if (!currentUser) {
+          setCurrentUser({ nombre: 'Usuario Vento', rut, correo: 'usuario@vento.cl', rol: rolAsignado });
+        }
+        showToast(`Sesión iniciada como ${rolAsignado}`, "success");
         resolve();
       }, 1500);
     });
@@ -25,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         setIsLoggedIn(true);
-        setCurrentUser(userData);
+        setCurrentUser({ ...userData, rol: 'Cliente' });
         showToast("Su perfil se ha registrado correctamente", "success");
         resolve();
       }, 1500);
