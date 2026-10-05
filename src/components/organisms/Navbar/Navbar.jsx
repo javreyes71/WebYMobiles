@@ -23,6 +23,11 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout, currentUs
     setAnchorEl(null);
   };
 
+  const handleMiPerfilClick = () => {
+    handleCloseMenu();
+    navigate('/perfil');
+  };
+
   const handleAdminClick = () => {
     handleCloseMenu();
     navigate('/admin/productos');
@@ -89,7 +94,7 @@ const Navbar = ({ onLoginClick, onRegisterClick, isLoggedIn, onLogout, currentUs
                   transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
-                  <MenuItem onClick={handleCloseMenu}>Mi Perfil</MenuItem>
+                  <MenuItem onClick={handleMiPerfilClick}>Mi Perfil</MenuItem>
                   <MenuItem onClick={handleAdminClick}>Admin. Productos</MenuItem>
                   <MenuItem onClick={handleAdminUsersClick}>Admin. Usuarios</MenuItem>
                   <Divider />

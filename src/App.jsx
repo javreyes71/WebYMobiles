@@ -9,6 +9,7 @@ import ProductDetail from './pages/ProductDetail/ProductDetail';
 import Cart from './pages/Cart/Cart';
 import AdminProductos from './pages/AdminProductos/AdminProductos';
 import AdminUsuarios from './pages/AdminUsuarios/AdminUsuarios';
+import Perfil from './pages/Perfil/Perfil';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
               <Route path="/carrito" element={<Cart />} />
               <Route path="/admin/productos" element={<AdminProductos />} />
               <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+              <Route path="/perfil" element={<Perfil currentUser={currentUser} />} />
             </Routes>
           </main>
           
