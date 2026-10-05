@@ -104,39 +104,68 @@ const AdminProductos = () => {
         </Button>
       </div>
 
-      <TableContainer component={Paper} elevation={0} variant="outlined" className="mb-8">
-        <Table sx={{ minWidth: 650 }}>
-          <TableHead className="bg-gray-100">
-            <TableRow>
-              <TableCell className="font-bold">ID</TableCell>
-              <TableCell className="font-bold">Nombre</TableCell>
-              <TableCell className="font-bold">Categoría</TableCell>
-              <TableCell className="font-bold text-right">Precio</TableCell>
-              <TableCell className="font-bold text-right">Stock</TableCell>
-              <TableCell className="font-bold text-center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {productos.map((prod) => (
-              <TableRow key={prod.id} hover>
-                <TableCell>{prod.id}</TableCell>
-                <TableCell>{prod.nombre}</TableCell>
-                <TableCell>{prod.categoria}</TableCell>
-                <TableCell className="text-right">${prod.precio}</TableCell>
-                <TableCell className="text-right">{prod.stock}</TableCell>
-                <TableCell className="text-center">
-                  <IconButton color="secondary" onClick={() => handleOpenEdit(prod)}>
-                    <Edit fontSize="small" />
-                  </IconButton>
-                  <IconButton color="error" onClick={() => handleOpenDelete(prod.id)}>
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </TableCell>
+      {/* Vista Desktop: Tabla */}
+      <div className="hidden md:block">
+        <TableContainer component={Paper} elevation={0} variant="outlined" className="mb-8">
+          <Table sx={{ minWidth: 650 }}>
+            <TableHead className="bg-gray-100">
+              <TableRow>
+                <TableCell className="font-bold">ID</TableCell>
+                <TableCell className="font-bold">Nombre</TableCell>
+                <TableCell className="font-bold">Categoría</TableCell>
+                <TableCell className="font-bold text-right">Precio</TableCell>
+                <TableCell className="font-bold text-right">Stock</TableCell>
+                <TableCell className="font-bold text-center">Acciones</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {productos.map((prod) => (
+                <TableRow key={prod.id} hover>
+                  <TableCell>{prod.id}</TableCell>
+                  <TableCell>{prod.nombre}</TableCell>
+                  <TableCell>{prod.categoria}</TableCell>
+                  <TableCell className="text-right">${prod.precio}</TableCell>
+                  <TableCell className="text-right">{prod.stock}</TableCell>
+                  <TableCell className="text-center">
+                    <IconButton color="secondary" onClick={() => handleOpenEdit(prod)}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => handleOpenDelete(prod.id)}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+
+      {/* Vista Mobile: Tarjetas */}
+      <div className="grid grid-cols-1 gap-4 md:hidden mb-8">
+        {productos.map((prod) => (
+          <div key={prod.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="font-bold text-gray-800">{prod.nombre}</h3>
+                <span className="text-xs font-semibold text-gray-500 uppercase">{prod.categoria}</span>
+              </div>
+              <span className="font-bold text-lg text-gray-900">${prod.precio}</span>
+            </div>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-600">Stock: <span className="font-bold">{prod.stock}</span></span>
+              <div>
+                <IconButton color="secondary" onClick={() => handleOpenEdit(prod)} size="small">
+                  <Edit fontSize="small" />
+                </IconButton>
+                <IconButton color="error" onClick={() => handleOpenDelete(prod.id)} size="small">
+                  <Delete fontSize="small" />
+                </IconButton>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <Dialog open={openForm} onClose={() => !isLoading && setOpenForm(false)} maxWidth="sm" fullWidth>
         <DialogTitle className="font-bold border-b border-gray-200">

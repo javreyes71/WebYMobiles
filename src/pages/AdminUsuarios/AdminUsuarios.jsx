@@ -112,43 +112,76 @@ const AdminUsuarios = () => {
         </Button>
       </div>
 
-      <TableContainer component={Paper} elevation={0} variant="outlined" className="mb-8">
-        <Table sx={{ minWidth: 650 }}>
-          <TableHead className="bg-gray-100">
-            <TableRow>
-              <TableCell className="font-bold">ID</TableCell>
-              <TableCell className="font-bold">Nombre</TableCell>
-              <TableCell className="font-bold">RUT</TableCell>
-              <TableCell className="font-bold">Email</TableCell>
-              <TableCell className="font-bold">Rol</TableCell>
-              <TableCell className="font-bold text-center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {usuarios.map((user) => (
-              <TableRow key={user.id} hover>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.nombre || user.margin}</TableCell>
-                <TableCell>{user.rut}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 text-xs font-bold rounded-full ${user.rol === 'Admin' ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'}`}>
-                    {user.rol}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <IconButton color="secondary" onClick={() => handleOpenEdit(user)}>
-                    <Edit fontSize="small" />
-                  </IconButton>
-                  <IconButton color="error" onClick={() => handleOpenDelete(user.id)}>
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </TableCell>
+      {/* Vista Desktop: Tabla */}
+      <div className="hidden md:block">
+        <TableContainer component={Paper} elevation={0} variant="outlined" className="mb-8">
+          <Table sx={{ minWidth: 650 }}>
+            <TableHead className="bg-gray-100">
+              <TableRow>
+                <TableCell className="font-bold">ID</TableCell>
+                <TableCell className="font-bold">Nombre</TableCell>
+                <TableCell className="font-bold">RUT</TableCell>
+                <TableCell className="font-bold">Email</TableCell>
+                <TableCell className="font-bold">Rol</TableCell>
+                <TableCell className="font-bold text-center">Acciones</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {usuarios.map((user) => (
+                <TableRow key={user.id} hover>
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell>{user.nombre || user.margin}</TableCell>
+                  <TableCell>{user.rut}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${user.rol === 'Admin' ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'}`}>
+                      {user.rol}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <IconButton color="secondary" onClick={() => handleOpenEdit(user)}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => handleOpenDelete(user.id)}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+
+      {/* Vista Mobile: Tarjetas */}
+      <div className="grid grid-cols-1 gap-4 md:hidden mb-8">
+        {usuarios.map((user) => (
+          <div key={user.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="font-bold text-gray-800">{user.nombre || user.margin}</h3>
+                <span className="text-xs text-gray-500">{user.email}</span>
+              </div>
+              <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${user.rol === 'Admin' ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'}`}>
+                {user.rol}
+              </span>
+            </div>
+            <div className="text-sm text-gray-700 mt-2">
+              <p><strong>RUT:</strong> {user.rut}</p>
+            </div>
+            <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-100">
+              <div>
+                <IconButton color="secondary" onClick={() => handleOpenEdit(user)} size="small">
+                  <Edit fontSize="small" />
+                </IconButton>
+                <IconButton color="error" onClick={() => handleOpenDelete(user.id)} size="small">
+                  <Delete fontSize="small" />
+                </IconButton>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* CREATE / UPDATE Modal */}
       <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="sm" fullWidth>
