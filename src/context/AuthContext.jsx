@@ -14,8 +14,9 @@ export const AuthProvider = ({ children }) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         setIsLoggedIn(true);
-        // Asignar rol Admin solo al RUT 12.345.678-5, el resto son Clientes
-        const rolAsignado = rut === '12.345.678-5' ? 'Admin' : 'Cliente';
+        const cleanRut = rut.replace(/[^0-9kK]/g, '').toLowerCase();
+        // Asignar rol Admin solo al RUT 12345678-5
+        const rolAsignado = cleanRut === '123456785' ? 'Admin' : 'Cliente';
         if (!currentUser) {
           setCurrentUser({ nombre: 'Usuario Vento', rut, correo: 'usuario@vento.cl', rol: rolAsignado });
         }

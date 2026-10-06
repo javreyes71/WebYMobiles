@@ -72,10 +72,10 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         {isLoggedIn && (
           <>
             <ListItem button onClick={() => { navigate('/admin/productos', { state: { initialView: 'form-producto' } }); toggleMobileMenu(); }}>
-              <ListItemText primary="VENDER" primaryTypographyProps={{ className: "font-bold text-green-600" }} />
+              <ListItemText primary="VENDER" primaryTypographyProps={{ className: "font-bold text-gray-800" }} />
             </ListItem>
             <ListItem button onClick={() => { navigate('/admin/productos', { state: { initialView: 'form-servicio' } }); toggleMobileMenu(); }}>
-              <ListItemText primary="PUBLICAR SERVICIO" primaryTypographyProps={{ className: "font-bold text-blue-600" }} />
+              <ListItemText primary="PUBLICAR SERVICIO" primaryTypographyProps={{ className: "font-bold text-gray-800" }} />
             </ListItem>
           </>
         )}
@@ -125,14 +125,14 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
               <Link 
                 to="/admin/productos" 
                 state={{ initialView: 'form-producto' }} 
-                className="hover:text-gray-500 transition-colors uppercase text-green-600"
+                className="hover:text-gray-500 transition-colors uppercase text-black"
               >
                 Vender
               </Link>
               <Link 
                 to="/admin/productos" 
                 state={{ initialView: 'form-servicio' }} 
-                className="hover:text-gray-500 transition-colors uppercase text-blue-600"
+                className="hover:text-gray-500 transition-colors uppercase text-black"
               >
                 Publicar Servicio
               </Link>
