@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Heart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { mockProducts } from '../../data/products';
+import { useProducts } from '../../context/ProductContext';
+import { useToast } from '../../context/ToastContext';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { productos } = useProducts();
+  const { showToast } = useToast();
   
-  // Find product by id from URL
-  const product = mockProducts.find(p => p.id === parseInt(id));
+  // Find product by id from Context
+  const product = productos.find(p => p.id === parseInt(id));
 
   // States for dropdowns
   const [talla, setTalla] = useState('11 US');
   const [color, setColor] = useState('Rojo');
 
   if (!product) {
-    return <div className="text-center py-20 text-xl font-bold">Producto no encontrado</div>;
+    return <div className="text-center py-20 text-xl font-bold">Producto o servicio no encontrado</div>;
   }
 
   const handleAddToCart = () => {
@@ -29,142 +32,209 @@ const ProductDetail = () => {
     navigate('/carrito');
   };
 
+  const handleQuote = () => {
+    showToast("Cotización solicitada", "success");
+  };
+
+  const handleWishlist = () => {
+    showToast("Agregado a lista de deseos", "success");
+  };
+
+  const isService = product.tipo === 'Servicio';
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <div className="container mx-auto px-6 pt-8">
         
         {/* Top Header - Search & Toggle */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <div className="relative w-full md:w-[320px] mb-4 md:mb-0">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input 
               type="text" 
-              defaultValue="Zapatillas nike" 
+              defaultValue={isService ? product.title : "Zapatillas nike"} 
               className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white text-sm"
             />
           </div>
           
-          <div className="flex items-center space-x-3 text-sm text-gray-700">
-            <span>Vendido por:</span>
-            <label className="flex items-center space-x-1 cursor-pointer">
-              <input type="radio" name="vendor" className="form-radio text-green-500" defaultChecked />
-              <span>Empresa</span>
-            </label>
-            <label className="flex items-center space-x-1 cursor-pointer">
-              <input type="radio" name="vendor" className="form-radio text-green-500" />
-              <span>Emprendedor</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Informative text similar to the Figma mockup */}
-        <div className="mb-8">
-          <p className="text-xs text-gray-500 italic max-w-2xl">
-            RF-14 — Ficha de producto y selección de vendedor.<br />
-            En la ficha el comprador ve filtros básicos, vendedor (emprendedor o empresa), precio, variante, stock, ofertas aplicables.
-          </p>
-        </div>
-
-        {/* Main Product Area */}
-        <div className="bg-white rounded-lg p-8 shadow-sm flex flex-col lg:flex-row gap-12">
-          
-          {/* Images Section */}
-          <div className="w-full lg:w-3/5 flex flex-col md:flex-row gap-4">
-            {/* Main Big Image */}
-            <div className="w-full md:w-3/4 rounded-lg flex items-center justify-center p-8 border border-gray-100">
-              <img src={product.mainImage || product.image} alt={product.title} className="w-full h-auto object-contain max-h-[400px]" />
+          {!isService && (
+            <div className="flex items-center space-x-3 text-sm text-gray-700">
+              <span>Vendido por:</span>
+              <label className="flex items-center space-x-1 cursor-pointer">
+                <input type="radio" name="vendor" className="form-radio text-green-500" defaultChecked />
+                <span>Empresa</span>
+              </label>
+              <label className="flex items-center space-x-1 cursor-pointer">
+                <input type="radio" name="vendor" className="form-radio text-green-500" />
+                <span>Emprendedor</span>
+              </label>
             </div>
-            
-            {/* Thumbnails */}
-            {product.thumbnails && product.thumbnails.length > 0 && (
-              <div className="w-full md:w-1/4 flex md:flex-col gap-4">
-                {product.thumbnails.map((thumb, idx) => (
-                  <div key={idx} className="rounded-lg flex items-center justify-center p-4 border border-gray-100 h-[190px] cursor-pointer hover:border-gray-300 transition-colors">
-                    <img src={thumb} alt={`Thumbnail ${idx + 1}`} className="max-h-full object-contain" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Details Section */}
-          <div className="w-full lg:w-2/5 flex flex-col">
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-6">
-              {product.title}
+        {isService ? (
+          /* ================= SERVICE LAYOUT (FIGMA) ================= */
+          <div className="bg-white rounded-lg p-8 shadow-sm">
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-8">
+              {product.title} - {product.brand}
             </h1>
-
-            {/* Dropdowns */}
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Talla</label>
-                <div className="relative">
-                  <select 
-                    value={talla} 
-                    onChange={(e) => setTalla(e.target.value)}
-                    className="w-full appearance-none bg-gray-100 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                  >
-                    <option>11 US</option>
-                    <option>10 US</option>
-                    <option>9 US</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
-                    <ChevronDown className="h-4 w-4" />
+            
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Images Section */}
+              <div className="w-full lg:w-3/5 flex gap-4">
+                <div className="w-2/3 h-96 overflow-hidden">
+                  <img src={product.mainImage || product.image} alt={product.title} className="w-full h-full object-cover rounded-sm" />
+                </div>
+                <div className="w-1/3 flex flex-col gap-4">
+                  <div className="h-[48%] overflow-hidden bg-gray-100">
+                    <img src={product.thumbnails?.[0] || product.image} alt="thumb1" className="w-full h-full object-cover rounded-sm" />
+                  </div>
+                  <div className="h-[48%] overflow-hidden bg-gray-100">
+                    <img src={product.thumbnails?.[1] || product.image} alt="thumb2" className="w-full h-full object-cover rounded-sm" />
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Color</label>
-                <div className="relative">
-                  <select 
-                    value={color} 
-                    onChange={(e) => setColor(e.target.value)}
-                    className="w-full appearance-none bg-gray-100 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+              {/* Details Section */}
+              <div className="w-full lg:w-2/5 flex flex-col bg-gray-100 p-8 rounded-sm">
+                <h2 className="text-sm font-bold text-gray-600 tracking-wider mb-4 uppercase">SERVICIO</h2>
+                
+                <ul className="list-disc pl-5 space-y-2 mb-8 text-gray-800 font-medium">
+                  <li>{product.categoria || 'Servicio Profesional'}</li>
+                  <li>{product.tiempoEstimado ? `Tiempo estimado: ${product.tiempoEstimado}` : 'Horario flexible'}</li>
+                  <li>Atención personalizada</li>
+                  {product.restriccionEdad === 'sí' && <li>Restricción de edad aplicable</li>}
+                </ul>
+
+                <div className="mt-auto space-y-4">
+                  {product.permiteCotizacion === 'no' ? (
+                    <div className="mb-4">
+                      <span className="block text-3xl font-bold text-gray-900">${product.price.toLocaleString('es-CL')}</span>
+                    </div>
+                  ) : null}
+                  
+                  <button 
+                    className="w-full bg-cyan-100 text-cyan-800 font-bold py-3 px-6 rounded text-sm hover:bg-cyan-200 transition-colors"
+                    onClick={product.permiteCotizacion === 'no' ? handleBuyNow : handleQuote}
                   >
-                    <option>Rojo</option>
-                    <option>Negro</option>
-                    <option>Blanco</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
-                    <ChevronDown className="h-4 w-4" />
-                  </div>
+                    {product.permiteCotizacion === 'no' ? 'Comprar Servicio' : 'Solicita una cotización'}
+                  </button>
+                  <button 
+                    className="w-full flex items-center justify-center gap-2 bg-transparent text-gray-600 font-bold py-3 px-6 rounded text-sm hover:bg-gray-200 transition-colors border border-transparent"
+                    onClick={handleWishlist}
+                  >
+                    <Heart className="w-4 h-4" /> Agregar a lista de deseos
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Pricing & Buttons */}
-            <div className="flex items-end justify-between mt-auto pt-6 border-t border-gray-100">
-              <div>
-                {product.originalPrice && (
-                  <span className="block text-sm text-gray-400 line-through mb-1">${product.originalPrice.toLocaleString('es-CL')}</span>
-                )}
-                <span className="block text-3xl font-bold text-gray-900">${product.price.toLocaleString('es-CL')}</span>
+            {/* Description Section */}
+            <div className="mt-8 bg-gray-100 p-8 rounded-sm text-sm text-gray-800 leading-relaxed">
+              <p className="font-bold mb-2">Descripción:</p>
+              <p>{product.description}</p>
+              {product.permiteCotizacion === 'sí' && (
+                <p className="mt-4 font-bold">Precio variable según duración, ubicación y requerimientos. Solicita tu cotización.</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ================= PRODUCT LAYOUT ================= */
+          <div className="bg-white rounded-lg p-8 shadow-sm flex flex-col lg:flex-row gap-12">
+            {/* Images Section */}
+            <div className="w-full lg:w-3/5 flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-3/4 rounded-lg flex items-center justify-center p-8 border border-gray-100">
+                <img src={product.mainImage || product.image} alt={product.title} className="w-full h-auto object-contain max-h-[400px]" />
               </div>
-              
-              <div className="flex flex-col gap-2">
-                <button 
-                  className="bg-cyan-200 text-cyan-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-cyan-300 transition-colors"
-                  onClick={handleBuyNow}
-                >
-                  Comprar ahora
-                </button>
-                <button 
-                  className="bg-blue-100 text-blue-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-blue-200 transition-colors"
-                  onClick={handleAddToCart}
-                >
-                  Agregar al carrito
-                </button>
+              {product.thumbnails && product.thumbnails.length > 0 && (
+                <div className="w-full md:w-1/4 flex md:flex-col gap-4">
+                  {product.thumbnails.map((thumb, idx) => (
+                    <div key={idx} className="rounded-lg flex items-center justify-center p-4 border border-gray-100 h-[190px] cursor-pointer hover:border-gray-300 transition-colors">
+                      <img src={thumb} alt={`Thumbnail ${idx + 1}`} className="max-h-full object-contain" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Details Section */}
+            <div className="w-full lg:w-2/5 flex flex-col">
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-6">
+                {product.title}
+              </h1>
+
+              <div className="space-y-4 mb-8">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Talla</label>
+                  <div className="relative">
+                    <select 
+                      value={talla} 
+                      onChange={(e) => setTalla(e.target.value)}
+                      className="w-full appearance-none bg-gray-100 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                    >
+                      <option>11 US</option>
+                      <option>10 US</option>
+                      <option>9 US</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                      <ChevronDown className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Color</label>
+                  <div className="relative">
+                    <select 
+                      value={color} 
+                      onChange={(e) => setColor(e.target.value)}
+                      className="w-full appearance-none bg-gray-100 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                    >
+                      <option>Rojo</option>
+                      <option>Negro</option>
+                      <option>Blanco</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                      <ChevronDown className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between mt-auto pt-6 border-t border-gray-100">
+                <div>
+                  {product.originalPrice && (
+                    <span className="block text-sm text-gray-400 line-through mb-1">${product.originalPrice.toLocaleString('es-CL')}</span>
+                  )}
+                  <span className="block text-3xl font-bold text-gray-900">${product.price.toLocaleString('es-CL')}</span>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <button 
+                    className="bg-cyan-200 text-cyan-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-cyan-300 transition-colors"
+                    onClick={handleBuyNow}
+                  >
+                    Comprar ahora
+                  </button>
+                  <button 
+                    className="bg-blue-100 text-blue-900 font-bold py-2.5 px-6 rounded text-sm hover:bg-blue-200 transition-colors"
+                    onClick={handleAddToCart}
+                  >
+                    Agregar al carrito
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Description Section */}
-        <div className="mt-8 bg-gray-100 p-8 rounded-lg text-sm text-gray-700 leading-relaxed shadow-inner">
-          <p className="font-bold mb-2">Descripción:</p>
-          <p>{product.description}</p>
-        </div>
-
+        {/* Description Section for Product is inside the conditional, wait no. I moved it up for Service, let's keep Product description outside or just add it. */}
+        {!isService && (
+          <div className="mt-8 bg-gray-100 p-8 rounded-lg text-sm text-gray-700 leading-relaxed shadow-inner">
+            <p className="font-bold mb-2">Descripción:</p>
+            <p>{product.description}</p>
+          </div>
+        )}
       </div>
     </div>
   );

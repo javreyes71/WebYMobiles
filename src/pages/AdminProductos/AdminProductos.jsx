@@ -54,6 +54,13 @@ const AdminProductos = () => {
     setView('form-servicio');
   };
 
+  const handleCreateOffer = () => {
+    handleCloseAddMenu();
+    setIsEditing(false);
+    setCurrentItem({ tipo: 'Oferta', tipoOferta: 'porcentual', porcentaje: '', precioFijo: '', inicio: '', fin: '', productoAsociado: '' });
+    setView('form-oferta');
+  };
+
   const handleEdit = (item) => {
     setIsEditing(true);
     setCurrentItem(item);
@@ -99,6 +106,67 @@ const AdminProductos = () => {
   };
 
   // --- RENDERIZADO CONDICIONAL DE VISTAS ---
+
+  if (view === 'form-oferta') {
+    return (
+      <div className="max-w-4xl mx-auto p-6 mt-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Crear Ofertas</h1>
+          <Button variant="outlined" onClick={() => setView('list')} disabled={isLoading}>Volver</Button>
+        </div>
+
+        <form onSubmit={handleSubmitForm} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          {/* Detalles */}
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-semibold text-gray-700">1. Detalles de Oferta</h2>
+          </div>
+          <div className="p-6 flex flex-col md:flex-row gap-8 items-center border-b border-gray-100">
+            <div className="flex flex-col gap-2 w-1/3">
+              <span className="text-sm text-gray-700 font-medium">Tipo de Oferta</span>
+              <RadioGroup name="tipoOferta" value={currentItem.tipoOferta} onChange={handleChange}>
+                <FormControlLabel value="porcentual" control={<Radio size="small" />} label={<span className="text-sm">Descuento porcentual</span>} />
+                <FormControlLabel value="fijo" control={<Radio size="small" />} label={<span className="text-sm">Precio fijo</span>} />
+              </RadioGroup>
+            </div>
+            <div className="flex gap-4 w-2/3">
+              <TextField label="%" name="porcentaje" value={currentItem.porcentaje} onChange={handleChange} disabled={currentItem.tipoOferta !== 'porcentual'} size="small" className="w-1/2" />
+              <TextField label="Precio" name="precioFijo" value={currentItem.precioFijo} onChange={handleChange} disabled={currentItem.tipoOferta !== 'fijo'} size="small" className="w-1/2" />
+            </div>
+          </div>
+
+          {/* Duración */}
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-semibold text-gray-700">2. Duración de la oferta</h2>
+          </div>
+          <div className="p-6 flex gap-4 border-b border-gray-100">
+            <TextField label="INICIO" type="date" name="inicio" value={currentItem.inicio} onChange={handleChange} InputLabelProps={{ shrink: true }} size="small" className="w-1/2" />
+            <TextField label="FIN" type="date" name="fin" value={currentItem.fin} onChange={handleChange} InputLabelProps={{ shrink: true }} size="small" className="w-1/2" />
+          </div>
+
+          {/* Productos a ofertar */}
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-semibold text-gray-700">3. Productos a ofertar</h2>
+          </div>
+          <div className="p-6 flex flex-col items-end gap-6">
+            <div className="w-full flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 min-w-32">Tus productos</span>
+              <FormControl size="small" fullWidth>
+                <Select name="productoAsociado" value={currentItem.productoAsociado} onChange={handleChange} displayEmpty>
+                  <MenuItem value="" disabled>Selecciona un producto o servicio</MenuItem>
+                  {productos.filter(p => p.tipo !== 'Oferta').map(p => (
+                    <MenuItem key={p.id} value={p.id}>{p.nombre}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+            <Button type="submit" variant="contained" disabled={isLoading} sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' }, px: 6, fontWeight: 'bold' }}>
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Guardar y publicar'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   if (view === 'form-producto' || view === 'form-servicio') {
     const isService = view === 'form-servicio';
@@ -211,6 +279,7 @@ const AdminProductos = () => {
           >
             <MenuItem onClick={handleCreateProduct}>Agregar Producto</MenuItem>
             <MenuItem onClick={handleCreateService}>Agregar Servicio</MenuItem>
+            <MenuItem onClick={handleCreateOffer}>Crear Oferta</MenuItem>
           </Menu>
         </div>
       </div>
