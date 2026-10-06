@@ -1,11 +1,21 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus } from 'lucide-react';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const navigate = useNavigate();
   
+  // Math for Resumen
+  const subtotal = cartTotal;
+  const descuento = subtotal > 0 ? 0.6 : 0; // 60% discount mock
+  const montoDescuento = subtotal * descuento;
+  const subtotalConDescuento = subtotal - montoDescuento;
+  const entrega = subtotal > 0 ? 25000 : 0;
+  const iva = subtotalConDescuento * 0.19;
+  const totalAPagar = subtotalConDescuento + entrega + iva;
+
   return (
     <div className="min-h-screen bg-gray-200 py-12">
       <div className="container mx-auto px-6">
@@ -72,41 +82,47 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Right Side: Order Summary */}
+            {/* Right Side: Order Summary (Figma) */}
             <div className="w-full lg:w-2/5 bg-white p-8 rounded-lg shadow-sm border border-gray-200 flex flex-col h-fit">
-              <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-6 border-b border-gray-100 pb-4">
-                Resumen de Compra
+              <h2 className="text-3xl font-bold text-gray-900 leading-tight mb-8 font-serif italic text-center">
+                Resumen
               </h2>
 
-              <div className="space-y-4 mb-6 flex-grow">
-                <div className="flex justify-between text-gray-600">
+              <div className="space-y-4 mb-6 flex-grow px-4">
+                <div className="flex justify-between text-gray-700 text-lg">
                   <span>Subtotal</span>
-                  <span className="font-medium text-gray-900">${cartTotal.toLocaleString('es-CL')}</span>
+                  <span className="font-semibold text-gray-900">${subtotal.toLocaleString('es-CL')}</span>
                 </div>
                 
-                {/* Costo de Envío Simulado */}
-                <div className="flex justify-between text-gray-600">
-                  <span>Costo de envío</span>
-                  <span className={`font-medium ${cartTotal >= 50000 ? 'text-green-600' : 'text-gray-900'}`}>
-                    {cartTotal >= 50000 ? 'GRATIS' : '$5.000'}
-                  </span>
+                <div className="flex justify-between text-gray-700 text-lg">
+                  <span>Entrega</span>
+                  <span className="font-semibold text-gray-900">${entrega.toLocaleString('es-CL')}</span>
+                </div>
+
+                <div className="flex justify-between text-gray-700 text-lg">
+                  <span>Descuento</span>
+                  <span className="font-semibold text-gray-900">{descuento * 100}%</span>
+                </div>
+
+                <div className="flex justify-between text-gray-700 text-lg">
+                  <span>IVA</span>
+                  <span className="font-semibold text-gray-900">19%</span>
                 </div>
               </div>
 
-              <div className="mt-auto border-t border-gray-200 pt-6">
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-lg font-bold text-gray-900">Total a Pagar</span>
+              <div className="mt-auto pt-8 flex flex-col items-center border-t border-gray-100">
+                <div className="flex items-center gap-4 mb-8 w-full justify-center">
+                  <span className="text-3xl font-bold text-gray-900">Total</span>
                   <span className="text-3xl font-bold text-gray-900">
-                    ${(cartTotal + (cartTotal >= 50000 ? 0 : 5000)).toLocaleString('es-CL')}
+                    ${totalAPagar.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-8 italic text-right">Impuestos incluidos</p>
 
                 <button 
-                  className="w-full py-4 border-2 border-gray-900 text-gray-900 font-bold text-lg rounded hover:bg-gray-900 hover:text-white transition-colors"
-                  onClick={() => window.open('https://www.webpay.cl', '_blank')}
+                  onClick={() => navigate('/checkout')}
+                  className="w-full text-center bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold text-2xl py-4 px-8 rounded transition-colors shadow-sm"
                 >
-                  Pagar Ahora
+                  Continuar
                 </button>
               </div>
 

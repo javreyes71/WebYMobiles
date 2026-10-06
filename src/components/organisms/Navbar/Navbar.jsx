@@ -66,7 +66,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         <ListItem button onClick={() => { navigate('/tienda'); toggleMobileMenu(); }}>
           <ListItemText primary="TIENDA" primaryTypographyProps={{ className: "font-bold text-gray-800" }} />
         </ListItem>
-        <ListItem button onClick={() => { toggleMobileMenu(); }}>
+        <ListItem button onClick={() => { navigate('/contacto'); toggleMobileMenu(); }}>
           <ListItemText primary="CONTACTO" primaryTypographyProps={{ className: "font-bold text-gray-800" }} />
         </ListItem>
         {isLoggedIn && (
@@ -119,7 +119,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         <nav className="hidden md:flex space-x-6 text-sm font-bold text-gray-800 tracking-wide items-center">
           <Link to="/" className="hover:text-gray-500 transition-colors uppercase">Inicio</Link>
           <Link to="/tienda" className="hover:text-gray-500 transition-colors uppercase">Tienda</Link>
-          <Link to="#" className="hover:text-gray-500 transition-colors uppercase">Contacto</Link>
+          <Link to="/contacto" className="hover:text-gray-500 transition-colors uppercase">Contacto</Link>
           {isLoggedIn && (
             <>
               <Link 

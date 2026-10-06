@@ -7,6 +7,8 @@ import Home from './pages/Home/Home';
 import Tienda from './pages/Tienda/Tienda';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
 import Cart from './pages/Cart/Cart';
+import Checkout from './pages/Checkout/Checkout';
+import Contacto from './pages/Contacto/Contacto';
 import AdminProductos from './pages/AdminProductos/AdminProductos';
 import AdminUsuarios from './pages/AdminUsuarios/AdminUsuarios';
 import Perfil from './pages/Perfil/Perfil';
@@ -47,6 +49,8 @@ function App() {
                     <Route path="/tienda" element={<Tienda />} />
                     <Route path="/producto/:id" element={<ProductDetail />} />
                     <Route path="/carrito" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/contacto" element={<Contacto />} />
                     <Route path="/admin/productos" element={<AdminProductos />} />
                     <Route path="/admin/usuarios" element={<AdminUsuarios />} />
                     <Route path="/perfil" element={<Perfil />} />
