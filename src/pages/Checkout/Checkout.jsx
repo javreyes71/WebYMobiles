@@ -2,9 +2,6 @@ import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
-import visaLogo from '../../assets/inicio/visa.png'; // Mock logos
-import mcLogo from '../../assets/inicio/mastercard.png';
-import paypalLogo from '../../assets/inicio/paypal.png';
 
 const Checkout = () => {
   const { cartTotal, clearCart } = useCart();

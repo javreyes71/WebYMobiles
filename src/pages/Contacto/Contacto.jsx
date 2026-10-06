@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Smartphone } from 'lucide-react'; // Using Smartphone as WhatsApp substitute if not available, or we can use custom SVG.
+import { Instagram, Facebook, WhatsApp } from '@mui/icons-material';
 
 const Contacto = () => {
   return (
@@ -62,13 +62,13 @@ const Contacto = () => {
             <p className="text-sm text-gray-700 font-medium mb-2">Redes Sociales:</p>
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink-600 shadow-sm cursor-pointer hover:bg-gray-50">
-                <Instagram size={18} />
+                <Instagram fontSize="small" />
               </div>
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-500 shadow-sm cursor-pointer hover:bg-gray-50">
-                <Smartphone size={18} />
+                <WhatsApp fontSize="small" />
               </div>
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm cursor-pointer hover:bg-gray-50">
-                <Facebook size={18} />
+                <Facebook fontSize="small" />
               </div>
             </div>
           </div>
