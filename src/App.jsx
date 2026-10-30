@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/organisms/Navbar/Navbar';
-import Login from './pages/Login/Login';
-import Register from './pages/Register/Register';
-import Home from './pages/Home/Home';
-import Tienda from './pages/Tienda/Tienda';
-import ProductDetail from './pages/ProductDetail/ProductDetail';
-import Cart from './pages/Cart/Cart';
-import Checkout from './pages/Checkout/Checkout';
-import Contacto from './pages/Contacto/Contacto';
-import AdminProductos from './pages/AdminProductos/AdminProductos';
-import AdminUsuarios from './pages/AdminUsuarios/AdminUsuarios';
-import Perfil from './pages/Perfil/Perfil';
-import { CartProvider } from './context/CartContext';
-import { ToastProvider } from './context/ToastContext';
-import { AuthProvider } from './context/AuthContext';
-import { ProductProvider } from './context/ProductContext';
+import Navbar from '@/components/organisms/Navbar/Navbar';
+import Footer from '@/components/organisms/Footer/Footer';
+import ProtectedRoute from '@/components/atoms/ProtectedRoute/ProtectedRoute';
+import Login from '@/pages/Login/Login';
+import Register from '@/pages/Register/Register';
+import Home from '@/pages/Home/Home';
+import Tienda from '@/pages/Tienda/Tienda';
+import Servicios from '@/pages/Servicios/Servicios';
+import ProductDetail from '@/pages/ProductDetail/ProductDetail';
+import Cart from '@/pages/Cart/Cart';
+import Checkout from '@/pages/Checkout/Checkout';
+import Contacto from '@/pages/Contacto/Contacto';
+import AdminProductos from '@/pages/AdminProductos/AdminProductos';
+import AdminUsuarios from '@/pages/AdminUsuarios/AdminUsuarios';
+import Perfil from '@/pages/Perfil/Perfil';
+import { CartProvider } from '@/context/CartContext';
+import { ToastProvider } from '@/context/ToastContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { ProductProvider } from '@/context/ProductContext';
 
 function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -37,35 +40,71 @@ function App() {
         <ProductProvider>
           <CartProvider>
             <Router>
-              <div className="min-h-screen flex flex-col font-sans">
-                <Navbar 
-                  onLoginClick={openLogin} 
-                  onRegisterClick={openRegister}
-                />
-                
-                <main className="flex-1 bg-gray-50" aria-label="Contenido Principal">
+              <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900">
+                <Navbar onLoginClick={openLogin} onRegisterClick={openRegister} />
+
+                <main className="flex-1" aria-label="Contenido Principal">
                   <Routes>
                     <Route path="/" element={<Home />} />
+                    {/* Páginas estrictamente separadas para Ventas (Tienda) vs Oferta de Servicios */}
                     <Route path="/tienda" element={<Tienda />} />
+                    <Route
+                      path="/servicios"
+                      element={<Servicios onRequireLogin={openLogin} />}
+                    />
                     <Route path="/producto/:id" element={<ProductDetail />} />
+                    <Route path="/servicio/:id" element={<ProductDetail />} />
                     <Route path="/carrito" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/contacto" element={<Contacto />} />
-                    <Route path="/admin/productos" element={<AdminProductos />} />
-                    <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-                    <Route path="/perfil" element={<Perfil />} />
+
+                    {/* Portales protegidos y separados para gestión de Ventas vs Servicios */}
+                    <Route
+                      path="/admin/productos"
+                      element={
+                        <ProtectedRoute onRequireLogin={openLogin}>
+                          <AdminProductos mode="productos" />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/servicios"
+                      element={
+                        <ProtectedRoute onRequireLogin={openLogin}>
+                          <AdminProductos mode="servicios" />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/usuarios"
+                      element={
+                        <ProtectedRoute requireAdmin onRequireLogin={openLogin}>
+                          <AdminUsuarios />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/perfil"
+                      element={
+                        <ProtectedRoute onRequireLogin={openLogin}>
+                          <Perfil />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Routes>
                 </main>
-                
-                <Login 
-                  isOpen={isLoginOpen} 
-                  onClose={() => setIsLoginOpen(false)} 
+
+                <Footer />
+
+                <Login
+                  isOpen={isLoginOpen}
+                  onClose={() => setIsLoginOpen(false)}
                   onSwitchToRegister={openRegister}
                 />
-                
-                <Register 
-                  isOpen={isRegisterOpen} 
-                  onClose={() => setIsRegisterOpen(false)} 
+
+                <Register
+                  isOpen={isRegisterOpen}
+                  onClose={() => setIsRegisterOpen(false)}
                   onSwitchToLogin={openLogin}
                 />
               </div>
