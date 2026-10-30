@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Environment variables y secretos (Frontend Vite y Backend .NET)
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+
+# Material docente local (no subir al repositorio)
+pdfs/
+
+# Artefactos de compilación .NET
+bin/
+obj/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -20,5 +33,4 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
