@@ -19,14 +19,35 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Alert,
+  Tooltip,
 } from '@mui/material';
-import { Edit, Delete, CloudUpload, LocalOffer, Add } from '@mui/icons-material';
+import {
+  Edit,
+  Delete,
+  CloudUpload,
+  LocalOffer,
+  Add,
+  Pause,
+  PlayArrow,
+} from '@mui/icons-material';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useToast } from '@/context/ToastContext';
 import { useProducts } from '@/context/ProductContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils/validators';
+import {
+  ROLES,
+  MODERATION_STATUS,
+  MODERATION_BADGE_STYLES,
+  APPROVAL_STATUS,
+  hasRole,
+  canAccessProductPanel,
+  canAccessServicePanel,
+  getCommercialApprovalStatus,
+  isApprovedForCommercialRole,
+} from '@/utils/roles';
 
 const PRODUCT_CATEGORIES = ['Zapatos', 'Ropa', 'Accesorios', 'Instrumentos musicales'];
 const SERVICE_CATEGORIES = [
@@ -43,20 +64,31 @@ const AdminProductos = ({ mode = 'productos' }) => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
   const {
-    productos,
-    servicios,
-    quotes,
+    allProductos,
+    allServicios,
+    receivedQuotes,
     addProducto,
     updateProducto,
     deleteProducto,
     addServicio,
     updateServicio,
     deleteServicio,
+    togglePauseItem,
     applyOfferToItem,
   } = useProducts();
 
   const isServiceMode = mode === 'servicios';
-  const activeItems = isServiceMode ? servicios : productos;
+  const isAdmin = hasRole(currentUser, ROLES.ADMIN);
+  const targetRole = isServiceMode ? ROLES.PROVEEDOR_SERVICIO : ROLES.VENDEDOR_PRODUCTO;
+  const roleApprovalStatus = getCommercialApprovalStatus(currentUser, targetRole);
+  const isRoleApproved = isApprovedForCommercialRole(currentUser, targetRole);
+  const canSwitchBothPortals =
+    canAccessProductPanel(currentUser) && canAccessServicePanel(currentUser);
+
+  const sourceList = isServiceMode ? allServicios : allProductos;
+  const activeItems = isAdmin
+    ? sourceList
+    : sourceList.filter((item) => String(item.ownerId) === String(currentUser?.id));
 
   // 'list' | 'form-item' | 'form-oferta'
   const [view, setView] = useState('list');
@@ -122,12 +154,26 @@ const AdminProductos = ({ mode = 'productos' }) => {
   }, [mode, location.state]);
 
   const handleOpenCreate = () => {
+    if (!isRoleApproved) {
+      showToast(
+        'Tu cuenta comercial aún está pendiente de aprobación por un Administrador.',
+        'warning'
+      );
+      return;
+    }
     setIsEditing(false);
     setCurrentItem(isServiceMode ? buildEmptyService() : buildEmptyProduct());
     setView('form-item');
   };
 
   const handleOpenOffer = () => {
+    if (!isRoleApproved) {
+      showToast(
+        'Debes contar con aprobación del Administrador para crear ofertas.',
+        'warning'
+      );
+      return;
+    }
     setOfferForm({
       tipoOferta: 'porcentual',
       porcentaje: '15',
@@ -183,19 +229,39 @@ const AdminProductos = ({ mode = 'productos' }) => {
 
     if (isServiceMode) {
       if (isEditing) {
-        updateServicio(currentItem);
-        showToast('Servicio actualizado correctamente.', 'success');
+        const res = updateServicio(currentItem);
+        showToast(
+          res?.resetToPending
+            ? 'Servicio actualizado y enviado a moderación del Administrador.'
+            : 'Servicio actualizado correctamente.',
+          res?.resetToPending ? 'info' : 'success'
+        );
       } else {
-        addServicio(currentItem);
-        showToast('Servicio publicado en la sección Servicios.', 'success');
+        const created = addServicio(currentItem);
+        showToast(
+          created.estadoModeracion === MODERATION_STATUS.APROBADO
+            ? 'Servicio publicado en la sección Servicios.'
+            : 'Servicio creado y enviado a revisión del Administrador (Pendiente).',
+          created.estadoModeracion === MODERATION_STATUS.APROBADO ? 'success' : 'info'
+        );
       }
     } else {
       if (isEditing) {
-        updateProducto(currentItem);
-        showToast('Producto actualizado correctamente.', 'success');
+        const res = updateProducto(currentItem);
+        showToast(
+          res?.resetToPending
+            ? 'Producto actualizado y enviado a moderación del Administrador.'
+            : 'Stock o estado del producto actualizado de inmediato.',
+          res?.resetToPending ? 'info' : 'success'
+        );
       } else {
-        addProducto(currentItem);
-        showToast('Producto publicado en la Tienda.', 'success');
+        const created = addProducto(currentItem);
+        showToast(
+          created.estadoModeracion === MODERATION_STATUS.APROBADO
+            ? 'Producto publicado en la Tienda.'
+            : 'Producto creado y enviado a revisión del Administrador (Pendiente).',
+          created.estadoModeracion === MODERATION_STATUS.APROBADO ? 'success' : 'info'
+        );
       }
     }
 
@@ -618,42 +684,54 @@ const AdminProductos = ({ mode = 'productos' }) => {
   // ==================== VISTA PRINCIPAL (TABLA SEPARADA PRODUCTOS VS SERVICIOS) ====================
   return (
     <div className="max-w-6xl mx-auto p-6 my-8 space-y-8">
-      {/* Selector superior para alternar entre los portales separados */}
+      {/* Selector superior para alternar entre portales (solo si el usuario posee acceso a ambos) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Link
-              to="/admin/productos"
-              className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-colors ${
-                !isServiceMode
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Portal Ventas (Productos)
-            </Link>
-            <Link
-              to="/admin/servicios"
-              className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-colors ${
-                isServiceMode
-                  ? 'bg-sky-600 text-white'
-                  : 'bg-sky-50 text-sky-700 hover:bg-sky-100'
-              }`}
-            >
-              Portal Oferta de Servicios
-            </Link>
-          </div>
+          {canSwitchBothPortals && (
+            <div className="flex items-center gap-2 mb-2">
+              <Link
+                to="/admin/productos"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                  !isServiceMode
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Portal Ventas (Productos)
+              </Link>
+              <Link
+                to="/admin/servicios"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                  isServiceMode
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-sky-50 text-sky-700 hover:bg-sky-100'
+                }`}
+              >
+                Portal Oferta de Servicios
+              </Link>
+            </div>
+          )}
           <h1 className="text-2xl font-extrabold text-gray-900">
             {isServiceMode
-              ? 'Gestión de Servicios Profesionales'
-              : 'Gestión de Ventas de Productos'}
+              ? isAdmin
+                ? 'Catálogo Global de Servicios Profesionales'
+                : 'Mi Portafolio de Servicios Profesionales'
+              : isAdmin
+                ? 'Catálogo Global de Productos en Venta'
+                : 'Mi Inventario de Productos en Venta'}
           </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {isAdmin
+              ? 'Vista con privilegios de Administrador sobre todas las publicaciones'
+              : `Mostrando únicamente publicaciones asociadas a ${currentUser?.nombreTienda || currentUser?.nombre}`}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2.5">
           <CustomButton
             variant="outline"
             size="sm"
+            disabled={!isRoleApproved || activeItems.length === 0}
             startIcon={<LocalOffer fontSize="small" />}
             onClick={handleOpenOffer}
           >
@@ -662,6 +740,7 @@ const AdminProductos = ({ mode = 'productos' }) => {
           <CustomButton
             variant={isServiceMode ? 'secondary' : 'primary'}
             size="sm"
+            disabled={!isRoleApproved}
             startIcon={<Add fontSize="small" />}
             onClick={handleOpenCreate}
           >
@@ -669,6 +748,27 @@ const AdminProductos = ({ mode = 'productos' }) => {
           </CustomButton>
         </div>
       </div>
+
+      {!isRoleApproved && (
+        <Alert
+          severity={roleApprovalStatus === APPROVAL_STATUS.RECHAZADO ? 'error' : 'warning'}
+          sx={{ borderRadius: 2 }}
+        >
+          {roleApprovalStatus === APPROVAL_STATUS.RECHAZADO ? (
+            <span>
+              <strong>Solicitud comercial rechazada:</strong>{' '}
+              {currentUser?.motivoRechazoRol ||
+                'Revisa tus antecedentes comerciales o contacta a Administración.'}
+            </span>
+          ) : (
+            <span>
+              <strong>Cuenta pendiente de aprobación previa:</strong> Tu perfil comercial está en
+              cola de validación del Administrador. Podrás crear publicaciones en cuanto sea
+              aprobado. Mientras tanto, puedes seguir comprando normalmente en el Marketplace.
+            </span>
+          )}
+        </Alert>
+      )}
 
       {/* Tabla Desktop */}
       <div className="hidden md:block">
@@ -681,6 +781,7 @@ const AdminProductos = ({ mode = 'productos' }) => {
                 <TableCell sx={{ fontWeight: 800 }}>
                   {isServiceMode ? 'Modalidad / Tipo' : 'Stock'}
                 </TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>Moderación</TableCell>
                 <TableCell sx={{ fontWeight: 800 }} align="right">
                   {isServiceMode ? 'Tarifa Base' : 'Precio'}
                 </TableCell>
@@ -690,69 +791,129 @@ const AdminProductos = ({ mode = 'productos' }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {activeItems.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={item.image}
-                        alt={item.nombre || item.title}
-                        className="w-11 h-11 rounded-lg object-cover bg-gray-100 border border-gray-200"
-                      />
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {item.nombre || item.title}
-                        </p>
-                        <span className="text-xs text-gray-500">
-                          {item.marca || item.brand} {item.sku ? `· ${item.sku}` : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.categoria}</TableCell>
-                  <TableCell>
-                    {isServiceMode ? (
-                      <span className="text-xs font-semibold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full">
-                        {item.modalidad || 'Presencial'} ·{' '}
-                        {item.permiteCotizacion === 'sí' ? 'Cotizable' : 'Fijo'}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold text-gray-700">
-                        {item.stock ?? 10} un.
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    <span className="font-extrabold text-gray-900">
-                      {formatCurrency(item.price ?? item.precio)}
-                    </span>
-                    {item.ofertaActiva && item.descuentoPorcentaje > 0 && (
-                      <span className="block text-[10px] font-bold text-green-700">
-                        Oferta -{item.descuentoPorcentaje}%
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      color="primary"
-                      aria-label={`Editar ${item.nombre || item.title}`}
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      aria-label={`Eliminar ${item.nombre || item.title}`}
-                      onClick={() => {
-                        setDeleteId(item.id);
-                        setOpenDelete(true);
-                      }}
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
+              {activeItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: '#6b7280' }}>
+                    Aún no tienes publicaciones registradas en este portal.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                activeItems.map((item) => {
+                  const status = item.estadoModeracion || MODERATION_STATUS.APROBADO;
+                  const badgeClass =
+                    MODERATION_BADGE_STYLES[status] || MODERATION_BADGE_STYLES.Aprobado;
+                  const canTogglePause =
+                    status === MODERATION_STATUS.APROBADO ||
+                    (status === MODERATION_STATUS.PAUSADO && item.aprobadoPorAdmin);
+
+                  return (
+                    <TableRow key={item.id} hover>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.image}
+                            alt={item.nombre || item.title}
+                            className="w-11 h-11 rounded-lg object-cover bg-gray-100 border border-gray-200"
+                          />
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">
+                              {item.nombre || item.title}
+                            </p>
+                            <span className="text-xs text-gray-500">
+                              {item.marca || item.brand} {item.sku ? `· ${item.sku}` : ''}
+                              {isAdmin && item.vendedorNombre ? ` · ${item.vendedorNombre}` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.categoria}</TableCell>
+                      <TableCell>
+                        {isServiceMode ? (
+                          <span className="text-xs font-semibold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full">
+                            {item.modalidad || 'Presencial'} ·{' '}
+                            {item.permiteCotizacion === 'sí' ? 'Cotizable' : 'Fijo'}
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              (item.stock ?? 10) <= 3
+                                ? 'bg-red-100 text-red-800'
+                                : 'text-gray-700 bg-gray-100'
+                            }`}
+                          >
+                            {item.stock ?? 10} un.
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeClass}`}
+                        >
+                          {status}
+                        </span>
+                      </TableCell>
+                      <TableCell align="right">
+                        <span className="font-extrabold text-gray-900">
+                          {formatCurrency(item.price ?? item.precio)}
+                        </span>
+                        {item.ofertaActiva && item.descuentoPorcentaje > 0 && (
+                          <span className="block text-[10px] font-bold text-green-700">
+                            Oferta -{item.descuentoPorcentaje}%
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        {canTogglePause && (
+                          <Tooltip
+                            title={
+                              status === MODERATION_STATUS.PAUSADO
+                                ? 'Reactivar publicación'
+                                : 'Pausar publicación'
+                            }
+                          >
+                            <IconButton
+                              color={status === MODERATION_STATUS.PAUSADO ? 'success' : 'default'}
+                              aria-label={`Pausar o reactivar ${item.nombre || item.title}`}
+                              onClick={() => {
+                                togglePauseItem(item.id, item.tipo);
+                                showToast(
+                                  status === MODERATION_STATUS.PAUSADO
+                                    ? 'Publicación reactivada en el catálogo.'
+                                    : 'Publicación pausada temporalmente.',
+                                  'info'
+                                );
+                              }}
+                            >
+                              {status === MODERATION_STATUS.PAUSADO ? (
+                                <PlayArrow fontSize="small" />
+                              ) : (
+                                <Pause fontSize="small" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <IconButton
+                          color="primary"
+                          aria-label={`Editar ${item.nombre || item.title}`}
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          aria-label={`Eliminar ${item.nombre || item.title}`}
+                          onClick={() => {
+                            setDeleteId(item.id);
+                            setOpenDelete(true);
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -805,19 +966,19 @@ const AdminProductos = ({ mode = 'productos' }) => {
           aria-label="Solicitudes de cotización recibidas"
         >
           <h2 className="text-lg font-extrabold text-gray-900 mb-1">
-            Solicitudes de Cotización Recibidas ({quotes.length})
+            Solicitudes de Cotización Recibidas ({receivedQuotes.length})
           </h2>
           <p className="text-xs text-gray-500 mb-4">
-            Requerimientos enviados por clientes desde las fichas de servicios cotizables
+            Requerimientos enviados por clientes a tus servicios publicados
           </p>
 
-          {quotes.length === 0 ? (
+          {receivedQuotes.length === 0 ? (
             <p className="text-sm text-gray-500 py-4">
               Aún no se han recibido solicitudes de cotización.
             </p>
           ) : (
             <div className="space-y-3">
-              {quotes.map((q) => (
+              {receivedQuotes.map((q) => (
                 <div
                   key={q.id}
                   className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between gap-3"

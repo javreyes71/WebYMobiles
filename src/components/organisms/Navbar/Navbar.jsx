@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, Menu as MenuIcon, Briefcase, PackagePlus } from 'lucide-react';
+import {
+  ShoppingCart,
+  Heart,
+  Menu as MenuIcon,
+  Briefcase,
+  PackagePlus,
+  ShieldCheck,
+} from 'lucide-react';
 import {
   Menu,
   MenuItem,
@@ -19,6 +26,14 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import { getInitials } from '@/utils/validators';
+import {
+  ROLES,
+  APPROVAL_STATUS,
+  hasRole,
+  canAccessProductPanel,
+  canAccessServicePanel,
+  getRoleLabel,
+} from '@/utils/roles';
 
 const Navbar = ({ onLoginClick, onRegisterClick }) => {
   const { cartCount } = useCart();
@@ -46,6 +61,10 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
   };
 
   const initials = currentUser ? getInitials(currentUser.nombre) : 'U';
+  const showProductPanel = canAccessProductPanel(currentUser);
+  const showServicePanel = canAccessServicePanel(currentUser);
+  const isAdmin = hasRole(currentUser, ROLES.ADMIN);
+  const isPendingApproval = currentUser?.estadoAprobacion === APPROVAL_STATUS.PENDIENTE;
 
   const drawerContent = (
     <div className="w-72 p-5 h-full flex flex-col bg-white" role="dialog" aria-label="Menú móvil">
@@ -91,31 +110,48 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
           />
         </ListItemButton>
 
-        {isLoggedIn && (
+        {isLoggedIn && (showProductPanel || showServicePanel || isAdmin) && (
           <>
             <Divider sx={{ my: 1.5 }} />
-            <ListItemButton
-              onClick={() => {
-                navigate('/admin/productos', { state: { initialView: 'form-producto' } });
-                toggleMobileMenu();
-              }}
-            >
-              <ListItemText
-                primary="VENDER PRODUCTO"
-                primaryTypographyProps={{ className: 'font-bold text-gray-800 text-xs' }}
-              />
-            </ListItemButton>
-            <ListItemButton
-              onClick={() => {
-                navigate('/admin/servicios', { state: { initialView: 'form-servicio' } });
-                toggleMobileMenu();
-              }}
-            >
-              <ListItemText
-                primary="OFRECER SERVICIO"
-                primaryTypographyProps={{ className: 'font-bold text-sky-700 text-xs' }}
-              />
-            </ListItemButton>
+            {showProductPanel && (
+              <ListItemButton
+                onClick={() => {
+                  navigate('/admin/productos');
+                  toggleMobileMenu();
+                }}
+              >
+                <ListItemText
+                  primary="PANEL VENDEDOR PRODUCTOS"
+                  primaryTypographyProps={{ className: 'font-bold text-gray-800 text-xs' }}
+                />
+              </ListItemButton>
+            )}
+            {showServicePanel && (
+              <ListItemButton
+                onClick={() => {
+                  navigate('/admin/servicios');
+                  toggleMobileMenu();
+                }}
+              >
+                <ListItemText
+                  primary="PANEL PROVEEDOR SERVICIOS"
+                  primaryTypographyProps={{ className: 'font-bold text-sky-700 text-xs' }}
+                />
+              </ListItemButton>
+            )}
+            {isAdmin && (
+              <ListItemButton
+                onClick={() => {
+                  navigate('/admin/usuarios');
+                  toggleMobileMenu();
+                }}
+              >
+                <ListItemText
+                  primary="GOBIERNO ADMINISTRADOR"
+                  primaryTypographyProps={{ className: 'font-extrabold text-indigo-700 text-xs' }}
+                />
+              </ListItemButton>
+            )}
           </>
         )}
       </List>
@@ -166,7 +202,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
           <Logo />
         </div>
 
-        {/* Centro: Navegación Principal Pública con SERVICIOS separado de TIENDA */}
+        {/* Centro: Navegación Principal Pública con SERVICIOS separado de TIENDA + Accesos por Rol */}
         <nav
           className="hidden md:flex items-center space-x-5 lg:space-x-7"
           aria-label="Navegación principal"
@@ -178,31 +214,41 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
           </NavLinkItem>
           <NavLinkItem to="/contacto">Contacto</NavLinkItem>
 
-          {isLoggedIn && (
+          {isLoggedIn && (showProductPanel || showServicePanel || isAdmin) && (
             <div className="hidden xl:flex items-center gap-2 pl-3 border-l border-gray-200">
-              <Link
-                to="/admin/productos"
-                state={{ initialView: 'form-producto' }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors"
-              >
-                <PackagePlus className="w-3.5 h-3.5" aria-hidden="true" />
-                Vender
-              </Link>
-              <Link
-                to="/admin/servicios"
-                state={{ initialView: 'form-servicio' }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors"
-              >
-                <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
-                Ofrecer Servicio
-              </Link>
+              {showProductPanel && (
+                <Link
+                  to="/admin/productos"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors"
+                >
+                  <PackagePlus className="w-3.5 h-3.5" aria-hidden="true" />
+                  Mis Productos
+                </Link>
+              )}
+              {showServicePanel && (
+                <Link
+                  to="/admin/servicios"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors"
+                >
+                  <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
+                  Mis Servicios
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/admin/usuarios"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                  Admin
+                </Link>
+              )}
             </div>
           )}
         </nav>
 
         {/* Derecha: Favoritos, Carrito y Autenticación */}
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Lista de deseos */}
           <Link
             to="/perfil?tab=favoritos"
             aria-label={`Lista de deseos (${wishlistIds.length} guardados)`}
@@ -216,7 +262,6 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             )}
           </Link>
 
-          {/* Carrito de compras */}
           <Link
             to="/carrito"
             aria-label={`Carrito de compras con ${cartCount} artículos`}
@@ -231,7 +276,6 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             </span>
           </Link>
 
-          {/* Sesión de usuario */}
           {isLoggedIn ? (
             <>
               <IconButton
@@ -246,7 +290,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
                   sx={{
                     width: 34,
                     height: 34,
-                    bgcolor: '#111827',
+                    bgcolor: isAdmin ? '#312e81' : '#111827',
                     fontSize: '0.8rem',
                     fontWeight: 700,
                   }}
@@ -262,32 +306,45 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
                 onClose={handleCloseMenu}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                PaperProps={{ sx: { minWidth: 220, mt: 1 } }}
+                PaperProps={{ sx: { minWidth: 245, mt: 1 } }}
               >
-                <div className="px-4 py-2 border-b border-gray-100">
+                <div className="px-4 py-2.5 border-b border-gray-100">
                   <p className="text-sm font-bold text-gray-900 truncate">
                     {currentUser?.nombre}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {currentUser?.rol || 'Cliente'} · {currentUser?.rut}
+                    {getRoleLabel(currentUser?.rol)} · {currentUser?.rut}
                   </p>
+                  {isPendingApproval && (
+                    <span className="inline-block mt-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                      Aprobación Admin Pendiente
+                    </span>
+                  )}
                 </div>
-                <MenuItem onClick={() => goAndCloseMenu('/perfil')}>Mi Perfil y Pedidos</MenuItem>
+
+                <MenuItem onClick={() => goAndCloseMenu('/perfil')}>Mi Cuenta y Pedidos</MenuItem>
                 <MenuItem onClick={() => goAndCloseMenu('/perfil?tab=cotizaciones')}>
                   Mis Cotizaciones
                 </MenuItem>
-                <Divider />
-                <MenuItem onClick={() => goAndCloseMenu('/admin/productos')}>
-                  Gestión de Ventas (Productos)
-                </MenuItem>
-                <MenuItem onClick={() => goAndCloseMenu('/admin/servicios')}>
-                  Gestión de Servicios
-                </MenuItem>
-                {currentUser?.rol === 'Admin' && (
-                  <MenuItem onClick={() => goAndCloseMenu('/admin/usuarios')}>
-                    Empresa y Administradores
+
+                {(showProductPanel || showServicePanel || isAdmin) && <Divider />}
+
+                {showProductPanel && (
+                  <MenuItem onClick={() => goAndCloseMenu('/admin/productos')}>
+                    Portal Vendedor de Productos
                   </MenuItem>
                 )}
+                {showServicePanel && (
+                  <MenuItem onClick={() => goAndCloseMenu('/admin/servicios')}>
+                    Portal Proveedor de Servicios
+                  </MenuItem>
+                )}
+                {isAdmin && (
+                  <MenuItem onClick={() => goAndCloseMenu('/admin/usuarios')}>
+                    Centro de Gobierno (Admin)
+                  </MenuItem>
+                )}
+
                 <Divider />
                 <MenuItem onClick={handleLogoutClick} sx={{ color: '#dc2626', fontWeight: 600 }}>
                   Cerrar sesión
@@ -307,7 +364,6 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         </div>
       </div>
 
-      {/* Drawer Móvil */}
       <Drawer
         anchor="left"
         open={mobileOpen}

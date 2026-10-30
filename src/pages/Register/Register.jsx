@@ -4,15 +4,17 @@ import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useAuth } from '@/context/AuthContext';
 import { validateRUT, formatRUT, validateEmail } from '@/utils/validators';
+import { ROLES } from '@/utils/roles';
 
 const initialForm = {
   nombre: '',
+  nombreTienda: '',
   rut: '',
   correo: '',
   telefono: '',
   direccion: '',
   fechaNacimiento: '',
-  tipoCuenta: 'Comprador',
+  tipoCuenta: ROLES.COMPRADOR,
   password: '',
   confirmPassword: '',
 };
@@ -41,6 +43,10 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
 
   if (!isOpen) return null;
 
+  const isCommercialRole =
+    formData.tipoCuenta === ROLES.VENDEDOR_PRODUCTO ||
+    formData.tipoCuenta === ROLES.PROVEEDOR_SERVICIO;
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const processedValue = name === 'rut' ? formatRUT(value) : value;
@@ -56,6 +62,9 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
     const nextErrors = {};
     if (!formData.nombre.trim() || formData.nombre.trim().length < 2) {
       nextErrors.nombre = 'Ingresa tu nombre completo (mínimo 2 caracteres).';
+    }
+    if (isCommercialRole && (!formData.nombreTienda.trim() || formData.nombreTienda.trim().length < 2)) {
+      nextErrors.nombreTienda = 'Ingresa el nombre de tu tienda o marca profesional.';
     }
     if (!validateRUT(formData.rut)) {
       nextErrors.rut = 'Ingresa un RUT chileno válido.';
@@ -97,50 +106,47 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="register-modal-title"
     >
-      <div
-        className="bg-white w-full max-w-3xl p-6 sm:p-8 rounded-2xl shadow-2xl relative border border-gray-100 my-8"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl relative overflow-hidden my-8 border border-gray-100">
         <button
-          type="button"
           onClick={onClose}
+          disabled={isLoading}
           aria-label="Cerrar ventana de registro"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="absolute top-4 right-5 text-gray-400 hover:text-gray-800 text-xl font-bold z-10 disabled:opacity-50"
         >
           ✕
         </button>
 
-        <div className="mb-6">
-          <h2 id="register-modal-title" className="text-2xl font-extrabold text-gray-900">
-            Crear cuenta en Vento
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Compra productos, vende artículos o publica tus servicios profesionales
-          </p>
-        </div>
+        <div className="p-6 sm:p-8">
+          <div className="mb-6">
+            <h2 id="register-modal-title" className="text-2xl font-extrabold text-gray-900">
+              Crear cuenta en Vento
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Elige tu perfil para comprar productos, contratar servicios o publicar tu catálogo
+            </p>
+          </div>
 
-        {serverError && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {serverError}
-          </Alert>
-        )}
+          {serverError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {serverError}
+            </Alert>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6" noValidate>
             {/* Columna Izquierda: Datos Personales */}
-            <div className="space-y-4 bg-gray-50/70 p-5 rounded-xl border border-gray-200">
+            <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                1. Datos Personales
+                1. Información Personal
               </h3>
 
               <CustomTextField
                 name="nombre"
                 label="Nombre completo"
+                placeholder="Ej: Ana Soto"
                 value={formData.nombre}
                 onChange={handleChange}
                 required
@@ -151,19 +157,19 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
               <CustomTextField
                 name="rut"
                 label="RUT"
-                placeholder="12.345.678-9"
+                placeholder="12.345.678-5"
                 value={formData.rut}
                 onChange={handleChange}
                 required
                 error={Boolean(errors.rut)}
-                helperText={errors.rut}
+                helperText={errors.rut || 'Se formatea automáticamente'}
               />
 
               <CustomTextField
                 name="correo"
                 label="Correo electrónico"
                 type="email"
-                placeholder="nombre@correo.cl"
+                placeholder="nombre@dominio.cl"
                 value={formData.correo}
                 onChange={handleChange}
                 required
@@ -173,7 +179,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
 
               <CustomTextField
                 name="telefono"
-                label="Teléfono de contacto"
+                label="Teléfono móvil"
                 placeholder="+56 9 1234 5678"
                 value={formData.telefono}
                 onChange={handleChange}
@@ -195,7 +201,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
             <div className="flex flex-col justify-between bg-gray-50/70 p-5 rounded-xl border border-gray-200">
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  2. Tipo de Cuenta y Seguridad
+                  2. Perfil de Cuenta y Seguridad
                 </h3>
 
                 <CustomTextField
@@ -204,12 +210,42 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                   label="Perfil de cuenta"
                   value={formData.tipoCuenta}
                   onChange={handleChange}
-                  helperText="Elige Vendedor o Empresa si deseas vender o publicar servicios"
+                  helperText="Todos los perfiles pueden comprar en el Marketplace"
                 >
-                  <MenuItem value="Comprador">Comprador (Personal)</MenuItem>
-                  <MenuItem value="Vendedor">Vendedor / Emprendedor</MenuItem>
-                  <MenuItem value="Empresa">Empresa / Proveedor de Servicios</MenuItem>
+                  <MenuItem value={ROLES.COMPRADOR}>
+                    Comprador (Comprar y cotizar servicios)
+                  </MenuItem>
+                  <MenuItem value={ROLES.VENDEDOR_PRODUCTO}>
+                    Vendedor de Productos (Tienda física/online)
+                  </MenuItem>
+                  <MenuItem value={ROLES.PROVEEDOR_SERVICIO}>
+                    Proveedor de Servicios Profesionales
+                  </MenuItem>
                 </CustomTextField>
+
+                {isCommercialRole && (
+                  <>
+                    <CustomTextField
+                      name="nombreTienda"
+                      label={
+                        formData.tipoCuenta === ROLES.PROVEEDOR_SERVICIO
+                          ? 'Nombre profesional o estudio'
+                          : 'Nombre de tu tienda'
+                      }
+                      placeholder="Ej: SneakerDrop CL"
+                      value={formData.nombreTienda}
+                      onChange={handleChange}
+                      required
+                      error={Boolean(errors.nombreTienda)}
+                      helperText={errors.nombreTienda}
+                    />
+                    <Alert severity="info" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                      Por seguridad del Marketplace, las nuevas cuentas de vendedor o proveedor
+                      quedan en estado <strong>Pendiente</strong> hasta ser aprobadas por un
+                      Administrador.
+                    </Alert>
+                  </>
+                )}
 
                 <CustomTextField
                   name="fechaNacimiento"
@@ -245,7 +281,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                 />
               </div>
 
-              <div className="pt-6">
+              <div className="pt-5">
                 <CustomButton
                   type="submit"
                   variant="primary"
@@ -253,23 +289,24 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                   fullWidth
                   isLoading={isLoading}
                 >
-                  Crear cuenta
+                  Crear mi cuenta
                 </CustomButton>
+
+                <div className="text-center mt-4 text-sm text-gray-600">
+                  ¿Ya tienes una cuenta?{' '}
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={onSwitchToLogin}
+                    className="font-bold text-gray-900 hover:underline"
+                  >
+                    Inicia sesión
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="text-center pt-2 border-t border-gray-100">
-            <span className="text-sm text-gray-600">¿Ya tienes una cuenta en Vento? </span>
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="text-sm font-bold text-gray-900 hover:underline"
-            >
-              Inicia sesión aquí
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

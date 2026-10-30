@@ -19,6 +19,7 @@ import { CartProvider } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { ProductProvider } from '@/context/ProductContext';
+import { ROLES } from '@/utils/roles';
 
 function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -58,11 +59,14 @@ function App() {
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/contacto" element={<Contacto />} />
 
-                    {/* Portales protegidos y separados para gestión de Ventas vs Servicios */}
+                    {/* Portales protegidos por Rol (RBAC) para Vendedor de Productos, Proveedor de Servicios y Admin */}
                     <Route
                       path="/admin/productos"
                       element={
-                        <ProtectedRoute onRequireLogin={openLogin}>
+                        <ProtectedRoute
+                          allowedRoles={[ROLES.ADMIN, ROLES.VENDEDOR_PRODUCTO]}
+                          onRequireLogin={openLogin}
+                        >
                           <AdminProductos mode="productos" />
                         </ProtectedRoute>
                       }
@@ -70,7 +74,10 @@ function App() {
                     <Route
                       path="/admin/servicios"
                       element={
-                        <ProtectedRoute onRequireLogin={openLogin}>
+                        <ProtectedRoute
+                          allowedRoles={[ROLES.ADMIN, ROLES.PROVEEDOR_SERVICIO]}
+                          onRequireLogin={openLogin}
+                        >
                           <AdminProductos mode="servicios" />
                         </ProtectedRoute>
                       }
@@ -78,7 +85,10 @@ function App() {
                     <Route
                       path="/admin/usuarios"
                       element={
-                        <ProtectedRoute requireAdmin onRequireLogin={openLogin}>
+                        <ProtectedRoute
+                          allowedRoles={[ROLES.ADMIN]}
+                          onRequireLogin={openLogin}
+                        >
                           <AdminUsuarios />
                         </ProtectedRoute>
                       }

@@ -5,6 +5,7 @@ import { User, Package, FileText, Heart, Trash2 } from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { getInitials, formatRUT, formatCurrency } from '@/utils/validators';
+import { getRoleLabel, APPROVAL_STATUS } from '@/utils/roles';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
@@ -12,7 +13,7 @@ import { useProducts } from '@/context/ProductContext';
 const Perfil = () => {
   const { currentUser, updateUserProfile } = useAuth();
   const { orders } = useCart();
-  const { productos, servicios, wishlistIds, toggleWishlist, quotes } = useProducts();
+  const { allProductos, allServicios, wishlistIds, toggleWishlist, myQuotes } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialTab = searchParams.get('tab') || 'datos';
@@ -68,13 +69,13 @@ const Perfil = () => {
     }
   };
 
-  const allCatalog = [...productos, ...servicios];
+  const allCatalog = [...allProductos, ...allServicios];
   const wishlistItems = allCatalog.filter((item) => wishlistIds.includes(item.id));
 
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: User },
     { id: 'pedidos', label: `Mis Pedidos (${orders.length})`, icon: Package },
-    { id: 'cotizaciones', label: `Mis Cotizaciones (${quotes.length})`, icon: FileText },
+    { id: 'cotizaciones', label: `Mis Cotizaciones (${myQuotes.length})`, icon: FileText },
     { id: 'favoritos', label: `Favoritos (${wishlistItems.length})`, icon: Heart },
   ];
 
@@ -105,8 +106,13 @@ const Perfil = () => {
               <h2 className="text-lg font-extrabold text-gray-900">{formData.nombre}</h2>
               <p className="text-xs text-gray-500 mb-2">{formData.correo}</p>
               <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-gray-100 text-gray-800">
-                {currentUser?.rol || 'Cliente'} · {currentUser?.tipoCuenta || 'Personal'}
+                {getRoleLabel(currentUser?.rol)}
               </span>
+              {currentUser?.estadoAprobacion === APPROVAL_STATUS.PENDIENTE && (
+                <span className="mt-1.5 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  Pendiente aprobación Admin
+                </span>
+              )}
             </Paper>
 
             <nav
@@ -279,13 +285,13 @@ const Perfil = () => {
                   </Link>
                 </div>
 
-                {quotes.length === 0 ? (
+                {myQuotes.length === 0 ? (
                   <p className="text-sm text-gray-500 py-8 text-center">
                     No has solicitado cotizaciones de servicios todavía.
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {quotes.map((q) => (
+                    {myQuotes.map((q) => (
                       <div
                         key={q.id}
                         className="p-4 bg-slate-50 rounded-xl border border-sky-100"

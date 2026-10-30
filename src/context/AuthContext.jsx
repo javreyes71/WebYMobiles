@@ -1,16 +1,26 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 import { useToast } from '@/context/ToastContext';
-import { authApi } from '@/services/api';
+import { authApi, usersApi } from '@/services/api';
 import { formatRUT } from '@/utils/validators';
+import { normalizeUserRoles } from '@/utils/roles';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(() => authApi.getSession());
+  const [currentUser, setCurrentUser] = useState(() =>
+    normalizeUserRoles(authApi.getSession())
+  );
   const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(authApi.getSession()));
   const { showToast } = useToast();
+
+  const refreshCurrentUser = useCallback(() => {
+    const fresh = authApi.getSession();
+    setCurrentUser(fresh ? normalizeUserRoles(fresh) : null);
+    setIsLoggedIn(Boolean(fresh));
+    return fresh;
+  }, []);
 
   const login = async (rut, password, rememberUser = false) => {
     try {
@@ -19,7 +29,8 @@ export const AuthProvider = ({ children }) => {
         return response;
       }
 
-      setCurrentUser(response.data);
+      const normalized = normalizeUserRoles(response.data);
+      setCurrentUser(normalized);
       setIsLoggedIn(true);
 
       if (rememberUser) {
@@ -50,9 +61,10 @@ export const AuthProvider = ({ children }) => {
         return response;
       }
 
-      setCurrentUser(response.data);
+      const normalized = normalizeUserRoles(response.data);
+      setCurrentUser(normalized);
       setIsLoggedIn(true);
-      showToast('Cuenta creada y sesión iniciada correctamente.', 'success');
+      showToast(response.message || 'Cuenta creada correctamente.', 'success');
       return response;
     } catch {
       const fallbackError = {
@@ -90,7 +102,8 @@ export const AuthProvider = ({ children }) => {
       const merged = { ...(currentUser || {}), ...updatedFields };
       const response = await authApi.updateProfile(merged);
       if (response.success) {
-        setCurrentUser(response.data);
+        const normalized = normalizeUserRoles(response.data);
+        setCurrentUser(normalized);
         setIsLoggedIn(true);
         showToast(response.message, 'success');
       } else {
@@ -101,6 +114,20 @@ export const AuthProvider = ({ children }) => {
       showToast('No se pudo actualizar el perfil.', 'error');
       return { success: false, errors: ['Error inesperado.'] };
     }
+  };
+
+  const requestRoleUpgrade = async (targetRole, extraInfo = {}) => {
+    if (!currentUser) {
+      return { success: false, message: 'Inicia sesión primero.' };
+    }
+    const response = await usersApi.requestRoleUpgrade(currentUser.id, targetRole, extraInfo);
+    if (response.success) {
+      setCurrentUser(normalizeUserRoles(response.data));
+      showToast(response.message, 'info');
+    } else {
+      showToast(response.message, 'error');
+    }
+    return response;
   };
 
   const logout = () => {
@@ -119,6 +146,8 @@ export const AuthProvider = ({ children }) => {
         register,
         requestPasswordRecovery,
         updateUserProfile,
+        requestRoleUpgrade,
+        refreshCurrentUser,
         logout,
         getRememberedRut: authApi.getRememberedRut,
       }}

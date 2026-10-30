@@ -67,6 +67,7 @@ const QuoteModal = ({ isOpen, onClose, service }) => {
     setIsSubmitting(true);
     await submitServiceQuote({
       servicioId: service.id,
+      proveedorId: service.ownerId || service.proveedorId || 3,
       servicioNombre: service.title || service.nombre,
       proveedor: service.vendedorNombre || service.brand,
       precioReferencial: service.price,

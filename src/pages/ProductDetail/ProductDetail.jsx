@@ -11,7 +11,7 @@ import {
   ShoppingBag,
   FileText,
 } from 'lucide-react';
-import { Rating } from '@mui/material';
+import { Rating, Alert } from '@mui/material';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
 import { useToast } from '@/context/ToastContext';
@@ -146,6 +146,13 @@ const ProductDetail = () => {
             </li>
           </ol>
         </nav>
+
+        {item.estadoModeracion && item.estadoModeracion !== 'Aprobado' && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <strong>Vista previa privada ({item.estadoModeracion}):</strong> Esta publicación aún
+            no es visible en el catálogo público hasta que un Administrador la apruebe.
+          </Alert>
+        )}
 
         {isService ? (
           /* ================= FICHA EXCLUSIVA DE SERVICIO ================= */

@@ -1,6 +1,20 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import { catalogApi, storageApi } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
+import {
+  ROLES,
+  MODERATION_STATUS,
+  hasRole,
+  didCommercialContentChange,
+} from '@/utils/roles';
 
 const ProductContext = createContext();
 
@@ -30,15 +44,22 @@ const createDefaultServiceImage = (name = 'Servicio Profesional') => {
 };
 
 export const ProductProvider = ({ children }) => {
-  // Separación estricta en estado: Productos (Tienda) vs Servicios (Oferta de Servicios)
-  const [productos, setProductos] = useState([]);
-  const [servicios, setServicios] = useState([]);
+  const { currentUser } = useAuth();
+  const { showToast } = useToast();
+
+  // Estado completo interno (incluye Pendientes, Aprobados, Pausados y Rechazados)
+  const [allProductos, setAllProductos] = useState([]);
+  const [allServicios, setAllServicios] = useState([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [catalogError, setCatalogError] = useState(null);
 
-  const [wishlistIds, setWishlistIds] = useState(() => storageApi.getWishlist());
+  const userKey = currentUser?.id || 'guest';
+  const [wishlistIds, setWishlistIds] = useState(() => storageApi.getWishlist(userKey));
   const [quotes, setQuotes] = useState(() => storageApi.getQuotes());
-  const { showToast } = useToast();
+
+  useEffect(() => {
+    setWishlistIds(storageApi.getWishlist(userKey));
+  }, [userKey]);
 
   const loadCatalog = useCallback(async () => {
     setIsLoadingCatalog(true);
@@ -54,8 +75,8 @@ export const ProductProvider = ({ children }) => {
           prodRes.message || servRes.message || 'No fue posible cargar el catálogo.'
         );
       } else {
-        setProductos(prodRes.data || []);
-        setServicios(servRes.data || []);
+        setAllProductos(prodRes.data || []);
+        setAllServicios(servRes.data || []);
       }
     } catch {
       setCatalogError('Fallo de conexión al obtener productos y servicios.');
@@ -68,14 +89,43 @@ export const ProductProvider = ({ children }) => {
     loadCatalog();
   }, [loadCatalog]);
 
-  // ==================== CRUD PRODUCTOS (VENTAS) ====================
+  // Catálogos públicos estrictos: solo muestran publicaciones APROBADAS por el Admin
+  const productos = useMemo(
+    () =>
+      allProductos.filter(
+        (p) => (p.estadoModeracion || MODERATION_STATUS.APROBADO) === MODERATION_STATUS.APROBADO
+      ),
+    [allProductos]
+  );
+
+  const servicios = useMemo(
+    () =>
+      allServicios.filter(
+        (s) => (s.estadoModeracion || MODERATION_STATUS.APROBADO) === MODERATION_STATUS.APROBADO
+      ),
+    [allServicios]
+  );
+
+  // ==================== CRUD PRODUCTOS (CON PROPIEDAD Y MODERACIÓN ESTRICTA) ====================
   const addProducto = (prod) => {
+    const isAdmin = hasRole(currentUser, ROLES.ADMIN);
+    const ownerId = prod.ownerId || currentUser?.id || 2;
     const precioNum = Number(prod.precio) || 0;
     const img = prod.image || createDefaultProductImage(prod.nombre);
+    const estadoInicial = isAdmin
+      ? MODERATION_STATUS.APROBADO
+      : MODERATION_STATUS.PENDIENTE;
+
     const newProd = {
       ...prod,
       id: Date.now(),
       tipo: 'Producto',
+      ownerId,
+      vendedorId: ownerId,
+      estadoModeracion: estadoInicial,
+      aprobadoPorAdmin: isAdmin,
+      motivoRechazo: '',
+      verificado: Boolean(currentUser?.verificado || isAdmin),
       nombre: prod.nombre,
       title: prod.nombre,
       marca: prod.marca || 'Vento',
@@ -88,7 +138,11 @@ export const ProductProvider = ({ children }) => {
       tallas: prod.tallas?.length ? prod.tallas : ['9 US', '10 US', '11 US'],
       colores: prod.colores?.length ? prod.colores : ['Negro', 'Blanco'],
       vendedorTipo: prod.vendedorTipo || 'Emprendedor',
-      vendedorNombre: prod.vendedorNombre || 'Vendedor Vento',
+      vendedorNombre:
+        prod.vendedorNombre ||
+        currentUser?.nombreTienda ||
+        currentUser?.nombre ||
+        'Vendedor Vento',
       descripcion: prod.descripcion || 'Sin descripción especificada.',
       description: prod.descripcion || 'Sin descripción especificada.',
       image: img,
@@ -99,7 +153,7 @@ export const ProductProvider = ({ children }) => {
       reviews: [],
     };
 
-    setProductos((prev) => {
+    setAllProductos((prev) => {
       const next = [newProd, ...prev];
       catalogApi.saveProductsLocal(next);
       return next;
@@ -108,71 +162,121 @@ export const ProductProvider = ({ children }) => {
   };
 
   const updateProducto = (updatedProd) => {
+    const isAdmin = hasRole(currentUser, ROLES.ADMIN);
     const precioNum = Number(updatedProd.precio ?? updatedProd.price) || 0;
-    setProductos((prev) => {
+    let resetToPending = false;
+
+    setAllProductos((prev) => {
       const next = prev.map((p) => {
-        if (p.id === updatedProd.id) {
-          const img = updatedProd.image || p.image;
-          return {
-            ...p,
-            ...updatedProd,
-            tipo: 'Producto',
-            nombre: updatedProd.nombre || p.nombre,
-            title: updatedProd.nombre || p.title,
-            marca: updatedProd.marca || p.marca,
-            brand: updatedProd.marca || p.brand,
-            precio: precioNum,
-            price: precioNum,
-            stock:
-              updatedProd.stock !== undefined && updatedProd.stock !== ''
-                ? Number(updatedProd.stock)
-                : p.stock ?? 10,
-            descripcion: updatedProd.descripcion ?? p.descripcion,
-            description: updatedProd.descripcion ?? p.description,
-            image: img,
-            mainImage: img,
-            thumbnails: p.thumbnails?.length ? [img, ...p.thumbnails.slice(1)] : [img],
-            freeShipping: precioNum >= 50000,
-          };
+        if (p.id !== updatedProd.id) return p;
+
+        // Regla A2: Si no es Admin y cambió contenido comercial público -> vuelve a Pendiente
+        const commercialChanged = didCommercialContentChange(p, updatedProd);
+        let nextModeration = updatedProd.estadoModeracion || p.estadoModeracion || MODERATION_STATUS.APROBADO;
+        if (!isAdmin && commercialChanged) {
+          nextModeration = MODERATION_STATUS.PENDIENTE;
+          resetToPending = true;
         }
-        return p;
+
+        const img = updatedProd.image || p.image;
+        return {
+          ...p,
+          ...updatedProd,
+          tipo: 'Producto',
+          estadoModeracion: nextModeration,
+          motivoRechazo: resetToPending ? '' : p.motivoRechazo || '',
+          nombre: updatedProd.nombre || p.nombre,
+          title: updatedProd.nombre || p.title,
+          marca: updatedProd.marca || p.marca,
+          brand: updatedProd.marca || p.brand,
+          precio: precioNum,
+          price: precioNum,
+          stock:
+            updatedProd.stock !== undefined && updatedProd.stock !== ''
+              ? Number(updatedProd.stock)
+              : p.stock ?? 10,
+          descripcion: updatedProd.descripcion ?? p.descripcion,
+          description: updatedProd.descripcion ?? p.description,
+          image: img,
+          mainImage: img,
+          thumbnails: p.thumbnails?.length ? [img, ...p.thumbnails.slice(1)] : [img],
+          freeShipping: precioNum >= 50000,
+        };
       });
       catalogApi.saveProductsLocal(next);
       return next;
     });
+
+    return { resetToPending };
   };
 
   const deleteProducto = (id) => {
-    setProductos((prev) => {
+    setAllProductos((prev) => {
       const next = prev.filter((p) => p.id !== id);
       catalogApi.saveProductsLocal(next);
       return next;
     });
   };
 
-  // ==================== CRUD SERVICIOS (OFERTA DE SERVICIOS) ====================
+  const deductProductStock = (purchasedItems = []) => {
+    if (!purchasedItems.length) return;
+    setAllProductos((prev) => {
+      const next = prev.map((p) => {
+        const boughtQty = purchasedItems
+          .filter((it) => it.id === p.id && it.tipo !== 'Servicio')
+          .reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+        if (boughtQty <= 0) return p;
+        return {
+          ...p,
+          stock: Math.max(0, (Number(p.stock) || 0) - boughtQty),
+        };
+      });
+      catalogApi.saveProductsLocal(next);
+      return next;
+    });
+  };
+
+  // ==================== CRUD SERVICIOS (CON PROPIEDAD Y MODERACIÓN ESTRICTA) ====================
   const addServicio = (serv) => {
+    const isAdmin = hasRole(currentUser, ROLES.ADMIN);
+    const ownerId = serv.ownerId || currentUser?.id || 3;
     const precioNum = Number(serv.precio) || 0;
     const img = serv.image || createDefaultServiceImage(serv.nombre);
+    const estadoInicial = isAdmin
+      ? MODERATION_STATUS.APROBADO
+      : MODERATION_STATUS.PENDIENTE;
+
     const newServ = {
       ...serv,
       id: Date.now(),
       tipo: 'Servicio',
+      ownerId,
+      proveedorId: ownerId,
+      estadoModeracion: estadoInicial,
+      aprobadoPorAdmin: isAdmin,
+      motivoRechazo: '',
+      verificado: Boolean(currentUser?.verificado || isAdmin),
       nombre: serv.nombre,
       title: serv.nombre,
-      marca: serv.marca || serv.vendedorNombre || 'Profesional Vento',
-      brand: serv.marca || serv.vendedorNombre || 'Profesional Vento',
+      marca: serv.marca || currentUser?.nombreTienda || currentUser?.nombre || 'Profesional Vento',
+      brand: serv.marca || currentUser?.nombreTienda || currentUser?.nombre || 'Profesional Vento',
       vendedorTipo: serv.vendedorTipo || 'Emprendedor',
-      vendedorNombre: serv.vendedorNombre || serv.marca || 'Profesional Vento',
+      vendedorNombre:
+        serv.vendedorNombre ||
+        currentUser?.nombreTienda ||
+        currentUser?.nombre ||
+        'Profesional Vento',
       categoria: serv.categoria || 'Servicios musicales',
       modalidad: serv.modalidad || 'Presencial',
       tiempoEstimado: serv.tiempoEstimado || 'A convenir',
+      cobertura: serv.cobertura || 'A convenir con el cliente',
+      garantia: serv.garantia || 'Garantía de satisfacción Vento',
       permiteCotizacion: serv.permiteCotizacion || 'no',
       restriccionEdad: serv.restriccionEdad || 'no',
       precio: precioNum,
       price: precioNum,
-      descripcion: serv.descripcion || 'Servicio profesional verificado en Vento.',
-      description: serv.descripcion || 'Servicio profesional verificado en Vento.',
+      descripcion: serv.descripcion || 'Servicio profesional en Vento.',
+      description: serv.descripcion || 'Servicio profesional en Vento.',
       incluye: serv.incluye?.length
         ? serv.incluye
         : ['Atención personalizada', 'Garantía de satisfacción Vento'],
@@ -183,7 +287,7 @@ export const ProductProvider = ({ children }) => {
       reviews: [],
     };
 
-    setServicios((prev) => {
+    setAllServicios((prev) => {
       const next = [newServ, ...prev];
       catalogApi.saveServicesLocal(next);
       return next;
@@ -192,40 +296,112 @@ export const ProductProvider = ({ children }) => {
   };
 
   const updateServicio = (updatedServ) => {
+    const isAdmin = hasRole(currentUser, ROLES.ADMIN);
     const precioNum = Number(updatedServ.precio ?? updatedServ.price) || 0;
-    setServicios((prev) => {
+    let resetToPending = false;
+
+    setAllServicios((prev) => {
       const next = prev.map((s) => {
-        if (s.id === updatedServ.id) {
-          const img = updatedServ.image || s.image;
-          return {
-            ...s,
-            ...updatedServ,
-            tipo: 'Servicio',
-            nombre: updatedServ.nombre || s.nombre,
-            title: updatedServ.nombre || s.title,
-            marca: updatedServ.marca || s.marca,
-            brand: updatedServ.marca || s.brand,
-            precio: precioNum,
-            price: precioNum,
-            descripcion: updatedServ.descripcion ?? s.descripcion,
-            description: updatedServ.descripcion ?? s.description,
-            image: img,
-            mainImage: img,
-          };
+        if (s.id !== updatedServ.id) return s;
+
+        const commercialChanged = didCommercialContentChange(s, updatedServ);
+        let nextModeration =
+          updatedServ.estadoModeracion || s.estadoModeracion || MODERATION_STATUS.APROBADO;
+        if (!isAdmin && commercialChanged) {
+          nextModeration = MODERATION_STATUS.PENDIENTE;
+          resetToPending = true;
         }
-        return s;
+
+        const img = updatedServ.image || s.image;
+        return {
+          ...s,
+          ...updatedServ,
+          tipo: 'Servicio',
+          estadoModeracion: nextModeration,
+          motivoRechazo: resetToPending ? '' : s.motivoRechazo || '',
+          nombre: updatedServ.nombre || s.nombre,
+          title: updatedServ.nombre || s.title,
+          marca: updatedServ.marca || s.marca,
+          brand: updatedServ.marca || s.brand,
+          precio: precioNum,
+          price: precioNum,
+          descripcion: updatedServ.descripcion ?? s.descripcion,
+          description: updatedServ.descripcion ?? s.description,
+          image: img,
+          mainImage: img,
+        };
       });
+      catalogApi.saveServicesLocal(next);
+      return next;
+    });
+
+    return { resetToPending };
+  };
+
+  const deleteServicio = (id) => {
+    setAllServicios((prev) => {
+      const next = prev.filter((s) => s.id !== id);
       catalogApi.saveServicesLocal(next);
       return next;
     });
   };
 
-  const deleteServicio = (id) => {
-    setServicios((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      catalogApi.saveServicesLocal(next);
-      return next;
-    });
+  // Regla A2: Pausar o reactivar un ítem ya aprobado por Admin sin requerir re-aprobación
+  const togglePauseItem = (id, tipo = 'Producto') => {
+    const toggleFn = (list) =>
+      list.map((item) => {
+        if (item.id !== id) return item;
+        if (item.estadoModeracion === MODERATION_STATUS.APROBADO) {
+          return { ...item, estadoModeracion: MODERATION_STATUS.PAUSADO };
+        }
+        if (item.estadoModeracion === MODERATION_STATUS.PAUSADO && item.aprobadoPorAdmin) {
+          return { ...item, estadoModeracion: MODERATION_STATUS.APROBADO };
+        }
+        return item;
+      });
+
+    if (tipo === 'Servicio') {
+      setAllServicios((prev) => {
+        const next = toggleFn(prev);
+        catalogApi.saveServicesLocal(next);
+        return next;
+      });
+    } else {
+      setAllProductos((prev) => {
+        const next = toggleFn(prev);
+        catalogApi.saveProductsLocal(next);
+        return next;
+      });
+    }
+  };
+
+  // Moderación exclusiva del Administrador (Aprobar / Rechazar con motivo / Destacar)
+  const moderateCatalogItem = (id, tipo, decision, motivoRechazo = '') => {
+    const moderateFn = (list) =>
+      list.map((item) => {
+        if (item.id !== id) return item;
+        return {
+          ...item,
+          estadoModeracion: decision,
+          aprobadoPorAdmin:
+            decision === MODERATION_STATUS.APROBADO ? true : item.aprobadoPorAdmin,
+          motivoRechazo: decision === MODERATION_STATUS.RECHAZADO ? motivoRechazo : '',
+        };
+      });
+
+    if (tipo === 'Servicio') {
+      setAllServicios((prev) => {
+        const next = moderateFn(prev);
+        catalogApi.saveServicesLocal(next);
+        return next;
+      });
+    } else {
+      setAllProductos((prev) => {
+        const next = moderateFn(prev);
+        catalogApi.saveProductsLocal(next);
+        return next;
+      });
+    }
   };
 
   // ==================== GESTIÓN REAL DE OFERTAS ====================
@@ -269,13 +445,13 @@ export const ProductProvider = ({ children }) => {
       });
 
     if (targetTipo === 'Servicio') {
-      setServicios((prev) => {
+      setAllServicios((prev) => {
         const next = updater(prev);
         catalogApi.saveServicesLocal(next);
         return next;
       });
     } else {
-      setProductos((prev) => {
+      setAllProductos((prev) => {
         const next = updater(prev);
         catalogApi.saveProductsLocal(next);
         return next;
@@ -287,6 +463,7 @@ export const ProductProvider = ({ children }) => {
   const addReview = (itemId, itemTipo, reviewData) => {
     const newReview = {
       id: `rev-${Date.now()}`,
+      autorId: currentUser?.id || null,
       fecha: new Date().toLocaleDateString('es-CL', {
         day: '2-digit',
         month: 'short',
@@ -309,13 +486,13 @@ export const ProductProvider = ({ children }) => {
       });
 
     if (itemTipo === 'Servicio') {
-      setServicios((prev) => {
+      setAllServicios((prev) => {
         const next = appendReview(prev);
         catalogApi.saveServicesLocal(next);
         return next;
       });
     } else {
-      setProductos((prev) => {
+      setAllProductos((prev) => {
         const next = appendReview(prev);
         catalogApi.saveProductsLocal(next);
         return next;
@@ -323,12 +500,12 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  // ==================== LISTA DE DESEOS (WISHLIST) ====================
+  // ==================== LISTA DE DESEOS AISLADA POR USUARIO ====================
   const toggleWishlist = (id) => {
     setWishlistIds((prev) => {
       const exists = prev.includes(id);
       const next = exists ? prev.filter((item) => item !== id) : [...prev, id];
-      storageApi.saveWishlist(next);
+      storageApi.saveWishlist(next, userKey);
       showToast(
         exists ? 'Eliminado de tu lista de deseos' : 'Guardado en tu lista de deseos',
         'info'
@@ -339,9 +516,12 @@ export const ProductProvider = ({ children }) => {
 
   const isInWishlist = (id) => wishlistIds.includes(id);
 
-  // ==================== COTIZACIONES DE SERVICIOS ====================
+  // ==================== COTIZACIONES AISLADAS POR COMPRADOR Y PROVEEDOR ====================
   const submitServiceQuote = async (quoteData) => {
-    const response = await storageApi.createQuote(quoteData);
+    const response = await storageApi.createQuote({
+      ...quoteData,
+      compradorId: currentUser?.id || null,
+    });
     if (response.success) {
       setQuotes((prev) => [response.data, ...prev]);
       showToast(response.message, 'success');
@@ -349,14 +529,42 @@ export const ProductProvider = ({ children }) => {
     return response;
   };
 
-  // Búsqueda por ID en ambos catálogos para vistas de detalle
+  const updateQuoteStatus = (quoteId, changes) => {
+    setQuotes((prev) => {
+      const next = prev.map((q) => (q.id === quoteId ? { ...q, ...changes } : q));
+      storageApi.saveQuotes(next);
+      return next;
+    });
+  };
+
+  const myQuotes = useMemo(() => {
+    if (!currentUser) return [];
+    return quotes.filter((q) => String(q.compradorId) === String(currentUser.id));
+  }, [quotes, currentUser]);
+
+  const receivedQuotes = useMemo(() => {
+    if (!currentUser) return [];
+    if (hasRole(currentUser, ROLES.ADMIN)) return quotes;
+    return quotes.filter((q) => String(q.proveedorId) === String(currentUser.id));
+  }, [quotes, currentUser]);
+
+  // Búsqueda por ID: visitantes/compradores solo ven Aprobados; Admin y dueño pueden previsualizar
   const findItemById = (id) => {
     const numericId = Number(id);
-    return (
-      productos.find((p) => p.id === numericId) ||
-      servicios.find((s) => s.id === numericId) ||
-      null
-    );
+    const found =
+      allProductos.find((p) => p.id === numericId) ||
+      allServicios.find((s) => s.id === numericId) ||
+      null;
+
+    if (!found) return null;
+    const status = found.estadoModeracion || MODERATION_STATUS.APROBADO;
+    if (status === MODERATION_STATUS.APROBADO) return found;
+
+    const isAdmin = hasRole(currentUser, ROLES.ADMIN);
+    const isOwner =
+      currentUser && String(found.ownerId) === String(currentUser.id);
+
+    return isAdmin || isOwner ? found : null;
   };
 
   return (
@@ -364,15 +572,20 @@ export const ProductProvider = ({ children }) => {
       value={{
         productos,
         servicios,
+        allProductos,
+        allServicios,
         isLoadingCatalog,
         catalogError,
         reloadCatalog: loadCatalog,
         addProducto,
         updateProducto,
         deleteProducto,
+        deductProductStock,
         addServicio,
         updateServicio,
         deleteServicio,
+        togglePauseItem,
+        moderateCatalogItem,
         applyOfferToItem,
         addReview,
         findItemById,
@@ -380,7 +593,10 @@ export const ProductProvider = ({ children }) => {
         toggleWishlist,
         isInWishlist,
         quotes,
+        myQuotes,
+        receivedQuotes,
         submitServiceQuote,
+        updateQuoteStatus,
       }}
     >
       {children}

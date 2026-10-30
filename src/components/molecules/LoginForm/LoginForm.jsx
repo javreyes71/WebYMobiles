@@ -10,7 +10,7 @@ import { formatRUT, validateRUT } from '@/utils/validators';
  * - Reutiliza átomos CustomTextField (con ojo mostrar/ocultar clave) y CustomButton
  * - Incluye casilla "Recordar usuario"
  * - Incluye acción "¿Olvidó su contraseña?"
- * - Valida RUT chileno con retroalimentación inmediata
+ * - Valida RUT chileno con retroalimentación inmediata y soporta los 4 perfiles RBAC
  */
 const LoginForm = ({ onSuccess, onForgotPassword, onSwitchToRegister }) => {
   const { login, getRememberedRut } = useAuth();
@@ -121,7 +121,6 @@ const LoginForm = ({ onSuccess, onForgotPassword, onSwitchToRegister }) => {
         helperText={fieldErrors.password}
       />
 
-      {/*Fila: Recordar usuario + ¿Olvidó su contraseña? */}
       <div className="flex items-center justify-between gap-2 pt-0.5">
         <FormControlLabel
           control={
@@ -154,25 +153,46 @@ const LoginForm = ({ onSuccess, onForgotPassword, onSwitchToRegister }) => {
         Iniciar sesión
       </CustomButton>
 
-      {/* Accesos rápidos de prueba para evaluación */}
+      {/* Accesos rápidos para evaluación de los 4 perfiles + cola de aprobación */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2">
         <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-          Cuentas rápidas de prueba:
+          Perfiles rápidos de prueba (4 roles):
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
             onClick={() => fillDemoAccount('12.345.678-5', 'admin1234')}
-            className="text-xs px-2.5 py-1 rounded bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-medium transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-indigo-50 border border-indigo-200 text-indigo-900 hover:bg-indigo-100 font-semibold transition-colors"
           >
-            Admin (12.345.678-5)
+            Admin
           </button>
           <button
             type="button"
             onClick={() => fillDemoAccount('11.111.111-1', 'vento1234')}
-            className="text-xs px-2.5 py-1 rounded bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-medium transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-semibold transition-colors"
           >
-            Vendedor (11.111.111-1)
+            Vendedor Productos
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemoAccount('22.222.222-2', 'servicio1234')}
+            className="text-[11px] px-2.5 py-1 rounded bg-sky-50 border border-sky-200 text-sky-900 hover:bg-sky-100 font-semibold transition-colors"
+          >
+            Proveedor Servicios
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemoAccount('15.555.555-6', 'compra1234')}
+            className="text-[11px] px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-900 hover:bg-emerald-100 font-semibold transition-colors"
+          >
+            Comprador
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemoAccount('18.888.888-7', 'pendiente1234')}
+            className="text-[11px] px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 font-semibold transition-colors"
+          >
+            Vendedor (Pendiente)
           </button>
         </div>
       </div>
