@@ -438,9 +438,9 @@ const AdminProductos = ({ mode = 'productos' }) => {
     setOpenDelete(false);
   };
 
-  /* ── Flujo Logístico de Despachos (VendedorProducto) ── */
+  /* ── Flujo Logístico de Despachos (VendedorProducto - Alineado con BD2) ── */
   const handleAdvanceOrderState = (order, nextState) => {
-    if (nextState === 'Enviado') {
+    if (nextState === 'Despachado' || nextState === 'Enviado') {
       setShippingModal({
         open: true,
         order,
@@ -470,11 +470,11 @@ const AdminProductos = ({ mode = 'productos' }) => {
     }
     const updatedItems = (order.items || []).map((it) =>
       isAdmin || String(it.ownerId) === String(currentUser?.id)
-        ? { ...it, estadoDespachoItem: 'Enviado' }
+        ? { ...it, estadoDespachoItem: 'Despachado' }
         : it
     );
     updateOrderStatus(order.id, {
-      estado: 'Enviado',
+      estado: 'Despachado',
       courier,
       trackingCodigo: trackingCodigo.trim().toUpperCase(),
       items: updatedItems,
@@ -1172,7 +1172,9 @@ const AdminProductos = ({ mode = 'productos' }) => {
                         className={`text-[11px] font-extrabold uppercase px-3 py-0.5 rounded-full ${
                           ord.estado === 'Entregado'
                             ? 'bg-emerald-100 text-emerald-800'
-                            : ord.estado === 'Enviado'
+                            : ord.estado === 'Despachado' ||
+                                ord.estado === 'Enviado' ||
+                                ord.estado === 'En reparto'
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-amber-100 text-amber-800'
                         }`}
@@ -1222,12 +1224,23 @@ const AdminProductos = ({ mode = 'productos' }) => {
                         <CustomButton
                           variant="primary"
                           size="sm"
-                          onClick={() => handleAdvanceOrderState(ord, 'Enviado')}
+                          onClick={() => handleAdvanceOrderState(ord, 'Despachado')}
                         >
                           Despachar y Asignar Tracking
                         </CustomButton>
                       )}
-                      {ord.estado === 'Enviado' && (
+                      {(ord.estado === 'Despachado' || ord.estado === 'Enviado') && (
+                        <CustomButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAdvanceOrderState(ord, 'En reparto')}
+                        >
+                          Marcar En Reparto
+                        </CustomButton>
+                      )}
+                      {(ord.estado === 'Despachado' ||
+                        ord.estado === 'Enviado' ||
+                        ord.estado === 'En reparto') && (
                         <CustomButton
                           variant="success"
                           size="sm"

@@ -163,3 +163,33 @@ WebYMobiles/
 
 - **Cupones iniciales activos:** `VENTO10` (`10%`), `BIENVENIDO` (`15%`), `VENTO20` (`20%`) — administrables en vivo desde el Centro de Gobierno.
 - **Publicaciones semilla en cola de moderación (`Pendiente`):** Producto `id: 8` (*Chaqueta Cortaviento*) y Servicio `id: 107` (*Autenticación Legit Check*), listos para ser aprobados o rechazados por el Administrador.
+
+---
+
+## 6. Arquitectura e Implementación Backend (`Fases B1 a B6` · .NET 8 + PostgreSQL `BD2`)
+
+### Fase B1: Base `.NET 8`, Seguridad de Secretos y Alineación `BD2`
+- **Solución:** `backend/Vento.sln` + `backend/Vento.Api/Vento.Api.csproj` (`net8.0`, `Npgsql.EntityFrameworkCore.PostgreSQL 8.0.11`, `Microsoft.AspNetCore.Authentication.JwtBearer 8.0.11`, `BCrypt.Net-Next 4.0.3`).
+- **Suite SQL (`backend/database/`):**
+  - `00_setup_usuario_bd.sql`: Rol dedicado `vento_app` con privilegios mínimos (cumpliendo Diapositiva 21 de `Contenido backend-1.pdf`, nunca `postgres`).
+  - `01_bd2_tablas_restricciones_indices.sql`: Las **49 tablas**, **9 `CHECK` constraints** y **25 índices** de *Base de Datos Avanzadas* (`BD2`).
+  - `02_bd2_triggers.sql` y `03_bd2_funciones_y_vistas.sql`: Los **23 triggers PL/pgSQL**, funciones y las **4 vistas analíticas** de `BD2`.
+  - `04_extension_vento_rbac.sql` y `05_seed_vento_demo.sql`: Extensión no destructiva (`ADD COLUMN IF NOT EXISTS`) y semilla con IDs `>= 5001` compatible sin colisión con los `1..1000` registros de `insertsll.txt`.
+- **Middleware y Contrato JSON:** `ApiResponse<T>` y `ExceptionHandlingMiddleware` garantizan `{ success, message, data, errors }` en toda respuesta HTTP (incluyendo errores `P0001`, `23505` y `23514` lanzados por triggers de PostgreSQL `BD2`).
+
+### Fase B2: Autenticación JWT, Hash `BCrypt` y Usuarios RBAC
+- **`AuthController` y `UsuariosController`:** Login con migración transparente de claves históricas de `BD2` a `BCrypt`, registro con bloqueo `403` ante auto-asignación de `Admin` (Diapositiva 34), doble validación en servidor de RUT Módulo 11 (`RutValidator.cs`) antes de PostgreSQL (`400`), perfil público `/api/usuarios/{id}/publico`, libreta de direcciones, postulación comercial, aprobación/suspensión administrativa y `204 No Content` en `DELETE`.
+
+### Fase B3: Catálogo Separado (`/api/productos` y `/api/servicios`) y Moderación
+- **`ProductosController`, `ServiciosController` y `AdminCatalogoController`:** Separación estricta de dominios, control de propiedad `ownerRun` (`403`), verificación de cuenta comercial aprobada (`403`), regla inteligente de edición (cambios comerciales regresan a `Pendiente`; ajustes de `stock` o pausa son inmediatos sincronizando la tabla `stock` de `BD2`) y cola administrativa `/api/admin/catalogo/pendientes`.
+
+### Fase B4: Operaciones Transaccionales `BD2` y Analítica
+- **`OrdenesController`:** Transacciones ACID sobre `venta` (`total_iva = precio_sin_iva * 0.19` cumpliendo `chk_venta_iva_valido`), `compra`, `medio_pago`, `despacho` (`chk_despacho_estado_valido`: `'En Preparación'`, `'Despachado'`, `'En reparto'`, `'Entregado'`), `empresa_transporte_despacho` y descuento atómico de inventario en `stock`.
+- **`CotizacionesController`, `CuponesController`, `ResenasController`, `ContactoYSoporteController` y `AnaliticaBd2Controller`:** Flujo completo sobre `cotizacion`/`solicita`, reseñas sobre `reseña`/`reseñar`/`critica`, tickets de soporte y exposición de las vistas `vista_inventario_critico`, `alerta_inventario`, `vista_factura_cliente`, `vista_rendimiento_emprendedor` y `vista_catalogo_unificado`.
+
+### Fase B5: Colección Oficial Postman (`backend/postman/`)
+- **`Vento_Marketplace.postman_collection.json` y `Vento_Local_Raspberry.postman_environment.json`:** **9 carpetas** y **63 peticiones** con variable `{{baseUrl}}`, captura automática de tokens JWT por rol y scripts `pm.test` verificando casos positivos (`200`, `201`, `204`) y al menos 2 casos negativos por recurso (`400`, `401`, `403`, `404`, `409`).
+
+### Fase B6: Integración React (`VITE_API_URL` + JWT) y Despliegue Raspberry Pi
+- **Integración Frontend:** `apiFetch()` inyecta `Authorization: Bearer <JWT>`, sincroniza catálogo, usuarios, órdenes, despachos, cotizaciones y reseñas contra `Vento.Api` cuando `VITE_API_URL` está definida, y alinea el `Stepper` de `Perfil.jsx` y `AdminProductos.jsx` con los estados logísticos de `BD2`.
+- **Despliegue ARM64 (`backend/deploy/`):** Servicio `vento-api.service` (`0.0.0.0:5000`) y script `deploy_raspberry.sh` con publicación `linux-arm64` y variables de entorno externas seguras (`/etc/vento-api/vento.env`).

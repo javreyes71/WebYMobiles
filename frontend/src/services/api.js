@@ -310,18 +310,34 @@ const DEFAULT_COUPONS = [
   { code: 'VENTO20', rate: 0.2, label: '20% OFF Especial', active: true },
 ];
 
+const getStoredJwtToken = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+};
+
 /**
- * Cliente HTTP estándar para comunicarse con el Backend .NET cuando VITE_API_URL está activo
+ * Cliente HTTP estándar para comunicarse con el Backend .NET cuando VITE_API_URL está activo.
+ * Inyecta automáticamente Authorization: Bearer <JWT> y valida respuesta.ok.
  */
 export async function apiFetch(endpoint, options = {}) {
   const url = `${API_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+  const jwtToken = getStoredJwtToken();
+  const authHeader = jwtToken ? { Authorization: `Bearer ${jwtToken}` } : {};
+
   try {
     const respuesta = await fetch(url, {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader,
         ...(options.headers || {}),
       },
-      ...options,
     });
 
     const payload = respuesta.status !== 204 ? await respuesta.json().catch(() => null) : null;
@@ -373,6 +389,13 @@ export const catalogApi = {
     };
   },
 
+  async getMyProducts() {
+    if (API_URL) {
+      return apiFetch('/productos/mis-publicaciones');
+    }
+    return this.getProducts();
+  },
+
   async getServices() {
     if (API_URL) {
       return apiFetch('/servicios');
@@ -386,6 +409,99 @@ export const catalogApi = {
       data: services.filter((s) => s.tipo === 'Servicio'),
       errors: null,
     };
+  },
+
+  async getMyServices() {
+    if (API_URL) {
+      return apiFetch('/servicios/mis-publicaciones');
+    }
+    return this.getServices();
+  },
+
+  async getAdminPending() {
+    if (API_URL) {
+      return apiFetch('/admin/catalogo/pendientes');
+    }
+    return { success: true, status: 200, message: 'OK', data: null, errors: null };
+  },
+
+  async createProduct(payload) {
+    if (API_URL) {
+      return apiFetch('/productos', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    return { success: true, status: 201, data: payload, errors: null };
+  },
+
+  async updateProduct(skuOrId, payload) {
+    if (API_URL) {
+      return apiFetch(`/productos/${encodeURIComponent(skuOrId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    }
+    return { success: true, status: 200, data: payload, errors: null };
+  },
+
+  async patchProductStock(skuOrId, stock) {
+    if (API_URL) {
+      return apiFetch(`/productos/${encodeURIComponent(skuOrId)}/stock`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stock: Number(stock) }),
+      });
+    }
+    return { success: true, status: 200, data: { stock }, errors: null };
+  },
+
+  async deleteProduct(skuOrId) {
+    if (API_URL) {
+      return apiFetch(`/productos/${encodeURIComponent(skuOrId)}`, {
+        method: 'DELETE',
+      });
+    }
+    return { success: true, status: 204, data: null, errors: null };
+  },
+
+  async createService(payload) {
+    if (API_URL) {
+      return apiFetch('/servicios', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    return { success: true, status: 201, data: payload, errors: null };
+  },
+
+  async updateService(skuOrId, payload) {
+    if (API_URL) {
+      return apiFetch(`/servicios/${encodeURIComponent(skuOrId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    }
+    return { success: true, status: 200, data: payload, errors: null };
+  },
+
+  async deleteService(skuOrId) {
+    if (API_URL) {
+      return apiFetch(`/servicios/${encodeURIComponent(skuOrId)}`, {
+        method: 'DELETE',
+      });
+    }
+    return { success: true, status: 204, data: null, errors: null };
+  },
+
+  async moderateItem(skuOrId, tipo, body) {
+    if (API_URL) {
+      const resource = tipo === 'Servicio' ? 'servicios' : 'productos';
+      return apiFetch(`/admin/catalogo/${resource}/${encodeURIComponent(skuOrId)}/moderacion`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+    }
+    return { success: true, status: 200, data: body, errors: null };
   },
 
   saveProductsLocal(products) {
@@ -405,7 +521,18 @@ export const authApi = {
       const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      // Sincroniza sesión con estado actualizado en USERS (ej: si Admin aprobó o suspendió)
+
+      // Si estamos conectados al Backend real (.NET + PostgreSQL) o la sesión trae token JWT,
+      // respetamos directamente la sesión emitida por el servidor.
+      if (API_URL || parsed?.token) {
+        if (parsed?.estadoCuenta === ACCOUNT_STATUS.SUSPENDIDO) {
+          localStorage.removeItem(STORAGE_KEYS.SESSION);
+          return null;
+        }
+        return normalizeUserRoles(parsed);
+      }
+
+      // Modo local: sincroniza sesión con estado actualizado en USERS
       const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
       const freshRecord = users.find(
         (u) => u.id === parsed.id || u.rutNormalized === normalizeRUT(parsed.rut)
@@ -425,7 +552,12 @@ export const authApi = {
 
   saveSession(user) {
     if (user) {
-      writeStorage(STORAGE_KEYS.SESSION, sanitizeUserDto(user));
+      const existingToken = getStoredJwtToken();
+      const sanitized = sanitizeUserDto(user);
+      if (!sanitized.token && existingToken) {
+        sanitized.token = existingToken;
+      }
+      writeStorage(STORAGE_KEYS.SESSION, sanitized);
     } else {
       localStorage.removeItem(STORAGE_KEYS.SESSION);
     }
@@ -462,10 +594,14 @@ export const authApi = {
     }
 
     if (API_URL) {
-      return apiFetch('/auth/login', {
+      const res = await apiFetch('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ rut: formatRUT(rut), password }),
       });
+      if (res.success && res.data) {
+        this.saveSession(res.data);
+      }
+      return res;
     }
 
     await delay(500);
@@ -567,10 +703,14 @@ export const authApi = {
     }
 
     if (API_URL) {
-      return apiFetch('/usuarios', {
+      const res = await apiFetch('/auth/register', {
         method: 'POST',
         body: JSON.stringify(formData),
       });
+      if (res.success && res.data) {
+        this.saveSession(res.data);
+      }
+      return res;
     }
 
     await delay(650);
@@ -713,7 +853,7 @@ export const authApi = {
     if (API_URL) {
       return apiFetch('/auth/cambiar-password', {
         method: 'POST',
-        body: JSON.stringify({ userId, currentPassword, newPassword }),
+        body: JSON.stringify({ userId: String(userId), currentPassword, newPassword }),
       });
     }
 
@@ -752,6 +892,18 @@ export const authApi = {
         data: null,
         errors,
       };
+    }
+
+    if (API_URL) {
+      const targetId = updatedData.id || updatedData.run || updatedData.rut;
+      const res = await apiFetch(`/usuarios/${encodeURIComponent(targetId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedData),
+      });
+      if (res.success && res.data) {
+        this.saveSession(res.data);
+      }
+      return res;
     }
 
     await delay(350);
@@ -793,13 +945,57 @@ export const usersApi = {
     return users.map(sanitizeUserDto);
   },
 
+  async fetchAllUsersAsync() {
+    if (API_URL) {
+      const res = await apiFetch('/usuarios');
+      if (res.success && Array.isArray(res.data)) {
+        writeStorage(STORAGE_KEYS.USERS, res.data);
+        return res;
+      }
+      return res;
+    }
+    return {
+      success: true,
+      status: 200,
+      message: 'Usuarios cargados localmente.',
+      data: this.getAllUsers(),
+      errors: null,
+    };
+  },
+
   getPublicUserById(userId) {
     const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
-    const found = users.find((u) => String(u.id) === String(userId));
+    const found = users.find(
+      (u) => String(u.id) === String(userId) || String(u.run) === String(userId)
+    );
     return found ? sanitizeUserDto(found) : null;
   },
 
+  async fetchPublicUserAsync(userId) {
+    if (API_URL) {
+      return apiFetch(`/usuarios/${encodeURIComponent(userId)}/publico`);
+    }
+    const local = this.getPublicUserById(userId);
+    return local
+      ? { success: true, status: 200, data: local, errors: null }
+      : { success: false, status: 404, message: 'Perfil no encontrado.', data: null, errors: ['404'] };
+  },
+
   async requestRoleUpgrade(userId, targetRole, extraInfo = {}) {
+    if (API_URL) {
+      const res = await apiFetch(`/usuarios/${encodeURIComponent(userId)}/postulacion-comercial`, {
+        method: 'POST',
+        body: JSON.stringify({
+          targetRole,
+          ...extraInfo,
+        }),
+      });
+      if (res.success && res.data) {
+        authApi.saveSession(res.data);
+      }
+      return res;
+    }
+
     await delay(450);
     const requestedRoles =
       targetRole === 'Ambos'
@@ -863,6 +1059,23 @@ export const usersApi = {
   },
 
   async moderateUserRole(userId, targetRole, decision, motivoRechazo = '') {
+    if (API_URL) {
+      const res = await apiFetch(`/admin/usuarios/${encodeURIComponent(userId)}/aprobacion`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          decision,
+          motivo: motivoRechazo,
+          verificado: decision === APPROVAL_STATUS.APROBADO,
+        }),
+      });
+      if (!res.success) return res;
+      const refreshed = await this.fetchAllUsersAsync();
+      return {
+        ...res,
+        data: refreshed.data || this.getAllUsers(),
+      };
+    }
+
     await delay(400);
     const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
     const nextUsers = users.map((u) => {
@@ -903,6 +1116,19 @@ export const usersApi = {
   },
 
   async updateUserByAdmin(userId, changes) {
+    if (API_URL) {
+      const res = await apiFetch(`/admin/usuarios/${encodeURIComponent(userId)}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify(changes),
+      });
+      if (!res.success) return res;
+      const refreshed = await this.fetchAllUsersAsync();
+      return {
+        ...res,
+        data: refreshed.data || this.getAllUsers(),
+      };
+    }
+
     await delay(350);
     const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
     const nextUsers = users.map((u) => (u.id === userId ? { ...u, ...changes } : u));
@@ -917,6 +1143,21 @@ export const usersApi = {
   },
 
   async deleteUserByAdmin(userId) {
+    if (API_URL) {
+      const res = await apiFetch(`/usuarios/${encodeURIComponent(userId)}`, {
+        method: 'DELETE',
+      });
+      if (!res.success) return res;
+      const refreshed = await this.fetchAllUsersAsync();
+      return {
+        success: true,
+        status: 204,
+        message: 'Cuenta eliminada por Administración.',
+        data: refreshed.data || this.getAllUsers(),
+        errors: null,
+      };
+    }
+
     await delay(350);
     const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
     const nextUsers = users.filter((u) => u.id !== userId);
@@ -958,13 +1199,64 @@ export const storageApi = {
     writeStorage(STORAGE_KEYS.ORDERS, next);
     return next;
   },
+  async fetchOrdersAsync(isSeller = false) {
+    if (API_URL) {
+      const endpoint = isSeller ? '/ordenes/vendedor' : '/ordenes/mias';
+      const res = await apiFetch(endpoint);
+      if (res.success && Array.isArray(res.data)) {
+        writeStorage(STORAGE_KEYS.ORDERS, res.data);
+      }
+      return res;
+    }
+    return { success: true, status: 200, data: this.getOrders(), errors: null };
+  },
+  async createOrderAsync(orderPayload) {
+    if (API_URL) {
+      return apiFetch('/ordenes', {
+        method: 'POST',
+        body: JSON.stringify(orderPayload),
+      });
+    }
+    return { success: true, status: 201, data: orderPayload, errors: null };
+  },
+  async updateDispatchAsync(orderId, dispatchPayload) {
+    if (API_URL) {
+      return apiFetch(`/ordenes/${encodeURIComponent(orderId)}/despacho`, {
+        method: 'PATCH',
+        body: JSON.stringify(dispatchPayload),
+      });
+    }
+    return { success: true, status: 200, data: dispatchPayload, errors: null };
+  },
   getQuotes() {
     return readStorage(STORAGE_KEYS.QUOTES, DEFAULT_QUOTES);
   },
   saveQuotes(quotes) {
     writeStorage(STORAGE_KEYS.QUOTES, quotes);
   },
+  async fetchQuotesAsync() {
+    if (API_URL) {
+      const res = await apiFetch('/cotizaciones');
+      if (res.success && Array.isArray(res.data)) {
+        writeStorage(STORAGE_KEYS.QUOTES, res.data);
+      }
+      return res;
+    }
+    return { success: true, status: 200, data: this.getQuotes(), errors: null };
+  },
   async createQuote(quotePayload) {
+    if (API_URL) {
+      const res = await apiFetch('/cotizaciones', {
+        method: 'POST',
+        body: JSON.stringify(quotePayload),
+      });
+      if (res.success && res.data) {
+        const next = [res.data, ...this.getQuotes()];
+        writeStorage(STORAGE_KEYS.QUOTES, next);
+      }
+      return res;
+    }
+
     await delay(500);
     const current = this.getQuotes();
     const newQuote = {
@@ -988,11 +1280,44 @@ export const storageApi = {
       errors: null,
     };
   },
+  async sendQuoteProposalAsync(quoteId, proposalPayload) {
+    if (API_URL) {
+      return apiFetch(`/cotizaciones/${encodeURIComponent(quoteId)}/propuesta`, {
+        method: 'PATCH',
+        body: JSON.stringify(proposalPayload),
+      });
+    }
+    return { success: true, status: 200, data: proposalPayload, errors: null };
+  },
+  async updateQuoteStatusAsync(quoteId, estado) {
+    if (API_URL) {
+      return apiFetch(`/cotizaciones/${encodeURIComponent(quoteId)}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado }),
+      });
+    }
+    return { success: true, status: 200, data: { estado }, errors: null };
+  },
+  async createReviewAsync(reviewPayload) {
+    if (API_URL) {
+      return apiFetch('/resenas', {
+        method: 'POST',
+        body: JSON.stringify(reviewPayload),
+      });
+    }
+    return { success: true, status: 201, data: reviewPayload, errors: null };
+  },
   getCoupons() {
     return readStorage(STORAGE_KEYS.COUPONS, DEFAULT_COUPONS);
   },
   saveCoupons(coupons) {
     writeStorage(STORAGE_KEYS.COUPONS, coupons);
+  },
+  async validateCouponAsync(code) {
+    if (API_URL) {
+      return apiFetch(`/cupones/validar/${encodeURIComponent(code)}`);
+    }
+    return null;
   },
   getTickets() {
     return readStorage(STORAGE_KEYS.TICKETS, DEFAULT_TICKETS);
@@ -1015,6 +1340,12 @@ export const storageApi = {
     };
     const next = [newTicket, ...current];
     writeStorage(STORAGE_KEYS.TICKETS, next);
+    if (API_URL) {
+      apiFetch('/contacto', {
+        method: 'POST',
+        body: JSON.stringify(ticketPayload),
+      }).catch(() => {});
+    }
     return newTicket;
   },
   getCompany() {
@@ -1027,6 +1358,12 @@ export const storageApi = {
   },
   saveCompany(company) {
     writeStorage(STORAGE_KEYS.COMPANY, company);
+    if (API_URL) {
+      apiFetch('/admin/empresa', {
+        method: 'PUT',
+        body: JSON.stringify(company),
+      }).catch(() => {});
+    }
   },
   getAdmins() {
     return readStorage(STORAGE_KEYS.ADMINS, [

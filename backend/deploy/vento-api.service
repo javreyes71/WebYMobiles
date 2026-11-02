@@ -1,0 +1,20 @@
+[Unit]
+Description=Vento Marketplace ASP.NET Core Web API (.NET 8 + PostgreSQL BD2)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+WorkingDirectory=/opt/vento-api
+ExecStart=/opt/vento-api/Vento.Api
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=vento-api
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
+# Sobrescribir en /etc/vento-api/vento.env (chmod 600) sin subir secretos a Git:
+EnvironmentFile=-/etc/vento-api/vento.env
+
+[Install]
+WantedBy=multi-user.target

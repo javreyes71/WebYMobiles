@@ -75,3 +75,19 @@ Este documento registra las sesiones de trabajo del equipo para el desarrollo de
   - **Proveedor de Servicios (`F3`):** Dashboard profesional, CRM de cotizaciones con envío de propuesta formal en CLP, control de ejecución y perfil público `/servicios/proveedor/:id`.
   - **Administrador (`F4`):** Centro de Gobierno en `/admin/usuarios` con colas de aprobación de cuentas y publicaciones, destacados en portada, suspensión `403`, motor dinámico de cupones y bandeja de soporte conectada a `Contacto`.
 - Reestructuración limpia con `git mv` en carpetas simétricas `/frontend` y `/backend` dejando el repositorio listo para iniciar la API en **ASP.NET Core + PostgreSQL + Postman + Raspberry Pi**.
+
+---
+
+## Reunión 6: Implementación Backend .NET 8, Alineación con Base de Datos Avanzadas (`BD2`), Postman y Raspberry Pi
+**Fecha y Hora:** Lunes 2 de Noviembre de 2026, 14:00 hrs.  
+**Miembros Presentes:** Javier Reyes, María Silva, Pedro Pascal.
+
+**Temas Discutidos:**
+- Integración total de los entregables del ramo *Base de Datos Avanzadas* (`BD2`): 49 tablas relacionales, 9 restricciones `CHECK` (`IVA 19%`, estados logísticos `'En Preparación'`, `'Despachado'`, `'En reparto'`, `'Entregado'`), 25 índices, 23 triggers PL/pgSQL y 4 vistas analíticas, extendidos de manera no destructiva (`04_extension_vento_rbac.sql`) para soportar los 4 roles RBAC y moderación previa estricta.
+- Implementación de `Vento.Api` en `.NET 8.0 LTS` con `Npgsql.EntityFrameworkCore.PostgreSQL`, `BCrypt.Net-Next`, `JWT Bearer`, doble validación en C# (`RutValidator` Módulo 11 antes de PostgreSQL) y `ExceptionHandlingMiddleware` que traduce excepciones `P0001`/`23505`/`23514` de triggers de `BD2` al contrato `{ success, message, data, errors }`.
+- Creación de colección oficial Postman (`63` pruebas automatizadas con `{{baseUrl}}`, positivos y negativos por recurso) y scripts de despliegue `linux-arm64` en Raspberry Pi (`0.0.0.0:5000` + CORS + `VITE_API_URL`).
+
+**Acuerdos y Tareas:**
+- **Javier:** Implementar `Vento.Api` (Fases B1–B4) y scripts SQL `00..05` alineados con `BD2`. (Completado)
+- **María:** Construir colección Postman v2.1 (`Fase B5`) con auto-guardado de JWT y validaciones negativas. (Completado)
+- **Pedro:** Integrar `VITE_API_URL` + JWT en `api.js`, alinear estados de despacho `BD2` en `Stepper` y documentar despliegue en Raspberry Pi (`Fase B6`). (Completado)

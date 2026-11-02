@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Table,
@@ -43,7 +43,7 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
-import { authApi, usersApi, storageApi } from '@/services/api';
+import { API_URL, apiFetch, authApi, usersApi, storageApi } from '@/services/api';
 import {
   validateRUT,
   formatRUT,
@@ -82,6 +82,22 @@ const AdminUsuarios = () => {
   const [tickets, setTickets] = useState(() => storageApi.getTickets());
   const [empresa, setEmpresa] = useState(() => storageApi.getCompany());
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!API_URL) return;
+    usersApi.fetchAllUsersAsync().then((res) => {
+      if (res?.success && Array.isArray(res.data)) setUsersList(res.data);
+    });
+    apiFetch('/cupones').then((res) => {
+      if (res?.success && Array.isArray(res.data)) setCoupons(res.data);
+    });
+    apiFetch('/admin/tickets').then((res) => {
+      if (res?.success && Array.isArray(res.data)) setTickets(res.data);
+    });
+    apiFetch('/empresa').then((res) => {
+      if (res?.success && res.data) setEmpresa((prev) => ({ ...prev, ...res.data }));
+    });
+  }, []);
 
   /* ── Filtros de Moderación y Directorio de Usuarios ── */
   const [modCatalogType, setModCatalogType] = useState('Producto'); // 'Producto' | 'Servicio'

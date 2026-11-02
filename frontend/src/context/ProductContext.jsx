@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { catalogApi, storageApi } from '@/services/api';
+import { API_URL, catalogApi, storageApi } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -61,6 +61,17 @@ export const ProductProvider = ({ children }) => {
     setWishlistIds(storageApi.getWishlist(userKey));
   }, [userKey]);
 
+  const matchesId = (item, targetId) =>
+    String(item?.id) === String(targetId) ||
+    (item?.sku && String(item.sku) === String(targetId));
+
+  const mergeById = (publicList = [], extraList = []) => {
+    const map = new Map();
+    publicList.forEach((it) => map.set(String(it.id), it));
+    extraList.forEach((it) => map.set(String(it.id), it));
+    return Array.from(map.values());
+  };
+
   const loadCatalog = useCallback(async () => {
     setIsLoadingCatalog(true);
     setCatalogError(null);
@@ -75,15 +86,52 @@ export const ProductProvider = ({ children }) => {
           prodRes.message || servRes.message || 'No fue posible cargar el catálogo.'
         );
       } else {
-        setAllProductos(prodRes.data || []);
-        setAllServicios(servRes.data || []);
+        let prods = prodRes.data || [];
+        let servs = servRes.data || [];
+
+        if (API_URL && currentUser) {
+          if (hasRole(currentUser, ROLES.ADMIN)) {
+            const [myP, myS, pendingRes] = await Promise.all([
+              catalogApi.getMyProducts(),
+              catalogApi.getMyServices(),
+              catalogApi.getAdminPending(),
+            ]);
+            if (myP.success && Array.isArray(myP.data)) prods = mergeById(prods, myP.data);
+            if (myS.success && Array.isArray(myS.data)) servs = mergeById(servs, myS.data);
+            if (pendingRes.success && pendingRes.data) {
+              if (Array.isArray(pendingRes.data.productosPendientes)) {
+                prods = mergeById(prods, pendingRes.data.productosPendientes);
+              }
+              if (Array.isArray(pendingRes.data.serviciosPendientes)) {
+                servs = mergeById(servs, pendingRes.data.serviciosPendientes);
+              }
+            }
+          } else {
+            if (hasRole(currentUser, ROLES.VENDEDOR_PRODUCTO)) {
+              const myP = await catalogApi.getMyProducts();
+              if (myP.success && Array.isArray(myP.data)) prods = mergeById(prods, myP.data);
+            }
+            if (hasRole(currentUser, ROLES.PROVEEDOR_SERVICIO)) {
+              const myS = await catalogApi.getMyServices();
+              if (myS.success && Array.isArray(myS.data)) servs = mergeById(servs, myS.data);
+            }
+          }
+
+          const quotesRes = await storageApi.fetchQuotesAsync();
+          if (quotesRes.success && Array.isArray(quotesRes.data)) {
+            setQuotes(quotesRes.data);
+          }
+        }
+
+        setAllProductos(prods);
+        setAllServicios(servs);
       }
     } catch {
       setCatalogError('Fallo de conexión al obtener productos y servicios.');
     } finally {
       setIsLoadingCatalog(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     loadCatalog();
@@ -118,7 +166,7 @@ export const ProductProvider = ({ children }) => {
 
     const newProd = {
       ...prod,
-      id: Date.now(),
+      id: prod.sku || Date.now(),
       tipo: 'Producto',
       ownerId,
       vendedorId: ownerId,
@@ -158,6 +206,17 @@ export const ProductProvider = ({ children }) => {
       catalogApi.saveProductsLocal(next);
       return next;
     });
+
+    if (API_URL) {
+      catalogApi.createProduct(newProd).then((res) => {
+        if (res.success && res.data) {
+          setAllProductos((prev) =>
+            prev.map((p) => (p.id === newProd.id ? res.data : p))
+          );
+        }
+      });
+    }
+
     return newProd;
   };
 
@@ -168,7 +227,7 @@ export const ProductProvider = ({ children }) => {
 
     setAllProductos((prev) => {
       const next = prev.map((p) => {
-        if (p.id !== updatedProd.id) return p;
+        if (!matchesId(p, updatedProd.id)) return p;
 
         // Regla A2: Si no es Admin y cambió contenido comercial público -> vuelve a Pendiente
         const commercialChanged = didCommercialContentChange(p, updatedProd);
@@ -207,15 +266,22 @@ export const ProductProvider = ({ children }) => {
       return next;
     });
 
+    if (API_URL) {
+      catalogApi.updateProduct(updatedProd.sku || updatedProd.id, updatedProd);
+    }
+
     return { resetToPending };
   };
 
   const deleteProducto = (id) => {
     setAllProductos((prev) => {
-      const next = prev.filter((p) => p.id !== id);
+      const next = prev.filter((p) => !matchesId(p, id));
       catalogApi.saveProductsLocal(next);
       return next;
     });
+    if (API_URL) {
+      catalogApi.deleteProduct(id);
+    }
   };
 
   const deductProductStock = (purchasedItems = []) => {
@@ -223,7 +289,7 @@ export const ProductProvider = ({ children }) => {
     setAllProductos((prev) => {
       const next = prev.map((p) => {
         const boughtQty = purchasedItems
-          .filter((it) => it.id === p.id && it.tipo !== 'Servicio')
+          .filter((it) => matchesId(p, it.id) && it.tipo !== 'Servicio')
           .reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
         if (boughtQty <= 0) return p;
         return {
@@ -248,7 +314,7 @@ export const ProductProvider = ({ children }) => {
 
     const newServ = {
       ...serv,
-      id: Date.now(),
+      id: serv.sku || Date.now(),
       tipo: 'Servicio',
       ownerId,
       proveedorId: ownerId,
@@ -292,6 +358,17 @@ export const ProductProvider = ({ children }) => {
       catalogApi.saveServicesLocal(next);
       return next;
     });
+
+    if (API_URL) {
+      catalogApi.createService(newServ).then((res) => {
+        if (res.success && res.data) {
+          setAllServicios((prev) =>
+            prev.map((s) => (s.id === newServ.id ? res.data : s))
+          );
+        }
+      });
+    }
+
     return newServ;
   };
 
@@ -302,7 +379,7 @@ export const ProductProvider = ({ children }) => {
 
     setAllServicios((prev) => {
       const next = prev.map((s) => {
-        if (s.id !== updatedServ.id) return s;
+        if (!matchesId(s, updatedServ.id)) return s;
 
         const commercialChanged = didCommercialContentChange(s, updatedServ);
         let nextModeration =
@@ -335,26 +412,36 @@ export const ProductProvider = ({ children }) => {
       return next;
     });
 
+    if (API_URL) {
+      catalogApi.updateService(updatedServ.sku || updatedServ.id, updatedServ);
+    }
+
     return { resetToPending };
   };
 
   const deleteServicio = (id) => {
     setAllServicios((prev) => {
-      const next = prev.filter((s) => s.id !== id);
+      const next = prev.filter((s) => !matchesId(s, id));
       catalogApi.saveServicesLocal(next);
       return next;
     });
+    if (API_URL) {
+      catalogApi.deleteServicio ? catalogApi.deleteServicio(id) : catalogApi.deleteService(id);
+    }
   };
 
   // Regla A2: Pausar o reactivar un ítem ya aprobado por Admin sin requerir re-aprobación
   const togglePauseItem = (id, tipo = 'Producto') => {
+    let nextState = null;
     const toggleFn = (list) =>
       list.map((item) => {
-        if (item.id !== id) return item;
+        if (!matchesId(item, id)) return item;
         if (item.estadoModeracion === MODERATION_STATUS.APROBADO) {
+          nextState = MODERATION_STATUS.PAUSADO;
           return { ...item, estadoModeracion: MODERATION_STATUS.PAUSADO };
         }
         if (item.estadoModeracion === MODERATION_STATUS.PAUSADO && item.aprobadoPorAdmin) {
+          nextState = MODERATION_STATUS.APROBADO;
           return { ...item, estadoModeracion: MODERATION_STATUS.APROBADO };
         }
         return item;
@@ -366,12 +453,18 @@ export const ProductProvider = ({ children }) => {
         catalogApi.saveServicesLocal(next);
         return next;
       });
+      if (API_URL && nextState) {
+        catalogApi.updateService(id, { estadoModeracion: nextState });
+      }
     } else {
       setAllProductos((prev) => {
         const next = toggleFn(prev);
         catalogApi.saveProductsLocal(next);
         return next;
       });
+      if (API_URL && nextState) {
+        catalogApi.updateProduct(id, { estadoModeracion: nextState });
+      }
     }
   };
 
@@ -379,7 +472,7 @@ export const ProductProvider = ({ children }) => {
   const moderateCatalogItem = (id, tipo, decision, motivoRechazo = '') => {
     const moderateFn = (list) =>
       list.map((item) => {
-        if (item.id !== id) return item;
+        if (!matchesId(item, id)) return item;
         return {
           ...item,
           estadoModeracion: decision,
@@ -402,13 +495,23 @@ export const ProductProvider = ({ children }) => {
         return next;
       });
     }
+
+    if (API_URL) {
+      catalogApi.moderateItem(id, tipo, {
+        estadoModeracion: decision,
+        motivoRechazo,
+      });
+    }
   };
 
   const toggleFeaturedItem = (id, tipo = 'Producto') => {
+    let nextFeatured = false;
     const flip = (list) =>
-      list.map((item) =>
-        item.id === id ? { ...item, destacado: !item.destacado } : item
-      );
+      list.map((item) => {
+        if (!matchesId(item, id)) return item;
+        nextFeatured = !item.destacado;
+        return { ...item, destacado: nextFeatured };
+      });
 
     if (tipo === 'Servicio') {
       setAllServicios((prev) => {
@@ -422,6 +525,10 @@ export const ProductProvider = ({ children }) => {
         catalogApi.saveProductsLocal(next);
         return next;
       });
+    }
+
+    if (API_URL) {
+      catalogApi.moderateItem(id, tipo, { destacado: nextFeatured });
     }
   };
 
@@ -495,7 +602,7 @@ export const ProductProvider = ({ children }) => {
 
     const appendReview = (list) =>
       list.map((item) => {
-        if (String(item.id) !== String(itemId)) return item;
+        if (!matchesId(item, itemId)) return item;
         const nextReviews = [newReview, ...(item.reviews || [])];
         const avg =
           nextReviews.reduce((acc, r) => acc + Number(r.rating || 5), 0) / nextReviews.length;
@@ -517,6 +624,16 @@ export const ProductProvider = ({ children }) => {
         const next = appendReview(prev);
         catalogApi.saveProductsLocal(next);
         return next;
+      });
+    }
+
+    if (API_URL) {
+      storageApi.createReviewAsync({
+        tipo: itemTipo || 'Producto',
+        itemId: String(itemId),
+        autorId: currentUser?.id ? String(currentUser.id) : null,
+        rating: Number(reviewData.rating || 5),
+        comentario: reviewData.comentario || '',
       });
     }
   };
@@ -552,10 +669,20 @@ export const ProductProvider = ({ children }) => {
 
   const updateQuoteStatus = (quoteId, changes) => {
     setQuotes((prev) => {
-      const next = prev.map((q) => (q.id === quoteId ? { ...q, ...changes } : q));
+      const next = prev.map((q) =>
+        String(q.id) === String(quoteId) ? { ...q, ...changes } : q
+      );
       storageApi.saveQuotes(next);
       return next;
     });
+
+    if (API_URL) {
+      if (changes.propuestaProveedor) {
+        storageApi.sendQuoteProposalAsync(quoteId, changes.propuestaProveedor);
+      } else if (changes.estado) {
+        storageApi.updateQuoteStatusAsync(quoteId, changes.estado);
+      }
+    }
   };
 
   const myQuotes = useMemo(() => {
@@ -569,12 +696,11 @@ export const ProductProvider = ({ children }) => {
     return quotes.filter((q) => String(q.proveedorId) === String(currentUser.id));
   }, [quotes, currentUser]);
 
-  // Búsqueda por ID: visitantes/compradores solo ven Aprobados; Admin y dueño pueden previsualizar
+  // Búsqueda por ID o SKU (soporta IDs numéricos y códigos alfanuméricos BD2 como VNT-P001)
   const findItemById = (id) => {
-    const numericId = Number(id);
     const found =
-      allProductos.find((p) => p.id === numericId) ||
-      allServicios.find((s) => s.id === numericId) ||
+      allProductos.find((p) => matchesId(p, id)) ||
+      allServicios.find((s) => matchesId(s, id)) ||
       null;
 
     if (!found) return null;

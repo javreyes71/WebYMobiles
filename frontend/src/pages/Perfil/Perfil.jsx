@@ -41,11 +41,14 @@ import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
 import { useToast } from '@/context/ToastContext';
 
-const ORDER_STEPS = ['Confirmado', 'En Preparación', 'Enviado', 'Entregado'];
+// Alineado con chk_despacho_estado_valido de BD2 ('En Preparación', 'Despachado', 'En reparto', 'Entregado')
+const ORDER_STEPS = ['En Preparación', 'Despachado', 'En reparto', 'Entregado'];
 
 const stepIndex = (estado) => {
-  const idx = ORDER_STEPS.indexOf(estado);
-  return idx >= 0 ? idx : 0;
+  if (estado === 'Entregado') return 3;
+  if (estado === 'En reparto') return 2;
+  if (estado === 'Despachado' || estado === 'Enviado') return 1;
+  return 0; // 'Confirmado' o 'En Preparación'
 };
 
 const QUOTE_STATUS_COLORS = {
@@ -817,7 +820,9 @@ const Perfil = () => {
                                 className={`inline-block px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase ${
                                   order.estado === 'Entregado'
                                     ? 'bg-green-100 text-green-800'
-                                    : order.estado === 'Enviado'
+                                    : order.estado === 'Despachado' ||
+                                        order.estado === 'Enviado' ||
+                                        order.estado === 'En reparto'
                                       ? 'bg-blue-100 text-blue-800'
                                       : 'bg-sky-100 text-sky-800'
                                 }`}

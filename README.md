@@ -2,7 +2,7 @@
 
 Plataforma integral de **Compra y Venta de Productos Físicos** y **Oferta y Cotización de Servicios Profesionales** desarrollada para la asignatura *Tecnologías Web y Móviles* (Universidad de Concepción).
 
-El repositorio está estructurado de forma simétrica en **`/frontend`** (React 18 + Vite 5 + Tailwind CSS 3 + Material UI 6) y **`/backend`** (preparado para ASP.NET Core Web API + PostgreSQL).
+El repositorio está estructurado de forma simétrica en **`/frontend`** (React 18 + Vite 5 + Tailwind CSS 3 + Material UI 6) y **`/backend`** (**ASP.NET Core Web API .NET 8 LTS + Entity Framework Core + PostgreSQL `BD2` + Postman + Raspberry Pi**).
 
 ---
 
@@ -15,7 +15,12 @@ WebYMobiles/
 │   ├── package.json
 │   ├── vite.config.js          # Alias @/ -> ./src y code-splitting optimizado
 │   └── src/                    # Arquitectura Atomic Design (atoms, molecules, organisms, pages)
-├── backend/                    # Espacio reservado para Vento.Api (.NET + EF Core + PostgreSQL)
+├── backend/                    # API REST Vento.Api (.NET 8 + EF Core + PostgreSQL BD2)
+│   ├── Vento.sln
+│   ├── Vento.Api/              # Controladores, DTOs, Middleware global, JWT, BCrypt y DbSeeder
+│   ├── database/               # Scripts SQL 00..05 (49 tablas BD2, 23 triggers, vistas y RBAC)
+│   ├── postman/                # Colección oficial Postman v2.1 + Entorno {{baseUrl}} (63 pruebas)
+│   └── deploy/                 # Servicio systemd y script ARM64 para Raspberry Pi (0.0.0.0:5000)
 ├── DESARROLLO_IMPLEMENTADO.md  # Informe técnico completo y matriz de cumplimiento
 ├── MINUTA.md                   # Registro histórico de reuniones y acuerdos del equipo
 └── README.md                   # Guía rápida de instalación y cuentas de prueba

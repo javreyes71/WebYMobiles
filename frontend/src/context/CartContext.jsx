@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
-import { storageApi } from '@/services/api';
+import { API_URL, storageApi } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
@@ -24,6 +24,30 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     storageApi.saveCart(cartItems);
   }, [cartItems]);
+
+  useEffect(() => {
+    if (!API_URL || !currentUser) return;
+    const isSellerOrAdmin =
+      hasRole(currentUser, ROLES.ADMIN) ||
+      hasRole(currentUser, ROLES.VENDEDOR_PRODUCTO) ||
+      hasRole(currentUser, ROLES.PROVEEDOR_SERVICIO);
+
+    Promise.all([
+      storageApi.fetchOrdersAsync(false),
+      isSellerOrAdmin ? storageApi.fetchOrdersAsync(true) : Promise.resolve({ success: false }),
+    ]).then(([mineRes, sellerRes]) => {
+      const merged = new Map();
+      if (mineRes?.success && Array.isArray(mineRes.data)) {
+        mineRes.data.forEach((o) => merged.set(String(o.id), o));
+      }
+      if (sellerRes?.success && Array.isArray(sellerRes.data)) {
+        sellerRes.data.forEach((o) => merged.set(String(o.id), o));
+      }
+      if (merged.size > 0) {
+        setOrders(Array.from(merged.values()));
+      }
+    });
+  }, [currentUser]);
 
   const addToCart = (product, qty = 1) => {
     const quantityToAdd = Math.max(1, Number(qty) || 1);
@@ -130,6 +154,7 @@ export const CartProvider = ({ children }) => {
   const recordOrder = (customerInfo = {}) => {
     const orderItems = cartItems.map((i) => ({
       id: i.id,
+      sku: i.sku || String(i.id),
       ownerId: i.ownerId || (i.tipo === 'Servicio' ? 3 : 2),
       vendedorNombre: i.vendedorNombre || 'Tienda Vento',
       title: i.title || i.nombre,
@@ -139,7 +164,7 @@ export const CartProvider = ({ children }) => {
       color: i.color,
       tipo: i.tipo || 'Producto',
       quoteId: i.quoteId || null,
-      estadoDespachoItem: 'Confirmado',
+      estadoDespachoItem: 'En Preparación',
     }));
 
     // Si algún ítem proviene de una cotización aceptada, pasa automáticamente a 'En Ejecución'
@@ -167,7 +192,7 @@ export const CartProvider = ({ children }) => {
       descuento: discountAmount,
       cuponAplicado: appliedCoupon?.code || null,
       envio: shippingCost,
-      estado: 'Confirmado',
+      estado: 'En Preparación',
       trackingCodigo: '',
       courier: '',
       itemsCount: cartCount,
@@ -178,16 +203,55 @@ export const CartProvider = ({ children }) => {
     deductProductStock(orderItems);
     const updatedOrders = storageApi.addOrder(newOrder);
     setOrders(updatedOrders);
+
+    if (API_URL) {
+      storageApi
+        .createOrderAsync({
+          compradorId: currentUser?.id ? String(currentUser.id) : null,
+          items: orderItems.map((it) => ({
+            id: String(it.id),
+            sku: String(it.sku || it.id),
+            tipo: it.tipo,
+            title: it.title,
+            quantity: it.quantity,
+            price: it.price,
+            quoteId: it.quoteId ? String(it.quoteId) : null,
+          })),
+          cuponCodigo: appliedCoupon?.code || null,
+          direccionDespacho: customerInfo.direccion || currentUser?.direccion || '',
+          comuna: customerInfo.ciudad || customerInfo.comuna || '',
+          region: customerInfo.region || '',
+          medioPago: customerInfo.metodoPago || 'Tarjeta de Crédito',
+        })
+        .then((res) => {
+          if (res?.success && res.data) {
+            setOrders((prev) =>
+              prev.map((o) => (String(o.id) === String(newOrder.id) ? res.data : o))
+            );
+          }
+        });
+    }
+
     clearCart();
     return newOrder;
   };
 
   const updateOrderStatus = (orderId, changes) => {
     setOrders((prev) => {
-      const next = prev.map((o) => (o.id === orderId ? { ...o, ...changes } : o));
+      const next = prev.map((o) =>
+        String(o.id) === String(orderId) ? { ...o, ...changes } : o
+      );
       storageApi.saveOrders(next);
       return next;
     });
+
+    if (API_URL && changes.estado) {
+      storageApi.updateDispatchAsync(orderId, {
+        estado: changes.estado,
+        courier: changes.courier,
+        trackingCodigo: changes.trackingCodigo,
+      });
+    }
   };
 
   // Pedidos propios del comprador actual (aislamiento estricto de datos)
