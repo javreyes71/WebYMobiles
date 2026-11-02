@@ -1,0 +1,6 @@
+@Vento.Api_HostAddress = http://localhost:5225
+
+GET {{Vento.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
