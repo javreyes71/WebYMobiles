@@ -80,6 +80,7 @@ const AdminProductos = ({ mode = 'productos' }) => {
     allProductos,
     allServicios,
     receivedQuotes,
+    updateQuoteStatus,
     addProducto,
     updateProducto,
     deleteProducto,
@@ -128,6 +129,79 @@ const AdminProductos = ({ mode = 'productos' }) => {
     courier: 'Starken',
     trackingCodigo: '',
   });
+
+  // Filtro y Modal de Propuesta Formal para el CRM de Cotizaciones (ProveedorServicio)
+  const [quoteFilter, setQuoteFilter] = useState('Todas');
+  const [proposalModal, setProposalModal] = useState({
+    open: false,
+    quote: null,
+    monto: '',
+    plazo: '48 horas hábiles',
+    validez: '7 días corridos',
+    detalle: '',
+  });
+
+  const serviceKpis = useMemo(() => {
+    const pendientes = receivedQuotes.filter((q) => q.estado === 'Pendiente').length;
+    const enCurso = receivedQuotes.filter(
+      (q) => q.estado === 'Aceptada' || q.estado === 'En Ejecución'
+    ).length;
+    const ingresosCotizados = receivedQuotes
+      .filter((q) => q.estado === 'En Ejecución' || q.estado === 'Completado')
+      .reduce((acc, q) => acc + Number(q.propuestaProveedor?.monto || q.precioReferencial || 0), 0);
+    const activos = activeItems.filter(
+      (s) => (s.estadoModeracion || MODERATION_STATUS.APROBADO) === MODERATION_STATUS.APROBADO
+    ).length;
+    return { pendientes, enCurso, ingresosCotizados, activos };
+  }, [receivedQuotes, activeItems]);
+
+  const filteredQuotes = useMemo(() => {
+    if (quoteFilter === 'Todas') return receivedQuotes;
+    return receivedQuotes.filter((q) => q.estado === quoteFilter);
+  }, [receivedQuotes, quoteFilter]);
+
+  const handleOpenProposalModal = (quote) => {
+    setProposalModal({
+      open: true,
+      quote,
+      monto: String(quote.propuestaProveedor?.monto || quote.precioReferencial || ''),
+      plazo: quote.propuestaProveedor?.plazo || '48 horas hábiles',
+      validez: quote.propuestaProveedor?.validez || '7 días corridos',
+      detalle:
+        quote.propuestaProveedor?.detalle ||
+        `Propuesta personalizada para ${quote.servicioNombre} según requerimientos del cliente.`,
+    });
+  };
+
+  const handleSendFormalProposal = (e) => {
+    e.preventDefault();
+    const montoNum = Number(proposalModal.monto);
+    if (!proposalModal.quote || montoNum <= 0) {
+      showToast('Ingresa un presupuesto válido mayor a $0 CLP.', 'warning');
+      return;
+    }
+    updateQuoteStatus(proposalModal.quote.id, {
+      estado: 'Cotizado',
+      propuestaProveedor: {
+        monto: montoNum,
+        plazo: proposalModal.plazo.trim() || 'A convenir',
+        validez: proposalModal.validez.trim() || '7 días corridos',
+        detalle: proposalModal.detalle.trim(),
+      },
+    });
+    showToast(
+      `Propuesta formal enviada al cliente (${formatCurrency(montoNum)}).`,
+      'success'
+    );
+    setProposalModal({
+      open: false,
+      quote: null,
+      monto: '',
+      plazo: '48 horas hábiles',
+      validez: '7 días corridos',
+      detalle: '',
+    });
+  };
 
   // Pedidos que contienen productos físicos de este vendedor (o todos si es Admin)
   const productSellerOrders = useMemo(() => {
@@ -837,14 +911,20 @@ const AdminProductos = ({ mode = 'productos' }) => {
         </div>
 
         <div className="flex flex-wrap gap-2.5">
-          {!isServiceMode && currentUser && (
-            <Link to={`/tienda/vendedor/${currentUser.id}`}>
+          {currentUser && (
+            <Link
+              to={
+                isServiceMode
+                  ? `/servicios/proveedor/${currentUser.id}`
+                  : `/tienda/vendedor/${currentUser.id}`
+              }
+            >
               <CustomButton
                 variant="outline"
                 size="sm"
                 startIcon={<OpenInNew fontSize="small" />}
               >
-                Ver Mi Tienda Pública
+                {isServiceMode ? 'Ver Mi Perfil Profesional' : 'Ver Mi Tienda Pública'}
               </CustomButton>
             </Link>
           )}
@@ -888,6 +968,50 @@ const AdminProductos = ({ mode = 'productos' }) => {
             </span>
           )}
         </Alert>
+      )}
+
+      {/* ==================== DASHBOARD KPI DEL PROVEEDOR DE SERVICIOS ==================== */}
+      {isServiceMode && (
+        <section
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          aria-label="Indicadores profesionales de servicios"
+        >
+          <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+            <span className="text-xs font-bold uppercase text-sky-700 block mb-1">
+              Por Cotizar
+            </span>
+            <p className="text-2xl font-extrabold text-gray-900">{serviceKpis.pendientes}</p>
+            <span className="text-[11px] text-gray-500">Solicitudes esperando propuesta</span>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+            <span className="text-xs font-bold uppercase text-sky-700 block mb-1">
+              En Ejecución
+            </span>
+            <p className="text-2xl font-extrabold text-gray-900">{serviceKpis.enCurso}</p>
+            <span className="text-[11px] text-gray-500">Servicios aceptados o en marcha</span>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+            <span className="text-xs font-bold uppercase text-sky-700 block mb-1">
+              Facturación Cotizada
+            </span>
+            <p className="text-2xl font-extrabold text-gray-900">
+              {formatCurrency(serviceKpis.ingresosCotizados)}
+            </p>
+            <span className="text-[11px] text-gray-500">En proyectos confirmados</span>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+            <span className="text-xs font-bold uppercase text-sky-700 block mb-1">
+              Portafolio Activo
+            </span>
+            <p className="text-2xl font-extrabold text-gray-900">
+              {serviceKpis.activos}{' '}
+              <span className="text-xs font-normal text-gray-400">
+                / {activeItems.length} total
+              </span>
+            </p>
+            <span className="text-[11px] text-gray-500">Servicios visibles en Directorio</span>
+          </div>
+        </section>
       )}
 
       {/* ==================== DASHBOARD KPI + PESTAÑAS DEL VENDEDOR DE PRODUCTOS ==================== */}
@@ -1322,43 +1446,161 @@ const AdminProductos = ({ mode = 'productos' }) => {
         </>
       )}
 
-      {/* Bandeja de Solicitudes de Cotización (visible solo en el Portal de Servicios) */}
+      {/* CRM Interactivo de Cotizaciones (visible solo en el Portal de Servicios) */}
       {isServiceMode && (
         <section
-          className="bg-white border border-sky-100 rounded-2xl p-6 shadow-sm"
-          aria-label="Solicitudes de cotización recibidas"
+          className="bg-white border border-sky-100 rounded-2xl p-6 shadow-sm space-y-4"
+          aria-label="CRM de solicitudes de cotización recibidas"
         >
-          <h2 className="text-lg font-extrabold text-gray-900 mb-1">
-            Solicitudes de Cotización Recibidas ({receivedQuotes.length})
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            Requerimientos enviados por clientes a tus servicios publicados
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-extrabold text-gray-900">
+                CRM de Cotizaciones y Proyectos ({receivedQuotes.length})
+              </h2>
+              <p className="text-xs text-gray-500">
+                Envía propuestas formales en CLP; cuando el comprador acepte y pague podrás
+                gestionar la ejecución hasta el cierre
+              </p>
+            </div>
 
-          {receivedQuotes.length === 0 ? (
-            <p className="text-sm text-gray-500 py-4">
-              Aún no se han recibido solicitudes de cotización.
+            <div className="flex flex-wrap gap-1.5">
+              {['Todas', 'Pendiente', 'Cotizado', 'En Ejecución', 'Completado'].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setQuoteFilter(st)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                    quoteFilter === st
+                      ? 'bg-sky-600 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredQuotes.length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">
+              No hay cotizaciones registradas bajo el filtro seleccionado.
             </p>
           ) : (
-            <div className="space-y-3">
-              {receivedQuotes.map((q) => (
+            <div className="space-y-4">
+              {filteredQuotes.map((q) => (
                 <div
                   key={q.id}
-                  className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between gap-3"
+                  className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3"
                 >
-                  <div>
-                    <span className="text-xs font-extrabold text-sky-700">{q.id}</span>
-                    <h3 className="text-sm font-bold text-gray-900">{q.servicioNombre}</h3>
-                    <p className="text-xs text-gray-600 mt-1">{q.detalles}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Cliente: <strong>{q.nombreContacto}</strong> ({q.correoContacto})
-                    </p>
+                  <div className="flex flex-col sm:flex-row justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-sky-700">{q.id}</span>
+                        <span className="text-xs text-gray-400">· {q.fechaCreacion}</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 mt-0.5">
+                        {q.servicioNombre}
+                      </h3>
+                      <p className="text-xs text-gray-600 mt-1">{q.detalles}</p>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        Cliente: <strong>{q.nombreContacto}</strong> ({q.correoContacto}
+                        {q.telefonoContacto ? ` · ${q.telefonoContacto}` : ''}) · Modalidad:{' '}
+                        <strong>{q.modalidadPreferida || 'A convenir'}</strong>
+                        {q.fechaDeseada ? ` · Fecha deseada: ${q.fechaDeseada}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-left sm:text-right shrink-0">
+                      <span
+                        className={`inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                          q.estado === 'Completado'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : q.estado === 'En Ejecución'
+                              ? 'bg-amber-100 text-amber-800'
+                              : q.estado === 'Cotizado'
+                                ? 'bg-indigo-100 text-indigo-800'
+                                : q.estado === 'Rechazada'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-sky-100 text-sky-800'
+                        }`}
+                      >
+                        {q.estado}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-left sm:text-right shrink-0">
-                    <span className="inline-block text-[11px] font-bold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">
-                      {q.estado}
-                    </span>
-                    <span className="block text-xs text-gray-400 mt-1">{q.fechaCreacion}</span>
+
+                  {q.propuestaProveedor && (
+                    <div className="bg-white p-3.5 rounded-xl border border-indigo-100 text-xs text-gray-700 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <span className="font-bold text-gray-500 block">Presupuesto Enviado</span>
+                        <span className="text-sm font-extrabold text-indigo-900">
+                          {formatCurrency(q.propuestaProveedor.monto)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-500 block">Plazo Comprometido</span>
+                        <span>{q.propuestaProveedor.plazo}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-500 block">Vigencia</span>
+                        <span>{q.propuestaProveedor.validez}</span>
+                      </div>
+                      {q.propuestaProveedor.detalle && (
+                        <div className="sm:col-span-3 pt-1 border-t border-gray-100">
+                          <span className="font-bold text-gray-500">Alcance: </span>
+                          {q.propuestaProveedor.detalle}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap justify-end gap-2 pt-1">
+                    {(q.estado === 'Pendiente' || q.estado === 'Cotizado') && (
+                      <CustomButton
+                        variant="secondary"
+                        size="sm"
+                        disabled={!isRoleApproved}
+                        onClick={() => handleOpenProposalModal(q)}
+                      >
+                        {q.propuestaProveedor
+                          ? 'Actualizar Propuesta Formal'
+                          : 'Enviar Propuesta Formal'}
+                      </CustomButton>
+                    )}
+
+                    {q.estado === 'Aceptada' && (
+                      <CustomButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          updateQuoteStatus(q.id, { estado: 'En Ejecución' });
+                          showToast(`Proyecto ${q.id} iniciado en ejecución.`, 'info');
+                        }}
+                      >
+                        Iniciar Ejecución
+                      </CustomButton>
+                    )}
+
+                    {q.estado === 'En Ejecución' && (
+                      <CustomButton
+                        variant="success"
+                        size="sm"
+                        onClick={() => {
+                          updateQuoteStatus(q.id, { estado: 'Completado' });
+                          showToast(
+                            `¡Servicio ${q.id} marcado como Completado exitosamente!`,
+                            'success'
+                          );
+                        }}
+                      >
+                        Marcar Servicio Completado
+                      </CustomButton>
+                    )}
+
+                    {q.estado === 'Completado' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+                        <CheckCircle2 className="w-4 h-4" /> Trabajo entregado y cerrado
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1366,6 +1608,99 @@ const AdminProductos = ({ mode = 'productos' }) => {
           )}
         </section>
       )}
+
+      {/* Modal Propuesta Formal de Servicio (CRM ProveedorServicio) */}
+      <Dialog
+        open={proposalModal.open}
+        onClose={() =>
+          setProposalModal({
+            open: false,
+            quote: null,
+            monto: '',
+            plazo: '48 horas hábiles',
+            validez: '7 días corridos',
+            detalle: '',
+          })
+        }
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          Propuesta Formal · {proposalModal.quote?.id}
+        </DialogTitle>
+        <form onSubmit={handleSendFormalProposal}>
+          <DialogContent dividers className="space-y-4">
+            <p className="text-xs text-gray-600">
+              Cliente: <strong>{proposalModal.quote?.nombreContacto}</strong> · Servicio:{' '}
+              <strong>{proposalModal.quote?.servicioNombre}</strong>
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CustomTextField
+                label="Presupuesto final ($ CLP)"
+                name="monto"
+                type="number"
+                value={proposalModal.monto}
+                onChange={(e) =>
+                  setProposalModal({ ...proposalModal, monto: e.target.value })
+                }
+                required
+              />
+              <CustomTextField
+                label="Plazo estimado de entrega"
+                name="plazo"
+                placeholder="Ej: 72 horas hábiles"
+                value={proposalModal.plazo}
+                onChange={(e) =>
+                  setProposalModal({ ...proposalModal, plazo: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <CustomTextField
+              label="Vigencia de la cotización"
+              name="validez"
+              placeholder="Ej: 7 días corridos"
+              value={proposalModal.validez}
+              onChange={(e) =>
+                setProposalModal({ ...proposalModal, validez: e.target.value })
+              }
+            />
+
+            <CustomTextField
+              label="Alcance técnico y condiciones del servicio"
+              name="detalle"
+              multiline
+              rows={3}
+              value={proposalModal.detalle}
+              onChange={(e) =>
+                setProposalModal({ ...proposalModal, detalle: e.target.value })
+              }
+              required
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={() =>
+                setProposalModal({
+                  open: false,
+                  quote: null,
+                  monto: '',
+                  plazo: '48 horas hábiles',
+                  validez: '7 días corridos',
+                  detalle: '',
+                })
+              }
+              color="inherit"
+            >
+              Cancelar
+            </Button>
+            <CustomButton type="submit" variant="secondary" size="sm">
+              Enviar Propuesta al Cliente
+            </CustomButton>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Modal Asignación de Courier y Código de Seguimiento */}
       <Dialog

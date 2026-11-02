@@ -242,9 +242,12 @@ const ProductDetail = () => {
                     <Store className="w-4 h-4 text-sky-600 shrink-0" />
                     <span>
                       Prestador:{' '}
-                      <strong className="text-gray-900">
+                      <Link
+                        to={`/servicios/proveedor/${item.ownerId || item.proveedorId || 3}`}
+                        className="font-bold text-sky-800 hover:underline"
+                      >
                         {item.vendedorNombre || item.brand}
-                      </strong>{' '}
+                      </Link>{' '}
                       <span className="text-xs bg-gray-100 px-2 py-0.5 rounded font-semibold">
                         {item.vendedorTipo || 'Profesional'}
                       </span>

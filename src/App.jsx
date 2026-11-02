@@ -16,6 +16,7 @@ import AdminProductos from '@/pages/AdminProductos/AdminProductos';
 import AdminUsuarios from '@/pages/AdminUsuarios/AdminUsuarios';
 import Perfil from '@/pages/Perfil/Perfil';
 import PerfilVendedor from '@/pages/PerfilVendedor/PerfilVendedor';
+import PerfilProveedor from '@/pages/PerfilProveedor/PerfilProveedor';
 import { CartProvider } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
@@ -55,6 +56,7 @@ function App() {
                       path="/servicios"
                       element={<Servicios onRequireLogin={openLogin} />}
                     />
+                    <Route path="/servicios/proveedor/:id" element={<PerfilProveedor />} />
                     <Route path="/producto/:id" element={<ProductDetail />} />
                     <Route path="/servicio/:id" element={<ProductDetail />} />
                     <Route path="/carrito" element={<Cart />} />
