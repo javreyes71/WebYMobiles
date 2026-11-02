@@ -87,6 +87,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<Vento.Api.Services.AuthAndUserService>();
+builder.Services.AddScoped<Vento.Api.Services.CatalogoService>();
 
 // 4. Política CORS explícita para Frontend Vite local y red LAN Raspberry Pi (Diap. 50-51)
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
