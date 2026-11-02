@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import {
   Table,
@@ -30,11 +30,22 @@ import {
   Add,
   Pause,
   PlayArrow,
+  LocalShipping,
+  Inventory2,
+  OpenInNew,
 } from '@mui/icons-material';
+import {
+  TrendingUp,
+  PackageCheck,
+  AlertTriangle,
+  Truck,
+  CheckCircle2,
+} from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useToast } from '@/context/ToastContext';
 import { useProducts } from '@/context/ProductContext';
+import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils/validators';
 import {
@@ -57,12 +68,14 @@ const SERVICE_CATEGORIES = [
   'Eventos y Sonido',
   'Asesoría de Imagen',
 ];
+const COURIERS_CHILE = ['Starken', 'Chilexpress', 'Bluexpress', 'Correos de Chile', 'Despacho Propio'];
 
 const AdminProductos = ({ mode = 'productos' }) => {
   const location = useLocation();
   const fileInputRef = useRef(null);
   const { currentUser } = useAuth();
   const { showToast } = useToast();
+  const { sellerOrders, updateOrderStatus } = useCart();
   const {
     allProductos,
     allServicios,
@@ -92,6 +105,8 @@ const AdminProductos = ({ mode = 'productos' }) => {
 
   // 'list' | 'form-item' | 'form-oferta'
   const [view, setView] = useState('list');
+  // Sub-pestaña en modo productos: 'inventario' | 'despachos'
+  const [productSection, setProductSection] = useState('inventario');
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
   const [offerForm, setOfferForm] = useState({
@@ -106,6 +121,51 @@ const AdminProductos = ({ mode = 'productos' }) => {
   const [openDelete, setOpenDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Modal de despacho con Courier + Código de Seguimiento
+  const [shippingModal, setShippingModal] = useState({
+    open: false,
+    order: null,
+    courier: 'Starken',
+    trackingCodigo: '',
+  });
+
+  // Pedidos que contienen productos físicos de este vendedor (o todos si es Admin)
+  const productSellerOrders = useMemo(() => {
+    return (sellerOrders || []).filter((ord) =>
+      ord.items?.some(
+        (it) =>
+          it.tipo !== 'Servicio' &&
+          (isAdmin || String(it.ownerId) === String(currentUser?.id))
+      )
+    );
+  }, [sellerOrders, isAdmin, currentUser]);
+
+  // KPIs del Dashboard Vendedor de Productos
+  const sellerKpis = useMemo(() => {
+    let totalVentas = 0;
+    let pendientesEnvio = 0;
+
+    productSellerOrders.forEach((ord) => {
+      if (ord.estado !== 'Entregado') pendientesEnvio += 1;
+      ord.items?.forEach((it) => {
+        if (
+          it.tipo !== 'Servicio' &&
+          (isAdmin || String(it.ownerId) === String(currentUser?.id))
+        ) {
+          totalVentas += Number(it.price || 0) * Number(it.quantity || 1);
+        }
+      });
+    });
+
+    const publicados = activeItems.filter(
+      (i) => (i.estadoModeracion || MODERATION_STATUS.APROBADO) === MODERATION_STATUS.APROBADO
+    ).length;
+
+    const stockCritico = activeItems.filter((i) => Number(i.stock ?? 10) <= 3).length;
+
+    return { totalVentas, pendientesEnvio, publicados, stockCritico };
+  }, [productSellerOrders, activeItems, isAdmin, currentUser]);
+
   const buildEmptyProduct = () => ({
     tipo: 'Producto',
     nombre: '',
@@ -118,7 +178,7 @@ const AdminProductos = ({ mode = 'productos' }) => {
     restriccionEdad: 'no',
     precio: '',
     image: '',
-    vendedorNombre: currentUser?.nombre || 'Tienda Vento',
+    vendedorNombre: currentUser?.nombreTienda || currentUser?.nombre || 'Tienda Vento',
     vendedorTipo: currentUser?.tipoCuenta === 'Empresa' ? 'Empresa' : 'Emprendedor',
   });
 
@@ -126,7 +186,7 @@ const AdminProductos = ({ mode = 'productos' }) => {
     tipo: 'Servicio',
     nombre: '',
     sku: '',
-    marca: currentUser?.nombre || 'Profesional Vento',
+    marca: currentUser?.nombreTienda || currentUser?.nombre || 'Profesional Vento',
     categoria: 'Mantención y Limpieza',
     modalidad: 'Presencial',
     tiempoEstimado: '',
@@ -135,12 +195,13 @@ const AdminProductos = ({ mode = 'productos' }) => {
     permiteCotizacion: 'no',
     precio: '',
     image: '',
-    vendedorNombre: currentUser?.nombre || 'Profesional Vento',
+    vendedorNombre: currentUser?.nombreTienda || currentUser?.nombre || 'Profesional Vento',
     vendedorTipo: currentUser?.tipoCuenta === 'Empresa' ? 'Empresa' : 'Emprendedor',
   });
 
   useEffect(() => {
     setView('list');
+    setProductSection('inventario');
     if (location.state?.initialView === 'form-servicio' && isServiceMode) {
       setIsEditing(false);
       setCurrentItem(buildEmptyService());
@@ -301,6 +362,54 @@ const AdminProductos = ({ mode = 'productos' }) => {
     }
     setIsLoading(false);
     setOpenDelete(false);
+  };
+
+  /* ── Flujo Logístico de Despachos (VendedorProducto) ── */
+  const handleAdvanceOrderState = (order, nextState) => {
+    if (nextState === 'Enviado') {
+      setShippingModal({
+        open: true,
+        order,
+        courier: order.courier || 'Starken',
+        trackingCodigo:
+          order.trackingCodigo ||
+          `STARKEN-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      });
+      return;
+    }
+
+    const updatedItems = (order.items || []).map((it) =>
+      isAdmin || String(it.ownerId) === String(currentUser?.id)
+        ? { ...it, estadoDespachoItem: nextState }
+        : it
+    );
+    updateOrderStatus(order.id, { estado: nextState, items: updatedItems });
+    showToast(`Pedido #${order.id} actualizado a "${nextState}".`, 'success');
+  };
+
+  const handleConfirmShipping = (e) => {
+    e.preventDefault();
+    const { order, courier, trackingCodigo } = shippingModal;
+    if (!order || !trackingCodigo.trim()) {
+      showToast('Ingresa el código de seguimiento del envío.', 'warning');
+      return;
+    }
+    const updatedItems = (order.items || []).map((it) =>
+      isAdmin || String(it.ownerId) === String(currentUser?.id)
+        ? { ...it, estadoDespachoItem: 'Enviado' }
+        : it
+    );
+    updateOrderStatus(order.id, {
+      estado: 'Enviado',
+      courier,
+      trackingCodigo: trackingCodigo.trim().toUpperCase(),
+      items: updatedItems,
+    });
+    showToast(
+      `Despacho registrado (${courier} · ${trackingCodigo.trim().toUpperCase()}).`,
+      'success'
+    );
+    setShippingModal({ open: false, order: null, courier: 'Starken', trackingCodigo: '' });
   };
 
   // ==================== VISTA CREAR OFERTA REAL ====================
@@ -681,10 +790,10 @@ const AdminProductos = ({ mode = 'productos' }) => {
     );
   }
 
-  // ==================== VISTA PRINCIPAL (TABLA SEPARADA PRODUCTOS VS SERVICIOS) ====================
+  // ==================== VISTA PRINCIPAL (SEPARADA PRODUCTOS VS SERVICIOS) ====================
   return (
     <div className="max-w-6xl mx-auto p-6 my-8 space-y-8">
-      {/* Selector superior para alternar entre portales (solo si el usuario posee acceso a ambos) */}
+      {/* Cabecera y botones de acción */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
           {canSwitchBothPortals && (
@@ -718,16 +827,27 @@ const AdminProductos = ({ mode = 'productos' }) => {
                 : 'Mi Portafolio de Servicios Profesionales'
               : isAdmin
                 ? 'Catálogo Global de Productos en Venta'
-                : 'Mi Inventario de Productos en Venta'}
+                : 'Portal Vendedor de Productos'}
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
             {isAdmin
               ? 'Vista con privilegios de Administrador sobre todas las publicaciones'
-              : `Mostrando únicamente publicaciones asociadas a ${currentUser?.nombreTienda || currentUser?.nombre}`}
+              : `Tienda activa: ${currentUser?.nombreTienda || currentUser?.nombre}`}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2.5">
+          {!isServiceMode && currentUser && (
+            <Link to={`/tienda/vendedor/${currentUser.id}`}>
+              <CustomButton
+                variant="outline"
+                size="sm"
+                startIcon={<OpenInNew fontSize="small" />}
+              >
+                Ver Mi Tienda Pública
+              </CustomButton>
+            </Link>
+          )}
           <CustomButton
             variant="outline"
             size="sm"
@@ -770,194 +890,437 @@ const AdminProductos = ({ mode = 'productos' }) => {
         </Alert>
       )}
 
-      {/* Tabla Desktop */}
-      <div className="hidden md:block">
-        <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 3 }}>
-          <Table sx={{ minWidth: 650 }}>
-            <TableHead className="bg-gray-50">
-              <TableRow>
-                <TableCell sx={{ fontWeight: 800 }}>Ítem</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Categoría</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>
-                  {isServiceMode ? 'Modalidad / Tipo' : 'Stock'}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Moderación</TableCell>
-                <TableCell sx={{ fontWeight: 800 }} align="right">
-                  {isServiceMode ? 'Tarifa Base' : 'Precio'}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 800 }} align="center">
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {activeItems.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: '#6b7280' }}>
-                    Aún no tienes publicaciones registradas en este portal.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                activeItems.map((item) => {
-                  const status = item.estadoModeracion || MODERATION_STATUS.APROBADO;
-                  const badgeClass =
-                    MODERATION_BADGE_STYLES[status] || MODERATION_BADGE_STYLES.Aprobado;
-                  const canTogglePause =
-                    status === MODERATION_STATUS.APROBADO ||
-                    (status === MODERATION_STATUS.PAUSADO && item.aprobadoPorAdmin);
-
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={item.image}
-                            alt={item.nombre || item.title}
-                            className="w-11 h-11 rounded-lg object-cover bg-gray-100 border border-gray-200"
-                          />
-                          <div>
-                            <p className="font-bold text-gray-900 text-sm">
-                              {item.nombre || item.title}
-                            </p>
-                            <span className="text-xs text-gray-500">
-                              {item.marca || item.brand} {item.sku ? `· ${item.sku}` : ''}
-                              {isAdmin && item.vendedorNombre ? ` · ${item.vendedorNombre}` : ''}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.categoria}</TableCell>
-                      <TableCell>
-                        {isServiceMode ? (
-                          <span className="text-xs font-semibold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full">
-                            {item.modalidad || 'Presencial'} ·{' '}
-                            {item.permiteCotizacion === 'sí' ? 'Cotizable' : 'Fijo'}
-                          </span>
-                        ) : (
-                          <span
-                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                              (item.stock ?? 10) <= 3
-                                ? 'bg-red-100 text-red-800'
-                                : 'text-gray-700 bg-gray-100'
-                            }`}
-                          >
-                            {item.stock ?? 10} un.
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeClass}`}
-                        >
-                          {status}
-                        </span>
-                      </TableCell>
-                      <TableCell align="right">
-                        <span className="font-extrabold text-gray-900">
-                          {formatCurrency(item.price ?? item.precio)}
-                        </span>
-                        {item.ofertaActiva && item.descuentoPorcentaje > 0 && (
-                          <span className="block text-[10px] font-bold text-green-700">
-                            Oferta -{item.descuentoPorcentaje}%
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell align="center">
-                        {canTogglePause && (
-                          <Tooltip
-                            title={
-                              status === MODERATION_STATUS.PAUSADO
-                                ? 'Reactivar publicación'
-                                : 'Pausar publicación'
-                            }
-                          >
-                            <IconButton
-                              color={status === MODERATION_STATUS.PAUSADO ? 'success' : 'default'}
-                              aria-label={`Pausar o reactivar ${item.nombre || item.title}`}
-                              onClick={() => {
-                                togglePauseItem(item.id, item.tipo);
-                                showToast(
-                                  status === MODERATION_STATUS.PAUSADO
-                                    ? 'Publicación reactivada en el catálogo.'
-                                    : 'Publicación pausada temporalmente.',
-                                  'info'
-                                );
-                              }}
-                            >
-                              {status === MODERATION_STATUS.PAUSADO ? (
-                                <PlayArrow fontSize="small" />
-                              ) : (
-                                <Pause fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        <IconButton
-                          color="primary"
-                          aria-label={`Editar ${item.nombre || item.title}`}
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          aria-label={`Eliminar ${item.nombre || item.title}`}
-                          onClick={() => {
-                            setDeleteId(item.id);
-                            setOpenDelete(true);
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </div>
-
-      {/* Tarjetas Móvil */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {activeItems.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col"
+      {/* ==================== DASHBOARD KPI + PESTAÑAS DEL VENDEDOR DE PRODUCTOS ==================== */}
+      {!isServiceMode && (
+        <>
+          <section
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            aria-label="Indicadores de desempeño de ventas"
           >
-            <div className="flex justify-between items-start gap-2">
-              <div>
-                <h2 className="font-bold text-gray-900 text-sm">{item.nombre || item.title}</h2>
-                <span className="text-xs text-gray-500">{item.categoria}</span>
+            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase text-gray-500">
+                  Ingresos Acumulados
+                </span>
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
-              <span className="font-extrabold text-gray-900">
-                {formatCurrency(item.price ?? item.precio)}
+              <p className="text-2xl font-extrabold text-gray-900">
+                {formatCurrency(sellerKpis.totalVentas)}
+              </p>
+              <span className="text-[11px] text-gray-500">
+                En {productSellerOrders.length} pedidos recibidos
               </span>
             </div>
-            <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-gray-100">
-              <IconButton
-                size="small"
-                aria-label={`Editar ${item.nombre || item.title}`}
-                onClick={() => handleEdit(item)}
-              >
-                <Edit fontSize="small" />
-              </IconButton>
-              <IconButton
-                size="small"
-                color="error"
-                aria-label={`Eliminar ${item.nombre || item.title}`}
-                onClick={() => {
-                  setDeleteId(item.id);
-                  setOpenDelete(true);
-                }}
-              >
-                <Delete fontSize="small" />
-              </IconButton>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase text-gray-500">
+                  Despachos Activos
+                </span>
+                <Truck className="w-4 h-4 text-blue-600" />
+              </div>
+              <p className="text-2xl font-extrabold text-gray-900">
+                {sellerKpis.pendientesEnvio}
+              </p>
+              <span className="text-[11px] text-gray-500">
+                Pedidos por preparar o en tránsito
+              </span>
             </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase text-gray-500">
+                  Productos Publicados
+                </span>
+                <PackageCheck className="w-4 h-4 text-gray-800" />
+              </div>
+              <p className="text-2xl font-extrabold text-gray-900">
+                {sellerKpis.publicados}{' '}
+                <span className="text-xs font-normal text-gray-400">
+                  / {activeItems.length} total
+                </span>
+              </p>
+              <span className="text-[11px] text-gray-500">
+                Visibles en el catálogo público
+              </span>
+            </div>
+
+            <div
+              className={`p-5 rounded-2xl border shadow-sm ${
+                sellerKpis.stockCritico > 0
+                  ? 'bg-red-50/50 border-red-200'
+                  : 'bg-white border-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase text-gray-500">
+                  Stock Crítico (≤ 3 un.)
+                </span>
+                <AlertTriangle
+                  className={`w-4 h-4 ${
+                    sellerKpis.stockCritico > 0 ? 'text-red-600' : 'text-gray-400'
+                  }`}
+                />
+              </div>
+              <p className="text-2xl font-extrabold text-gray-900">
+                {sellerKpis.stockCritico}
+              </p>
+              <span className="text-[11px] text-gray-500">
+                {sellerKpis.stockCritico > 0
+                  ? 'Requieren reposición pronta'
+                  : 'Inventario saludable'}
+              </span>
+            </div>
+          </section>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setProductSection('inventario')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                productSection === 'inventario'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Inventory2 fontSize="small" />
+              Mi Inventario ({activeItems.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setProductSection('despachos')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-colors ${
+                productSection === 'despachos'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <LocalShipping fontSize="small" />
+              Bandeja de Pedidos y Despachos ({productSellerOrders.length})
+            </button>
           </div>
-        ))}
-      </div>
+        </>
+      )}
+
+      {/* ==================== BANDEJA DE DESPACHOS (SOLO MODO PRODUCTOS) ==================== */}
+      {!isServiceMode && productSection === 'despachos' ? (
+        <section
+          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4"
+          aria-label="Gestión logística de pedidos recibidos"
+        >
+          <div>
+            <h2 className="text-lg font-extrabold text-gray-900">
+              Bandeja de Pedidos y Despachos ({productSellerOrders.length})
+            </h2>
+            <p className="text-xs text-gray-500">
+              Actualiza el estado de preparación, asigna courier con código de seguimiento y
+              confirma entregas
+            </p>
+          </div>
+
+          {productSellerOrders.length === 0 ? (
+            <p className="text-sm text-gray-500 py-8 text-center">
+              Aún no registras pedidos sobre tus productos publicados.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {productSellerOrders.map((ord) => {
+                const relevantItems = (ord.items || []).filter(
+                  (it) =>
+                    it.tipo !== 'Servicio' &&
+                    (isAdmin || String(it.ownerId) === String(currentUser?.id))
+                );
+                return (
+                  <div
+                    key={ord.id}
+                    className="p-5 rounded-xl bg-gray-50 border border-gray-200 space-y-3"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-sm font-extrabold text-gray-900">
+                          Pedido #{ord.id}
+                        </span>
+                        <span className="text-xs text-gray-500 ml-2">
+                          · {ord.fecha} · Cliente: <strong>{ord.compradorNombre}</strong>
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[11px] font-extrabold uppercase px-3 py-0.5 rounded-full ${
+                          ord.estado === 'Entregado'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : ord.estado === 'Enviado'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {ord.estado}
+                      </span>
+                    </div>
+
+                    {ord.cliente?.direccion && (
+                      <p className="text-xs text-gray-600">
+                        <strong>Destino:</strong> {ord.cliente.direccion}
+                        {ord.cliente.ciudad ? `, ${ord.cliente.ciudad}` : ''}
+                      </p>
+                    )}
+
+                    {ord.trackingCodigo && (
+                      <p className="text-xs text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg inline-block font-semibold">
+                        Courier: {ord.courier || 'Starken'} · Tracking: {ord.trackingCodigo}
+                      </p>
+                    )}
+
+                    <ul className="text-xs text-gray-700 space-y-1 bg-white p-3 rounded-lg border border-gray-100">
+                      {relevantItems.map((it, idx) => (
+                        <li key={idx} className="flex justify-between">
+                          <span>
+                            {it.quantity} × {it.title}
+                            {it.talla ? ` (${it.talla})` : ''}
+                          </span>
+                          <span className="font-bold">
+                            {formatCurrency(it.price * it.quantity)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      {ord.estado === 'Confirmado' && (
+                        <CustomButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAdvanceOrderState(ord, 'En Preparación')}
+                        >
+                          Pasar a En Preparación
+                        </CustomButton>
+                      )}
+                      {(ord.estado === 'Confirmado' || ord.estado === 'En Preparación') && (
+                        <CustomButton
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleAdvanceOrderState(ord, 'Enviado')}
+                        >
+                          Despachar y Asignar Tracking
+                        </CustomButton>
+                      )}
+                      {ord.estado === 'Enviado' && (
+                        <CustomButton
+                          variant="success"
+                          size="sm"
+                          onClick={() => handleAdvanceOrderState(ord, 'Entregado')}
+                        >
+                          Confirmar Entrega Final
+                        </CustomButton>
+                      )}
+                      {ord.estado === 'Entregado' && (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+                          <CheckCircle2 className="w-4 h-4" /> Despacho completado
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          {/* Tabla Desktop */}
+          <div className="hidden md:block">
+            <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 3 }}>
+              <Table sx={{ minWidth: 650 }}>
+                <TableHead className="bg-gray-50">
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800 }}>Ítem</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Categoría</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>
+                      {isServiceMode ? 'Modalidad / Tipo' : 'Stock'}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Moderación</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }} align="right">
+                      {isServiceMode ? 'Tarifa Base' : 'Precio'}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800 }} align="center">
+                      Acciones
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {activeItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: '#6b7280' }}>
+                        Aún no tienes publicaciones registradas en este portal.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    activeItems.map((item) => {
+                      const status = item.estadoModeracion || MODERATION_STATUS.APROBADO;
+                      const badgeClass =
+                        MODERATION_BADGE_STYLES[status] || MODERATION_BADGE_STYLES.Aprobado;
+                      const canTogglePause =
+                        status === MODERATION_STATUS.APROBADO ||
+                        (status === MODERATION_STATUS.PAUSADO && item.aprobadoPorAdmin);
+
+                      return (
+                        <TableRow key={item.id} hover>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={item.image}
+                                alt={item.nombre || item.title}
+                                className="w-11 h-11 rounded-lg object-cover bg-gray-100 border border-gray-200"
+                              />
+                              <div>
+                                <p className="font-bold text-gray-900 text-sm">
+                                  {item.nombre || item.title}
+                                </p>
+                                <span className="text-xs text-gray-500">
+                                  {item.marca || item.brand} {item.sku ? `· ${item.sku}` : ''}
+                                  {isAdmin && item.vendedorNombre ? ` · ${item.vendedorNombre}` : ''}
+                                </span>
+                                {status === MODERATION_STATUS.RECHAZADO && item.motivoRechazo && (
+                                  <span className="block text-[11px] font-semibold text-red-600 mt-0.5">
+                                    Motivo rechazo: {item.motivoRechazo}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.categoria}</TableCell>
+                          <TableCell>
+                            {isServiceMode ? (
+                              <span className="text-xs font-semibold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full">
+                                {item.modalidad || 'Presencial'} ·{' '}
+                                {item.permiteCotizacion === 'sí' ? 'Cotizable' : 'Fijo'}
+                              </span>
+                            ) : (
+                              <span
+                                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                  (item.stock ?? 10) <= 3
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'text-gray-700 bg-gray-100'
+                                }`}
+                              >
+                                {item.stock ?? 10} un.
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeClass}`}
+                            >
+                              {status}
+                            </span>
+                          </TableCell>
+                          <TableCell align="right">
+                            <span className="font-extrabold text-gray-900">
+                              {formatCurrency(item.price ?? item.precio)}
+                            </span>
+                            {item.ofertaActiva && item.descuentoPorcentaje > 0 && (
+                              <span className="block text-[10px] font-bold text-green-700">
+                                Oferta -{item.descuentoPorcentaje}%
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {canTogglePause && (
+                              <Tooltip
+                                title={
+                                  status === MODERATION_STATUS.PAUSADO
+                                    ? 'Reactivar publicación'
+                                    : 'Pausar publicación'
+                                }
+                              >
+                                <IconButton
+                                  color={status === MODERATION_STATUS.PAUSADO ? 'success' : 'default'}
+                                  aria-label={`Pausar o reactivar ${item.nombre || item.title}`}
+                                  onClick={() => {
+                                    togglePauseItem(item.id, item.tipo);
+                                    showToast(
+                                      status === MODERATION_STATUS.PAUSADO
+                                        ? 'Publicación reactivada en el catálogo.'
+                                        : 'Publicación pausada temporalmente.',
+                                      'info'
+                                    );
+                                  }}
+                                >
+                                  {status === MODERATION_STATUS.PAUSADO ? (
+                                    <PlayArrow fontSize="small" />
+                                  ) : (
+                                    <Pause fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            <IconButton
+                              color="primary"
+                              aria-label={`Editar ${item.nombre || item.title}`}
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              color="error"
+                              aria-label={`Eliminar ${item.nombre || item.title}`}
+                              onClick={() => {
+                                setDeleteId(item.id);
+                                setOpenDelete(true);
+                              }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
+
+          {/* Tarjetas Móvil */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {activeItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h2 className="font-bold text-gray-900 text-sm">{item.nombre || item.title}</h2>
+                    <span className="text-xs text-gray-500">{item.categoria}</span>
+                  </div>
+                  <span className="font-extrabold text-gray-900">
+                    {formatCurrency(item.price ?? item.precio)}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-gray-100">
+                  <IconButton
+                    size="small"
+                    aria-label={`Editar ${item.nombre || item.title}`}
+                    onClick={() => handleEdit(item)}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label={`Eliminar ${item.nombre || item.title}`}
+                    onClick={() => {
+                      setDeleteId(item.id);
+                      setOpenDelete(true);
+                    }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Bandeja de Solicitudes de Cotización (visible solo en el Portal de Servicios) */}
       {isServiceMode && (
@@ -1003,6 +1366,68 @@ const AdminProductos = ({ mode = 'productos' }) => {
           )}
         </section>
       )}
+
+      {/* Modal Asignación de Courier y Código de Seguimiento */}
+      <Dialog
+        open={shippingModal.open}
+        onClose={() =>
+          setShippingModal({ open: false, order: null, courier: 'Starken', trackingCodigo: '' })
+        }
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          Despachar Pedido #{shippingModal.order?.id}
+        </DialogTitle>
+        <form onSubmit={handleConfirmShipping}>
+          <DialogContent dividers className="space-y-4">
+            <CustomTextField
+              select
+              label="Empresa de Transporte / Courier"
+              name="courier"
+              value={shippingModal.courier}
+              onChange={(e) =>
+                setShippingModal({ ...shippingModal, courier: e.target.value })
+              }
+            >
+              {COURIERS_CHILE.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </CustomTextField>
+
+            <CustomTextField
+              label="Código de Seguimiento (Tracking)"
+              name="trackingCodigo"
+              placeholder="Ej: STARKEN-8841209"
+              value={shippingModal.trackingCodigo}
+              onChange={(e) =>
+                setShippingModal({ ...shippingModal, trackingCodigo: e.target.value })
+              }
+              required
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={() =>
+                setShippingModal({
+                  open: false,
+                  order: null,
+                  courier: 'Starken',
+                  trackingCodigo: '',
+                })
+              }
+              color="inherit"
+            >
+              Cancelar
+            </Button>
+            <CustomButton type="submit" variant="primary" size="sm">
+              Confirmar Envío
+            </CustomButton>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Confirmación de eliminación */}
       <Dialog open={openDelete} onClose={() => !isLoading && setOpenDelete(false)}>

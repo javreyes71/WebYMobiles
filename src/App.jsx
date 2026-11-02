@@ -15,6 +15,7 @@ import Contacto from '@/pages/Contacto/Contacto';
 import AdminProductos from '@/pages/AdminProductos/AdminProductos';
 import AdminUsuarios from '@/pages/AdminUsuarios/AdminUsuarios';
 import Perfil from '@/pages/Perfil/Perfil';
+import PerfilVendedor from '@/pages/PerfilVendedor/PerfilVendedor';
 import { CartProvider } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
@@ -49,6 +50,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     {/* Páginas estrictamente separadas para Ventas (Tienda) vs Oferta de Servicios */}
                     <Route path="/tienda" element={<Tienda />} />
+                    <Route path="/tienda/vendedor/:id" element={<PerfilVendedor />} />
                     <Route
                       path="/servicios"
                       element={<Servicios onRequireLogin={openLogin} />}

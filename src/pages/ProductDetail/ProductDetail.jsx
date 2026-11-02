@@ -398,10 +398,13 @@ const ProductDetail = () => {
                       ({item.reviews?.length || 0})
                     </span>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full">
+                  <Link
+                    to={`/tienda/vendedor/${item.ownerId || item.vendedorId || 2}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 px-2.5 py-1 rounded-full transition-colors"
+                  >
                     <Store className="w-3.5 h-3.5" />
-                    Vendido por: {item.vendedorNombre || item.brand} ({item.vendedorTipo || 'Empresa'})
-                  </span>
+                    Vendido por: <strong className="underline">{item.vendedorNombre || item.brand}</strong> ({item.vendedorTipo || 'Empresa'})
+                  </Link>
                 </div>
 
                 {/* Precio */}
