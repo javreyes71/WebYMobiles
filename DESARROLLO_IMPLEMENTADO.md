@@ -1,232 +1,165 @@
 # Documentación Técnica de Desarrollo Implementado — Vento Marketplace (WYM)
 
-Este documento detalla la implementación integral en **5 fases** realizada sobre el repositorio **WebYMobiles (Vento Marketplace)**, junto con la matriz de verificación de cumplimiento de todos los requerimientos funcionales solicitados y los estándares técnicos/académicos establecidos en la carpeta `pdfs/` (*Tecnologías Web y Móviles*).
+Este documento detalla la arquitectura e implementación integral realizada sobre **Vento Marketplace (`WebYMobiles`)**, cubriendo la base E-Commerce/Servicios y las **Fases F0 a F5** del sistema multi-perfil (**RBAC de 4 roles + Moderación Previa Estricta + Flujos Bidireccionales**), verificadas contra los lineamientos académicos de *Tecnologías Web y Móviles*.
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Resumen Ejecutivo de la Plataforma
 
-Se evolucionó la aplicación hacia un **Marketplace de Compra/Venta de Productos y Contratación/Cotización de Servicios Profesionales** de nivel productivo, manteniendo el stack base (**React 18 + Vite 5 + Tailwind CSS 3 + Material UI 6 + React Router DOM 6**) y resolviendo brechas arquitectónicas, funcionales y de experiencia de usuario:
+1. **Separación Estricta entre Venta de Productos y Oferta de Servicios:**
+   - Barra superior (`Navbar`) con acceso público y permanente a **`TIENDA`** (`/tienda`) y **`SERVICIOS`** (`/servicios`).
+   - En ninguna vista pública ni panel de gestión se mezclan artículos físicos (`Producto`) con prestaciones profesionales (`Servicio`).
+   - Portales independientes por rol: `/admin/productos` + `/tienda/vendedor/:id` para vendedores de productos, y `/admin/servicios` + `/servicios/proveedor/:id` para proveedores de servicios.
 
-- **Separación estricta entre Ventas y Servicios:** La barra superior (`Navbar`) incorpora de forma permanente y pública la sección **`SERVICIOS`** (`/servicios`), totalmente independiente de **`TIENDA`** (`/tienda`). En ninguna vista de catálogo ni tabla de administración se mezclan productos físicos con servicios profesionales.
-- **Autenticación completa y accesible:** Incorporación del botón de **ojo (`Visibility` / `VisibilityOff`)** para visualizar caracteres en todos los campos de contraseña (Login y Registro), flujo interactivo **`¿Olvidaste tu contraseña?`**, casilla **`Recordar usuario`**, auto-formateo de **RUT chileno** en tiempo real con validación Módulo 11 y control de duplicados (`409 Conflict`).
-- **Corrección de bugs críticos y flujo E-Commerce de punta a punta:** Reparación del error fatal `clearCart is not a function` en `Checkout.jsx`, unificación matemática entre Carrito y Checkout (despacho gratis desde `$50.000` y cupones de descuento reales), ofertas con recálculo real de precios (eliminando ítems corruptos con `$NaN`), carga de imágenes locales con previsualización (`FileReader`), galería interactiva, control de stock, reseñas, lista de deseos (*Wishlist*) y **Modal de Cotización de Servicios (`QuoteModal`)**.
-- **Cumplimiento de estándares académicos (PDFs del curso):** Arquitectura estricta **Atomic Design**, alias `@/` en Vite, HTML5 semántico **W3C**, accesibilidad **WCAG**, variables de entorno (`VITE_API_URL` + `.env.example`), cliente HTTP con validación `respuesta.ok` y `try/catch`, contrato JSON `{ success, message, data, errors }` y manejo explícito de los **4 estados de interfaz con Material UI** (*Cargando*, *Éxito*, *Error de validación* y *Fallo de conexión*).
+2. **Arquitectura RBAC de 4 Perfiles con Propiedad de Datos (`ownerId` / `compradorId`):**
+   - **`Admin` (Administrador General):** Gobierno total de la plataforma, colas de aprobación previa de cuentas comerciales y publicaciones, gestión de usuarios (incluyendo suspensión con bloqueo `403 Forbidden`), destacados en portada, motor dinámico de cupones y bandeja de tickets de soporte.
+   - **`VendedorProducto` (Vendedor de Productos):** Dashboard de ventas y alertas de stock crítico (`≤ 3`), inventario propio aislado por `ownerId`, creación de ofertas reales, bandeja logística de despachos (*Confirmado* → *En Preparación* → *Enviado* con courier y código de seguimiento → *Entregado*) y tienda pública verificable. Conserva capacidad de compra.
+   - **`ProveedorServicio` (Proveedor de Servicios):** Dashboard de proyectos, portafolio propio aislado por `ownerId`, CRM interactivo de cotizaciones (envío de **Propuesta Formal** con monto CLP, plazo, vigencia y alcance; avance a *En Ejecución* y *Completado*) y perfil profesional público con credenciales. Conserva capacidad de compra.
+   - **`Comprador` (Usuario Comprador):** Libreta de direcciones chilenas (Región/Comuna) integrada en un clic con Checkout, cambio de contraseña con verificación de clave actual y botón de ojo, seguimiento visual de pedidos con `Stepper` MUI y boleta imprimible, aceptación/pago o rechazo de propuestas de servicio, reseñas con sello *"Compra Verificada"* / *"Servicio Verificado"* y formulario de postulación a rol comercial.
 
----
-
-## 2. Desarrollo Implementado por Fases
-
-### Fase 1: Arquitectura Atómica, Alias `@/`, Tema MUI y Estándar W3C/WCAG
-
-1. **Configuración de Build y Variables de Entorno:**
-   - `vite.config.js`: Configuración del alias `@/` apuntando a `./src` (según *Guía REACT y MUI.pdf*, pág. 5) y particionado de bundles (`manualChunks` para `vendor-react`, `vendor-mui` y `vendor-icons`) optimizando la carga en producción sin advertencias de tamaño ni ciclos.
-   - `.gitignore` y `.env.example`: Protección de `.env` y documentación de `VITE_API_URL` para conexión limpia con un backend `.NET + PostgreSQL`.
-   - `index.html`: Cambio de idioma raíz a `<html lang="es">` y metadatos descriptivos en español.
-2. **Tema Global y Utilidades de Validación:**
-   - `src/theme.js`: Definición de paleta corporativa Vento, tipografía `Inter` y bordes redondeados consistentes para componentes Material UI.
-   - `src/utils/validators.js`: Implementación de `validateRUT` (Módulo 11), `formatRUT` (formateo dinámico `XX.XXX.XXX-X`), `normalizeRUT`, `validateEmail`, `getInitials` y `formatCurrency` (`CLP`).
-3. **Átomos y Organismo Global:**
-   - `src/components/atoms/TextField/CustomTextField.jsx`: Campo reutilizable basado en MUI `TextField` que detecta automáticamente `type="password"` e inyecta un `IconButton` accesible (`aria-label`) con íconos `Visibility` y `VisibilityOff`.
-   - `src/components/atoms/Button/CustomButton.jsx`: Botón atómico con estado `loading` (`CircularProgress`), soporte de íconos y variantes (`primary`, `secondary`, `service`, `danger`, `outline`).
-   - `src/components/atoms/Logo/Logo.jsx`, `NavLinkItem/NavLinkItem.jsx` y `ProtectedRoute/ProtectedRoute.jsx` (guardián de rutas autenticadas y de rol `Admin`).
-   - `src/components/organisms/Footer/Footer.jsx`: Pie de página semántico `<footer>` global con enlaces rápidos a Tienda, Servicios, Carrito, Contacto y garantías de compra segura.
+3. **Regla de Moderación Previa Estricta:**
+   - Las cuentas nuevas o postulaciones a `VendedorProducto` / `ProveedorServicio` nacen en estado `Pendiente` hasta que el `Admin` las aprueba (pudiendo otorgar insignia *"Verificado"* o rechazar con observación).
+   - Toda publicación nueva creada por un vendedor o proveedor entra como `Pendiente` (invisible en `/tienda` y `/servicios` hasta su aprobación).
+   - Si un vendedor/proveedor edita campos comerciales públicos (título, precio, imagen, descripción, categoría, marca o modalidad), la publicación vuelve automáticamente a `Pendiente`. Los ajustes de stock o pausar/reactivar son inmediatos sin requerir re-aprobación.
 
 ---
 
-### Fase 2: Barra Superior y Separación Total de "Tienda (Ventas)" vs. "Servicios"
+## 2. Detalle Técnico por Fases Implementadas (F0 a F5)
 
-1. **Barra Superior (`src/components/organisms/Navbar/Navbar.jsx`):**
-   - Navegación principal visible para todo usuario (autenticado o visitante): **`INICIO`** (`/`), **`TIENDA`** (`/tienda`), **`SERVICIOS`** (`/servicios`) y **`CONTACTO`** (`/contacto`).
-   - Acciones diferenciadas para usuarios autenticados: **`Vender`** (`/admin/productos`) separado de **`Ofrecer Servicio`** (`/admin/servicios`).
-   - Indicadores dinámicos con contadores para **Favoritos (*Wishlist*)** y **Carrito de Compras**, además de menú móvil responsive completo.
-2. **Datasets y Modelos Independientes:**
-   - `src/data/products.js`: Catálogo exclusivo de productos físicos (`tipo: 'Producto'`) con `stock`, múltiples imágenes (`images`), `marca`, `genero`, `tallas`, `envioGratis`, `rating` y `reviews`.
-   - `src/data/services.js`: Catálogo exclusivo de servicios profesionales (`tipo: 'Servicio'`) con `modalidad` (*Presencial*, *Remoto / Online*, *A Domicilio*), `duracionEstimada`, `cobertura`, `profesional`, `experiencia`, `garantia` e ilustraciones vectoriales embebidas listas para uso sin conexión.
-3. **Componentes y Vistas Especializadas:**
-   - `src/components/molecules/ServiceCard/ServiceCard.jsx`: Tarjeta exclusiva para servicios (distinta visual y funcionalmente de `ProductCard.jsx`), destacando modalidad, cobertura, tiempo estimado, proveedor verificado y botón directo **`Solicitar Cotización`**.
-   - `src/pages/Servicios/Servicios.jsx`: Página dedicada en `/servicios` con identidad visual propia, buscador especializado, filtros por categoría de servicio, modalidad, cobertura geográfica, rango tarifario, ordenamiento y apertura directa del modal de cotización.
-   - `src/pages/Tienda/Tienda.jsx`: Aislada estrictamente para renderizar solo artículos físicos (`tipo === 'Producto'`), con enlace cruzado informativo hacia `/servicios` sin mezclar listados.
+### Fase F0: Núcleo RBAC, Propiedad de Datos y Moderación Base
+- **`frontend/src/utils/roles.js`:** Definición centralizada de `ROLES`, `ACCOUNT_STATUS`, `APPROVAL_STATUS`, `MODERATION_STATUS`, `normalizeUserRoles()`, `canAccessProductPanel()`, `canAccessServicePanel()` y `didCommercialContentChange()`.
+- **`frontend/src/components/atoms/ProtectedRoute/ProtectedRoute.jsx`:** Guardián RBAC que recibe `allowedRoles` y despliega una vista semántica **HTTP 403 Acceso Restringido** cuando el rol no posee permisos.
+- **`frontend/src/services/api.js`:** Cliente HTTP preparado para `import.meta.env.VITE_API_URL` con validación `respuesta.ok`, `try/catch` y respaldo local persistente (`_v2`) con validación de RUT Módulo 11, bloqueo de login fantasma (`401`), bloqueo de suspendidos (`403`), prevención de auto-asignación de `Admin` (`403`) y control de duplicados (`409`).
 
----
+### Fase F1: Perfil Usuario Comprador (`Comprador`)
+- **`frontend/src/utils/chileGeo.js`:** División político-administrativa de Chile (Regiones y Comunas) compartida entre Perfil y Checkout.
+- **`frontend/src/pages/Perfil/Perfil.jsx`:**
+  - **Libreta de Direcciones:** Creación, eliminación y marcación de dirección predeterminada sincronizada con `Checkout.jsx`.
+  - **Seguridad:** Cambio de contraseña validando clave actual con alternancia de visibilidad (`Eye` / `EyeOff`).
+  - **Mis Pedidos con `Stepper` MUI:** Visualización de etapas logísticas (*Confirmado* → *En Preparación* → *Enviado* con courier y código de tracking → *Entregado*) y emisión de boleta electrónica imprimible.
+  - **Cotizaciones Interactivas:** Recepción de propuestas formales con botones **"Aceptar y Pagar"** (carga el servicio acordado al carrito y redirige a `/checkout`, pasando a *En Ejecución* tras el pago) y **"Rechazar Propuesta"**.
+  - **Postulación Comercial:** Formulario para solicitar habilitación como `VendedorProducto`, `ProveedorServicio` o `Ambos`, entrando directo a la cola del Administrador.
+- **`frontend/src/pages/ProductDetail/ProductDetail.jsx`:** Detección automática de transacciones reales del usuario para otorgar el sello **"Compra Verificada"** o **"Servicio Verificado"** en sus valoraciones.
 
-### Fase 3: Autenticación Completa y Seguridad de Formularios
+### Fase F2: Perfil Vendedor de Productos (`VendedorProducto`)
+- **`frontend/src/pages/AdminProductos/AdminProductos.jsx` (`mode="productos"`):**
+  - Tarjetas KPI en tiempo real: *Ingresos Acumulados*, *Despachos Activos*, *Productos Publicados* y *Stock Crítico (`≤ 3` unidades)*.
+  - Pestaña **Bandeja de Pedidos y Despachos** con modal para asignar empresa de transporte (*Starken*, *Chilexpress*, *Bluexpress*, *Correos de Chile*) y código de seguimiento, reflejado instantáneamente en el `Stepper` del comprador.
+- **`frontend/src/pages/PerfilVendedor/PerfilVendedor.jsx` (`/tienda/vendedor/:id`):** Escaparate público exclusivo de productos aprobados de la tienda, reputación promedio, filtro por categorías e insignia *"Tienda Verificada"*.
 
-1. **Molécula `LoginForm` (`src/components/molecules/LoginForm/LoginForm.jsx`):**
-   - Construida siguiendo explícitamente el ejemplo de *Estructura y Componentes.pptx.pdf* (pág. 10), integrando:
-     - Campo RUT con auto-formateo en vivo y validación Módulo 11.
-     - Campo Contraseña con **botón de ojo** para mostrar/ocultar caracteres.
-     - Casilla **`Recordar usuario`** (`Checkbox` MUI) que persiste el RUT para futuros inicios de sesión.
-     - Enlace **`¿Olvidaste tu contraseña?`**.
-     - Alertas MUI para validación (`400`), credenciales inválidas (`401`), fallo de conexión y estado de carga.
-2. **Recuperación de Contraseña (`src/pages/Login/Login.jsx`):**
-   - Flujo interactivo completo para **`¿Olvidaste tu contraseña?`**: solicita RUT o correo electrónico registrado, valida existencia contra la capa de servicio, muestra estado de carga y despliega pantalla de confirmación con instrucciones de restablecimiento.
-3. **Registro con Validación Exhaustiva (`src/pages/Register/Register.jsx`):**
-   - Selector de tipo de cuenta (**Comprador**, **Vendedor de Productos**, **Proveedor de Servicios**), validación campo por campo, **botón de ojo** tanto en *Contraseña* como en *Confirmar Contraseña*, verificación de coincidencia y manejo del código **`409 Conflict`** si el RUT o correo ya existen.
+### Fase F3: Perfil Proveedor de Servicios (`ProveedorServicio`)
+- **`frontend/src/pages/AdminProductos/AdminProductos.jsx` (`mode="servicios"`):**
+  - Tarjetas KPI profesionales: *Por Cotizar*, *En Ejecución*, *Facturación Cotizada* y *Portafolio Activo*.
+  - **CRM de Cotizaciones y Proyectos:** Filtros por estado, modal de **Propuesta Formal** (`monto` CLP, `plazo`, `validez` y `detalle` técnico) y botones para avanzar servicios pagados desde *En Ejecución* hasta *Completado*.
+- **`frontend/src/pages/PerfilProveedor/PerfilProveedor.jsx` (`/servicios/proveedor/:id`):** Perfil profesional público con especialidad, años de experiencia, certificaciones acreditadas y portafolio exclusivo de `ServiceCard`.
 
----
+### Fase F4: Centro de Gobierno Administrador (`Admin`)
+- **`frontend/src/pages/AdminUsuarios/AdminUsuarios.jsx`:** Reescritura integral como consola ejecutiva en 6 módulos:
+  1. **Aprobación de Cuentas Comerciales:** Aprobar con sello *"Verificado"*, aprobar estándar o rechazar con motivo obligatorio.
+  2. **Moderación y Destacados de Catálogo:** Colas separadas para Productos y Servicios pendientes, rechazo con observación al autor y botón **Destacar** conectado con la portada (`Home.jsx`).
+  3. **Usuarios y Roles (CRUD Unificado):** Búsqueda por RUT/correo/tienda, creación de cuentas/administradores, edición de roles, insignia de verificación y suspensión de acceso (`403`).
+  4. **Motor Dinámico de Cupones:** Creación, pausa/activación y eliminación de códigos promocionales conectados en vivo al Carrito y Checkout.
+  5. **Bandeja de Soporte:** Gestión y respuesta de tickets generados desde `Contacto.jsx` (`TCK-XXXX`).
+  6. **Datos Corporativos:** Configuración de RUT legal, razón social, sitio web y logo corporativo.
 
-### Fase 4: Experiencia Avanzada de Compra, Venta, Cotizaciones y Checkout
-
-1. **Inicio Conectado (`src/pages/Home/Home.jsx`):**
-   - Buscador superior funcional con selector de destino (**Productos en Tienda** vs. **Servicios**) que redirige con query params (`?q=...`).
-   - Corrección de las imágenes invertidas en categorías (*Ropa* vs. *Zapatos*) y navegación directa filtrada (`/tienda?categoria=...`).
-   - Bloques separados para **Productos Destacados** y **Servicios Profesionales Verificados**.
-2. **Filtros Completos en Tienda (`src/pages/Tienda/Tienda.jsx`):**
-   - Implementación real de todos los filtros laterales (anteriormente varios sin estado): **Búsqueda por texto**, **Categoría**, **Rango de Precio (`Slider` MUI)**, **Marca**, **Género**, **Talla**, **Solo Despacho Gratis (`Switch` MUI)**, **Ordenamiento** (*Relevancia*, *Menor precio*, *Mayor precio*, *Mejor evaluados*) y contador de filtros activos con limpieza en un clic.
-3. **Ficha de Detalle y Cotizaciones (`src/pages/ProductDetail/ProductDetail.jsx` y `QuoteModal.jsx`):**
-   - Galería con miniaturas interactivas, selector de talla y cantidad validado contra `stock`, botón de **Favoritos**, envío y publicación de **Reseñas con calificación (`Rating` MUI)** y productos/servicios relacionados del mismo tipo.
-   - Si el ítem es un **Servicio** (`/servicio/:id`), adapta la interfaz mostrando cobertura, modalidad, duración y habilitando tanto **Solicitud de Cotización (`QuoteModal`)** como reserva directa.
-4. **Carrito y Checkout Reparados (`CartContext.jsx`, `Cart.jsx`, `Checkout.jsx`):**
-   - Implementación de `clearCart()` en `CartContext.jsx`, eliminando el crash al confirmar pago en `Checkout.jsx`.
-   - Cálculo unificado en todo el flujo: barra de progreso hacia **Despacho Gratis sobre `$50.000`** (`$4.990` bajo el umbral; `$0` para servicios digitales/remotos) y motor de **cupones promocionales** (`VENTO10`, `BIENVENIDO`, `VENTO20`).
-   - Registro automático de cada compra confirmada en el historial de **Mis Pedidos** con código único de orden y descuento de stock.
-5. **Portales Separados de Gestión y Ofertas Reales (`AdminProductos.jsx`):**
-   - `/admin/productos` (`mode="productos"`): Publicación, edición, control de stock y creación de ofertas exclusivamente sobre productos físicos.
-   - `/admin/servicios` (`mode="servicios"`): Publicación, edición y promociones exclusivamente sobre servicios profesionales (con campos de modalidad, duración, cobertura y garantía).
-   - **Carga de imágenes reales** desde el dispositivo mediante `FileReader` (con previsualización instantánea y validación de tamaño) o mediante URL externa.
-   - **Reparación de `Crear Oferta`:** Ahora selecciona un producto/servicio existente y aplica el porcentaje real calculando `precioOriginal`, `discount` y nuevo `price` numérico (eliminando el bug anterior que creaba tarjetas vacías con `$NaN`).
-6. **Perfil Dinámico (`src/pages/Perfil/Perfil.jsx`):**
-   - Edición real de datos personales con persistencia, pestaña **Mis Pedidos** conectada a órdenes reales de Checkout, pestaña **Mis Cotizaciones de Servicios** y pestaña **Lista de Deseos (Favoritos)**.
+### Fase F5: Documentación y Reestructuración Simétrica `/frontend` + `/backend`
+- Reorganización limpia mediante `git mv` preservando historial hacia `/frontend` y `/backend`, dejando la raíz preparada para la API en **ASP.NET Core + Entity Framework Core + PostgreSQL**.
 
 ---
 
-### Fase 5: Capa API REST (`VITE_API_URL`), 4 Estados UI y Verificación de Producción
+## 3. Matriz de Verificación Académica y Funcional
 
-1. **Cliente y Servicio API (`src/services/api.js`):**
-   - Lee `import.meta.env.VITE_API_URL`. Cuando está configurada, ejecuta peticiones `fetch()` reales verificando `if (!respuesta.ok)` dentro de bloques `try/catch`.
-   - Cuando se ejecuta sin backend externo configurado, opera sobre una capa persistente en `localStorage` que respeta exactamente el mismo contrato JSON estandarizado (`{ success, message, data, errors, status }`) y códigos HTTP (`200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `404 Not Found`, `409 Conflict`).
-2. **Los 4 Estados de Interfaz con Material UI:**
-   - Implementados en formularios críticos (`LoginForm`, `Login`, `Register`, `Contacto`, `QuoteModal`, `Checkout`):
-     1. **Cargando:** `CircularProgress` y deshabilitación preventiva de botones durante peticiones asíncronas.
-     2. **Éxito:** `Alert severity="success"` y confirmaciones visuales con código de seguimiento/orden.
-     3. **Error de validación (`400` / `401` / `409`):** `Alert severity="error"` detallando mensajes específicos y `helperText` por campo.
-     4. **Fallo de conexión:** `Alert severity="warning"` ante errores de red capturados en `catch`.
-
----
-
-## 3. Matriz de Verificación de Cumplimiento
-
-### 3.1 Requerimientos Funcionales del Usuario
-
-| Requerimiento | Estado | Implementación / Archivos Clave |
+| Estándar / Requerimiento | Estado | Implementación Verificada |
 | :--- | :---: | :--- |
-| Sección **SERVICIOS** obligatoria en la barra superior | Cumplido | `src/components/organisms/Navbar/Navbar.jsx` (enlace público `/servicios` en desktop y móvil) |
-| Ventas y oferta de servicios en páginas separadas (nunca mezcladas) | Cumplido | `/tienda` (`Tienda.jsx`) solo `Producto` vs. `/servicios` (`Servicios.jsx`) solo `Servicio`; `/admin/productos` vs. `/admin/servicios` |
-| Ícono de **ojo** para ver/ocultar caracteres de contraseña | Cumplido | `src/components/atoms/TextField/CustomTextField.jsx` integrado en `LoginForm.jsx` y `Register.jsx` |
-| Opción **"¿Olvidaste tu contraseña?"** funcional | Cumplido | `src/components/molecules/LoginForm/LoginForm.jsx` + vista de recuperación en `src/pages/Login/Login.jsx` |
-| Reparación de flujo de compra, carrito, checkout y ofertas | Cumplido | `CartContext.jsx` (`clearCart`, cupones, envío), `Checkout.jsx`, `AdminProductos.jsx` |
-
-### 3.2 Requerimientos Académicos (`pdfs/`)
-
-| Documento PDF de Referencia | Requerimiento Técnico | Estado | Evidencia en el Código |
-| :--- | :--- | :---: | :--- |
-| `[TWM] Semana 1–4` | HTML5 semántico W3C (`header`, `nav`, `main`, `section`, `article`, `aside`, `footer`) y `lang="es"` | Cumplido | `index.html`, `App.jsx`, `Navbar.jsx`, `Footer.jsx`, `Tienda.jsx`, `Servicios.jsx` |
-| `[TWM] Semana 2` | Accesibilidad WCAG (`aria-label`, `alt` descriptivos, navegación por teclado y contraste) | Cumplido | `CustomTextField.jsx`, `Navbar.jsx`, `ProductCard.jsx`, `ServiceCard.jsx` |
-| `Estructura y Componentes.pptx.pdf` | Atomic Design (`atoms`, `molecules`, `organisms`, `pages`) y molécula `LoginForm` con `Checkbox` *"Recordar usuario"* | Cumplido | `src/components/atoms/*`, `src/components/molecules/LoginForm/LoginForm.jsx` |
-| `Guia REACT y MUI.pdf` | Configuración de alias `@/` en `vite.config.js` e integración coherente de `ThemeProvider` MUI + Tailwind | Cumplido | `vite.config.js`, `src/theme.js`, `src/main.jsx` |
-| `Contenido backend-1.pdf` | Uso de `import.meta.env.VITE_API_URL`, `.env` en `.gitignore`, verificación `respuesta.ok`, `try/catch`, contrato `{ success, message, data, errors }` y 4 estados UI | Cumplido | `.gitignore`, `.env.example`, `src/services/api.js`, `Contacto.jsx`, `LoginForm.jsx`, `Register.jsx` |
+| Barra superior con sección **SERVICIOS** separada de **TIENDA** | Cumplido | `Navbar.jsx`, `/tienda` vs. `/servicios`, `/admin/productos` vs. `/admin/servicios` |
+| Visibilidad de contraseña (ojo) y recuperación de clave | Cumplido | `CustomTextField.jsx`, `LoginForm.jsx`, `Login.jsx`, `Register.jsx`, `Perfil.jsx` |
+| 4 Perfiles RBAC con propiedad de datos y moderación estricta | Cumplido | `roles.js`, `ProtectedRoute.jsx`, `AuthContext.jsx`, `ProductContext.jsx`, `CartContext.jsx` |
+| HTML5 Semántico W3C (`lang="es"`) y Accesibilidad WCAG | Cumplido | `index.html`, `header`, `nav`, `main`, `section`, `article`, `aside`, `footer`, `aria-label` |
+| Atomic Design + Alias `@/` + Tema MUI coherente | Cumplido | `frontend/vite.config.js`, `frontend/jsconfig.json`, `atoms/`, `molecules/`, `organisms/`, `pages/` |
+| `VITE_API_URL`, `respuesta.ok`, `try/catch` y `{ success, message, data, errors }` | Cumplido | `frontend/.env.example`, `.gitignore`, `frontend/src/services/api.js` |
+| Estructura simétrica `/frontend` y `/backend` | Cumplido | `frontend/` (SPA React compilada sin errores) + `backend/` (guía `Vento.Api`) |
 
 ---
 
-## 4. Estructura del Proyecto (Atomic Design)
+## 4. Árbol Actualizado del Proyecto
 
 ```text
-d:\wym
-├── .env.example
+WebYMobiles/
 ├── .gitignore
-├── index.html
-├── vite.config.js
+├── README.md
+├── MINUTA.md
 ├── DESARROLLO_IMPLEMENTADO.md
-└── src/
-    ├── App.jsx
-    ├── main.jsx
-    ├── theme.js
-    ├── components/
-    │   ├── atoms/
-    │   │   ├── Button/CustomButton.jsx
-    │   │   ├── Logo/Logo.jsx
-    │   │   ├── NavLinkItem/NavLinkItem.jsx
-    │   │   ├── ProtectedRoute/ProtectedRoute.jsx
-    │   │   └── TextField/CustomTextField.jsx
-    │   ├── molecules/
-    │   │   ├── LoginForm/LoginForm.jsx
-    │   │   ├── ProductCard/ProductCard.jsx
-    │   │   ├── QuoteModal/QuoteModal.jsx
-    │   │   └── ServiceCard/ServiceCard.jsx
-    │   └── organisms/
-    │       ├── Footer/Footer.jsx
-    │       └── Navbar/Navbar.jsx
-    ├── context/
-    │   ├── AuthContext.jsx
-    │   ├── CartContext.jsx
-    │   ├── ProductContext.jsx
-    │   └── ToastContext.jsx
-    ├── data/
-    │   ├── products.js
-    │   └── services.js
-    ├── pages/
-    │   ├── AdminProductos/AdminProductos.jsx
-    │   ├── AdminUsuarios/AdminUsuarios.jsx
-    │   ├── Cart/Cart.jsx
-    │   ├── Checkout/Checkout.jsx
-    │   ├── Contacto/Contacto.jsx
-    │   ├── Home/Home.jsx
-    │   ├── Login/Login.jsx
-    │   ├── Perfil/Perfil.jsx
-    │   ├── ProductDetail/ProductDetail.jsx
-    │   ├── Register/Register.jsx
-    │   ├── Servicios/Servicios.jsx
-    │   └── Tienda/Tienda.jsx
-    ├── services/
-    │   └── api.js
-    └── utils/
-        └── validators.js
+├── backend/
+│   └── README.md
+└── frontend/
+    ├── .env.example
+    ├── index.html
+    ├── jsconfig.json
+    ├── package.json
+    ├── postcss.config.js
+    ├── tailwind.config.js
+    ├── vite.config.js
+    └── src/
+        ├── App.jsx
+        ├── main.jsx
+        ├── theme.js
+        ├── components/
+        │   ├── atoms/
+        │   │   ├── Button/CustomButton.jsx
+        │   │   ├── Logo/Logo.jsx
+        │   │   ├── NavLinkItem/NavLinkItem.jsx
+        │   │   ├── ProtectedRoute/ProtectedRoute.jsx
+        │   │   └── TextField/CustomTextField.jsx
+        │   ├── molecules/
+        │   │   ├── LoginForm/LoginForm.jsx
+        │   │   ├── ProductCard/ProductCard.jsx
+        │   │   ├── QuoteModal/QuoteModal.jsx
+        │   │   └── ServiceCard/ServiceCard.jsx
+        │   └── organisms/
+        │       ├── Footer/Footer.jsx
+        │       └── Navbar/Navbar.jsx
+        ├── context/
+        │   ├── AuthContext.jsx
+        │   ├── CartContext.jsx
+        │   ├── ProductContext.jsx
+        │   └── ToastContext.jsx
+        ├── data/
+        │   ├── products.js
+        │   └── services.js
+        ├── pages/
+        │   ├── AdminProductos/AdminProductos.jsx
+        │   ├── AdminUsuarios/AdminUsuarios.jsx
+        │   ├── Cart/Cart.jsx
+        │   ├── Checkout/Checkout.jsx
+        │   ├── Contacto/Contacto.jsx
+        │   ├── Home/Home.jsx
+        │   ├── Login/Login.jsx
+        │   ├── Perfil/Perfil.jsx
+        │   ├── PerfilProveedor/PerfilProveedor.jsx
+        │   ├── PerfilVendedor/PerfilVendedor.jsx
+        │   ├── ProductDetail/ProductDetail.jsx
+        │   ├── Register/Register.jsx
+        │   ├── Servicios/Servicios.jsx
+        │   └── Tienda/Tienda.jsx
+        ├── services/
+        │   └── api.js
+        └── utils/
+            ├── chileGeo.js
+            ├── roles.js
+            └── validators.js
 ```
 
 ---
 
-## 5. Guía de Ejecución y Datos de Prueba
+## 5. Cuentas Semilla y Datos de Prueba
 
-### Comandos
-
-```bash
-# Instalar dependencias
-npm install
-
-# Iniciar servidor de desarrollo
-npm run dev
-
-# Compilar para producción
-npm run build
-```
-
-### Cuentas de Prueba Pre-cargadas
-
-| Rol | RUT | Contraseña | Correo | Permisos Principales |
+| Rol | RUT | Contraseña | Tienda / Estudio | Estado Inicial |
 | :--- | :--- | :--- | :--- | :--- |
-| **Administrador** | `12.345.678-5` | `admin1234` | `admin@vento.cl` | Acceso total + Panel `Config` (`/admin/usuarios`), Ventas y Servicios |
-| **Vendedor / Proveedor** | `11.111.111-1` | `vento1234` | `javier@vento.cl` | Publicar/editar en `/admin/productos` y `/admin/servicios`, crear ofertas |
+| `Admin` | `12.345.678-5` | `admin1234` | Vento Oficial Store | Aprobado y Verificado |
+| `VendedorProducto` | `11.111.111-1` | `vento1234` | SneakerDrop CL | Aprobado y Verificado |
+| `ProveedorServicio` | `22.222.222-2` | `servicio1234` | SneakerCare & Custom Studio | Aprobado y Verificado |
+| `Comprador` | `15.555.555-6` | `compra1234` | — (Cliente con pedidos y cotizaciones) | Activo |
+| `VendedorProducto` | `18.888.888-7` | `pendiente1234` | UrbanThreads Sur | **Pendiente de Aprobación Admin** |
 
-*(También es posible registrar cualquier usuario nuevo desde el botón **Registrarse**, validando RUT chileno real con Módulo 11).*
-
-### Cupones de Descuento y Reglas de Despacho
-
-- **`VENTO10`**: `10%` de descuento sobre el subtotal del carrito.
-- **`BIENVENIDO`**: `15%` de descuento primera compra.
-- **`VENTO20`**: `20%` de descuento promocional especial.
-- **Despacho Gratis**: Se activa automáticamente en compras con subtotal igual o superior a **`$50.000 CLP`** (o cuando el carrito solo contiene servicios remotos/online).
-
----
-
-## 6. Contrato REST Preparado para Backend (`.NET + PostgreSQL`)
-
-Al definir `VITE_API_URL=http://localhost:5000/api` en un archivo `.env`, `src/services/api.js` redirige automáticamente las operaciones a los siguientes endpoints esperando el envoltorio estándar `{ success, message, data, errors }`:
-
-- `POST /api/auth/login` (`200 OK` / `400 Bad Request` / `401 Unauthorized`)
-- `POST /api/auth/register` (`201 Created` / `400 Bad Request` / `409 Conflict`)
-- `POST /api/auth/recover-password` (`200 OK` / `404 Not Found`)
-- `GET /api/products` y `POST /api/products`
-- `GET /api/services` y `POST /api/services`
-- `POST /api/quotes` (`201 Created` — solicitudes de cotización de servicios)
-- `POST /api/contact` (`201 Created` — formulario de contacto y soporte)
+- **Cupones iniciales activos:** `VENTO10` (`10%`), `BIENVENIDO` (`15%`), `VENTO20` (`20%`) — administrables en vivo desde el Centro de Gobierno.
+- **Publicaciones semilla en cola de moderación (`Pendiente`):** Producto `id: 8` (*Chaqueta Cortaviento*) y Servicio `id: 107` (*Autenticación Legit Check*), listos para ser aprobados o rechazados por el Administrador.
