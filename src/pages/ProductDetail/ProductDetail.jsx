@@ -24,8 +24,8 @@ import { formatCurrency } from '@/utils/validators';
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { findItemById, toggleWishlist, isInWishlist, addReview } = useProducts();
+  const { addToCart, myOrders } = useCart();
+  const { findItemById, toggleWishlist, isInWishlist, addReview, myQuotes } = useProducts();
   const { showToast } = useToast();
   const { isLoggedIn, currentUser } = useAuth();
 
@@ -80,8 +80,20 @@ const ProductDetail = () => {
 
   const availableStock = isService ? 99 : Number(item.stock ?? 10);
 
+  const hasVerifiedTransaction = Boolean(
+    isLoggedIn &&
+      (myOrders?.some((o) => o.items?.some((it) => String(it.id) === String(item.id))) ||
+        myQuotes?.some(
+          (q) =>
+            String(q.servicioId) === String(item.id) &&
+            (q.estado === 'Completado' || q.estado === 'En Ejecución')
+        ))
+  );
+
   const buildCartPayload = () => ({
     id: item.id,
+    ownerId: item.ownerId || (isService ? 3 : 2),
+    vendedorNombre: item.vendedorNombre || item.brand || 'Vento Store',
     tipo: item.tipo,
     title: item.title || item.nombre,
     price: item.price,
@@ -111,9 +123,10 @@ const ProductDetail = () => {
       return;
     }
     addReview(item.id, item.tipo, {
-      autor: isLoggedIn ? currentUser.nombre : 'Cliente Verificado',
+      autor: isLoggedIn ? currentUser.nombre : 'Visitante Vento',
       rating: reviewRating || 5,
       comentario: reviewComment.trim(),
+      verificada: hasVerifiedTransaction,
     });
     setReviewComment('');
     setReviewRating(5);
@@ -557,7 +570,15 @@ const ProductDetail = () => {
               onSubmit={handleReviewSubmit}
               className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-4 h-fit"
             >
-              <h3 className="text-sm font-bold text-gray-900">Deja tu valoración</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-gray-900">Deja tu valoración</h3>
+                {hasVerifiedTransaction && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {isService ? 'Servicio Verificado' : 'Compra Verificada'}
+                  </span>
+                )}
+              </div>
               <div>
                 <span className="block text-xs text-gray-600 mb-1">Tu calificación:</span>
                 <Rating
@@ -588,8 +609,16 @@ const ProductDetail = () => {
                     key={rev.id}
                     className="p-4 rounded-xl border border-gray-100 bg-gray-50/50"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-bold text-gray-900">{rev.autor}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-900">{rev.autor}</span>
+                        {(rev.verificada || rev.autor === 'Cliente Verificado') && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            {isService ? 'Servicio Verificado' : 'Compra Verificada'}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-400">{rev.fecha}</span>
                     </div>
                     <Rating value={Number(rev.rating)} size="small" readOnly sx={{ mb: 1 }} />

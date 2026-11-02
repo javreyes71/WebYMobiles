@@ -14,7 +14,7 @@ export const STANDARD_SHIPPING_COST = 4990;
 
 export const CartProvider = ({ children }) => {
   const { currentUser } = useAuth();
-  const { deductProductStock } = useProducts();
+  const { deductProductStock, updateQuoteStatus } = useProducts();
   const { showToast } = useToast();
 
   const [cartItems, setCartItems] = useState(() => storageApi.getCart());
@@ -138,8 +138,16 @@ export const CartProvider = ({ children }) => {
       talla: i.talla,
       color: i.color,
       tipo: i.tipo || 'Producto',
+      quoteId: i.quoteId || null,
       estadoDespachoItem: 'Confirmado',
     }));
+
+    // Si algún ítem proviene de una cotización aceptada, pasa automáticamente a 'En Ejecución'
+    orderItems.forEach((it) => {
+      if (it.quoteId && updateQuoteStatus) {
+        updateQuoteStatus(it.quoteId, { estado: 'En Ejecución' });
+      }
+    });
 
     const newOrder = {
       id: String(Math.floor(10100 + Math.random() * 89000)),

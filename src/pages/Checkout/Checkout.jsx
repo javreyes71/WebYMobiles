@@ -8,13 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { formatCurrency, validateEmail } from '@/utils/validators';
-
-const REGIONES_COMUNAS = {
-  RM: ['Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'Maipú', 'Puente Alto'],
-  V: ['Valparaíso', 'Viña del Mar', 'Quilpué', 'Concón'],
-  VIII: ['Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chillán'],
-  X: ['Puerto Montt', 'Osorno', 'Puerto Varas', 'Castro'],
-};
+import { REGIONES_CHILE, getComunasByRegion } from '@/utils/chileGeo';
 
 const Checkout = () => {
   const {
@@ -50,12 +44,19 @@ const Checkout = () => {
   useEffect(() => {
     if (currentUser) {
       const parts = (currentUser.nombre || '').split(' ');
+      const defaultAddr =
+        currentUser.direcciones?.find((d) => d.esPredeterminada) ||
+        currentUser.direcciones?.[0] ||
+        null;
+
       setCustomer((prev) => ({
         ...prev,
         correo: currentUser.correo || prev.correo,
         nombre: parts[0] || prev.nombre,
         apellido: parts.slice(1).join(' ') || prev.apellido,
-        direccion: currentUser.direccion || prev.direccion,
+        direccion: defaultAddr?.calle || currentUser.direccion || prev.direccion,
+        region: defaultAddr?.region || prev.region,
+        ciudad: defaultAddr?.comuna || prev.ciudad,
       }));
     }
   }, [currentUser]);
@@ -94,7 +95,7 @@ const Checkout = () => {
     setCustomer((prev) => ({
       ...prev,
       region: reg,
-      ciudad: REGIONES_COMUNAS[reg]?.[0] || '',
+      ciudad: getComunasByRegion(reg)[0] || '',
     }));
   };
 
@@ -270,6 +271,37 @@ const Checkout = () => {
                 2. Datos de Envío y Comprobante
               </h2>
 
+              {currentUser?.direcciones?.length > 0 && (
+                <div className="mb-4">
+                  <span className="block text-[11px] font-bold uppercase text-gray-500 mb-1.5">
+                    Usar dirección de mi libreta:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {currentUser.direcciones.map((addr) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() =>
+                          setCustomer((prev) => ({
+                            ...prev,
+                            direccion: addr.calle,
+                            region: addr.region,
+                            ciudad: addr.comuna,
+                          }))
+                        }
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors ${
+                          customer.direccion === addr.calle
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                        }`}
+                      >
+                        {addr.alias} ({addr.comuna})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4 mb-8">
                 <CustomTextField
                   name="correo"
@@ -315,10 +347,11 @@ const Checkout = () => {
                     onChange={handleRegionChange}
                     required
                   >
-                    <MenuItem value="RM">Metropolitana</MenuItem>
-                    <MenuItem value="V">Valparaíso</MenuItem>
-                    <MenuItem value="VIII">Biobío</MenuItem>
-                    <MenuItem value="X">Los Lagos</MenuItem>
+                    {REGIONES_CHILE.map((reg) => (
+                      <MenuItem key={reg.codigo} value={reg.codigo}>
+                        {reg.nombre}
+                      </MenuItem>
+                    ))}
                   </CustomTextField>
 
                   <CustomTextField
@@ -329,7 +362,7 @@ const Checkout = () => {
                     onChange={(e) => setCustomer({ ...customer, ciudad: e.target.value })}
                     required
                   >
-                    {(REGIONES_COMUNAS[customer.region] || []).map((comuna) => (
+                    {getComunasByRegion(customer.region).map((comuna) => (
                       <MenuItem key={comuna} value={comuna}>
                         {comuna}
                       </MenuItem>

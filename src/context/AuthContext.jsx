@@ -116,6 +116,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!currentUser) {
+      return { success: false, message: 'Inicia sesión primero.' };
+    }
+    try {
+      const response = await authApi.changePassword({
+        userId: currentUser.id,
+        currentPassword,
+        newPassword,
+      });
+      if (response.success) {
+        showToast(response.message, 'success');
+      } else {
+        showToast(response.errors?.[0] || response.message, 'error');
+      }
+      return response;
+    } catch {
+      showToast('Error al cambiar la contraseña.', 'error');
+      return { success: false, errors: ['Error inesperado.'] };
+    }
+  };
+
   const requestRoleUpgrade = async (targetRole, extraInfo = {}) => {
     if (!currentUser) {
       return { success: false, message: 'Inicia sesión primero.' };
@@ -146,6 +168,7 @@ export const AuthProvider = ({ children }) => {
         register,
         requestPasswordRecovery,
         updateUserProfile,
+        changePassword,
         requestRoleUpgrade,
         refreshCurrentUser,
         logout,

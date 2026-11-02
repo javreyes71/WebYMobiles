@@ -91,7 +91,8 @@ export const DEFAULT_USERS = [
     id: 2,
     nombre: 'Javier Reyes',
     nombreTienda: 'SneakerDrop CL',
-    biografiaTienda: 'Especialistas en calzado urbano y lanzamientos limitados verificados.',
+    biografiaTienda: 'Especialistas en calzado urbano y lanzamientos limitados verificados con despacho a todo Chile.',
+    ciudadBase: 'Concepción, Región del Biobío',
     rut: '11.111.111-1',
     rutNormalized: '111111111',
     correo: 'javier@vento.cl',
@@ -111,7 +112,11 @@ export const DEFAULT_USERS = [
     id: 3,
     nombre: 'María Silva',
     nombreTienda: 'SneakerCare & Custom Studio',
-    biografiaTienda: 'Restauración, custom art, asesoría streetwear y luthería profesional.',
+    biografiaTienda: 'Restauración, custom art, asesoría streetwear y luthería profesional con insumos certificados.',
+    especialidad: 'Restauración, Custom Art & Cuidado Textil',
+    experienciaAnios: 6,
+    certificaciones: ['Certificación Angelus Direct Customizer', 'Restauración de Gamuza y Nobuck Premium'],
+    ciudadBase: 'Concepción, Región del Biobío',
     rut: '22.222.222-2',
     rutNormalized: '222222222',
     correo: 'maria@vento.cl',
@@ -135,6 +140,24 @@ export const DEFAULT_USERS = [
     correo: 'pedro@vento.cl',
     telefono: '+56 9 7777 4444',
     direccion: 'Av. Alemania 0420, Temuco',
+    direcciones: [
+      {
+        id: 'addr-1',
+        alias: 'Casa Principal',
+        calle: 'Av. Alemania 0420, Depto 602',
+        region: 'IX',
+        comuna: 'Temuco',
+        esPredeterminada: true,
+      },
+      {
+        id: 'addr-2',
+        alias: 'Oficina Estudio',
+        calle: 'Av. Providencia 1945, Of. 304',
+        region: 'RM',
+        comuna: 'Providencia',
+        esPredeterminada: false,
+      },
+    ],
     fechaNacimiento: '1997-11-04',
     tipoCuenta: 'Comprador',
     rol: ROLES.COMPRADOR,
@@ -226,6 +249,29 @@ const DEFAULT_ORDERS = [
 
 const DEFAULT_QUOTES = [
   {
+    id: 'COT-4899',
+    compradorId: 4,
+    proveedorId: 3,
+    servicioId: 101,
+    servicioNombre: 'Limpieza Profunda y Restauración Premium de Calzado',
+    proveedor: 'SneakerCare & Custom Studio',
+    precioReferencial: 18990,
+    nombreContacto: 'Pedro Pascal',
+    correoContacto: 'pedro@vento.cl',
+    telefonoContacto: '+56 9 7777 4444',
+    fechaDeseada: '2026-11-10',
+    modalidadPreferida: 'Presencial',
+    detalles: 'Necesito restauración completa de gamuza y blanqueamiento de entresuela en Jordan 4.',
+    fechaCreacion: '25 de octubre de 2026',
+    estado: 'Cotizado',
+    propuestaProveedor: {
+      monto: 24990,
+      plazo: '72 horas hábiles',
+      validez: '7 días corridos',
+      detalle: 'Incluye limpieza ultrasónica, nutrición de gamuza, desoxidación UV de suela y sellado hidrofóbico.',
+    },
+  },
+  {
     id: 'COT-4821',
     compradorId: 4,
     proveedorId: 3,
@@ -242,6 +288,19 @@ const DEFAULT_QUOTES = [
     fechaCreacion: '20 de octubre de 2026',
     estado: 'Pendiente',
     propuestaProveedor: null,
+  },
+];
+
+const DEFAULT_TICKETS = [
+  {
+    id: 'TCK-1042',
+    nombre: 'Camila Ríos',
+    correo: 'camila@vento.cl',
+    asunto: 'Consulta sobre aprobación de tienda regional',
+    mensaje: 'Hola equipo Vento, envié mi postulación para UrbanThreads Sur desde Osorno y quería saber los plazos de revisión.',
+    fecha: '28 de octubre de 2026',
+    estado: 'Abierto',
+    respuestaAdmin: '',
   },
 ];
 
@@ -640,6 +699,39 @@ export const authApi = {
     };
   },
 
+  async changePassword({ userId, currentPassword, newPassword }) {
+    if (!newPassword || newPassword.length < 8) {
+      return {
+        success: false,
+        status: 400,
+        message: 'La nueva contraseña debe tener al menos 8 caracteres.',
+        data: null,
+        errors: ['Contraseña demasiado corta.'],
+      };
+    }
+
+    if (API_URL) {
+      return apiFetch('/auth/cambiar-password', {
+        method: 'POST',
+        body: JSON.stringify({ userId, currentPassword, newPassword }),
+      });
+    }
+
+    await delay(500);
+    const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
+    const user = users.find((u) => u.id === userId);
+    if (!user) {
+      return { success: false, status: 404, message: 'Usuario no encontrado.', data: null, errors: ['No se encontró la cuenta.'] };
+    }
+    if (user.passwordHint && user.passwordHint !== currentPassword) {
+      return { success: false, status: 401, message: 'Contraseña actual incorrecta.', data: null, errors: ['La contraseña actual ingresada no coincide.'] };
+    }
+
+    const nextUsers = users.map((u) => (u.id === userId ? { ...u, passwordHint: newPassword } : u));
+    writeStorage(STORAGE_KEYS.USERS, nextUsers);
+    return { success: true, status: 200, message: 'Contraseña actualizada correctamente.', data: null, errors: null };
+  },
+
   async updateProfile(updatedData) {
     const errors = [];
     if (!updatedData.nombre || updatedData.nombre.trim().length < 2) {
@@ -701,15 +793,28 @@ export const usersApi = {
     return users.map(sanitizeUserDto);
   },
 
+  getPublicUserById(userId) {
+    const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
+    const found = users.find((u) => String(u.id) === String(userId));
+    return found ? sanitizeUserDto(found) : null;
+  },
+
   async requestRoleUpgrade(userId, targetRole, extraInfo = {}) {
     await delay(450);
-    if (![ROLES.VENDEDOR_PRODUCTO, ROLES.PROVEEDOR_SERVICIO].includes(targetRole)) {
+    const requestedRoles =
+      targetRole === 'Ambos'
+        ? [ROLES.VENDEDOR_PRODUCTO, ROLES.PROVEEDOR_SERVICIO]
+        : [ROLES.VENDEDOR_PRODUCTO, ROLES.PROVEEDOR_SERVICIO].includes(targetRole)
+          ? [targetRole]
+          : [];
+
+    if (requestedRoles.length === 0) {
       return {
         success: false,
         status: 400,
         message: 'Rol comercial solicitado no válido.',
         data: null,
-        errors: ['Selecciona Vendedor de Productos o Proveedor de Servicios.'],
+        errors: ['Selecciona Vendedor de Productos, Proveedor de Servicios o Ambos.'],
       };
     }
 
@@ -718,12 +823,14 @@ export const usersApi = {
 
     const nextUsers = users.map((u) => {
       if (u.id !== userId) return u;
-      const rolesSet = new Set([...(u.rolesHabilitados || [ROLES.COMPRADOR]), targetRole]);
-      const nextAprobaciones = {
-        ...(u.aprobacionesPorRol || {}),
-        [targetRole]: APPROVAL_STATUS.PENDIENTE,
-      };
-      const primaryRole = u.rol === ROLES.COMPRADOR ? targetRole : u.rol;
+      const rolesSet = new Set([...(u.rolesHabilitados || [ROLES.COMPRADOR]), ...requestedRoles]);
+      const nextAprobaciones = { ...(u.aprobacionesPorRol || {}) };
+      requestedRoles.forEach((r) => {
+        if (nextAprobaciones[r] !== APPROVAL_STATUS.APROBADO) {
+          nextAprobaciones[r] = APPROVAL_STATUS.PENDIENTE;
+        }
+      });
+      const primaryRole = u.rol === ROLES.COMPRADOR ? requestedRoles[0] : u.rol;
       const updated = {
         ...u,
         rol: primaryRole,
@@ -732,6 +839,7 @@ export const usersApi = {
         aprobacionesPorRol: nextAprobaciones,
         nombreTienda: extraInfo.nombreTienda || u.nombreTienda || u.nombre,
         biografiaTienda: extraInfo.biografiaTienda || u.biografiaTienda || '',
+        especialidad: extraInfo.especialidad || u.especialidad || '',
       };
       updatedDto = sanitizeUserDto(updated);
       return updated;
@@ -740,10 +848,15 @@ export const usersApi = {
     writeStorage(STORAGE_KEYS.USERS, nextUsers);
     if (updatedDto) authApi.saveSession(updatedDto);
 
+    const roleText =
+      targetRole === 'Ambos'
+        ? 'Vendedor de Productos y Proveedor de Servicios'
+        : getRoleLabel(targetRole);
+
     return {
       success: true,
       status: 200,
-      message: `Solicitud para ${getRoleLabel(targetRole)} enviada a revisión del Administrador.`,
+      message: `Solicitud para ${roleText} enviada a revisión del Administrador.`,
       data: updatedDto,
       errors: null,
     };
@@ -756,11 +869,25 @@ export const usersApi = {
       if (u.id !== userId) return u;
       const nextAprobaciones = {
         ...(u.aprobacionesPorRol || {}),
-        [targetRole]: decision,
       };
+      if (targetRole === 'Todos') {
+        Object.keys(nextAprobaciones).forEach((k) => {
+          nextAprobaciones[k] = decision;
+        });
+      } else {
+        nextAprobaciones[targetRole] = decision;
+      }
+
+      const statuses = Object.values(nextAprobaciones);
+      const overallStatus = statuses.includes(APPROVAL_STATUS.PENDIENTE)
+        ? APPROVAL_STATUS.PENDIENTE
+        : statuses.includes(APPROVAL_STATUS.APROBADO)
+          ? APPROVAL_STATUS.APROBADO
+          : decision;
+
       return {
         ...u,
-        estadoAprobacion: decision,
+        estadoAprobacion: overallStatus,
         aprobacionesPorRol: nextAprobaciones,
         motivoRechazoRol: decision === APPROVAL_STATUS.RECHAZADO ? motivoRechazo : '',
       };
@@ -784,6 +911,20 @@ export const usersApi = {
       success: true,
       status: 200,
       message: 'Usuario actualizado por Administración.',
+      data: nextUsers.map(sanitizeUserDto),
+      errors: null,
+    };
+  },
+
+  async deleteUserByAdmin(userId) {
+    await delay(350);
+    const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
+    const nextUsers = users.filter((u) => u.id !== userId);
+    writeStorage(STORAGE_KEYS.USERS, nextUsers);
+    return {
+      success: true,
+      status: 200,
+      message: 'Cuenta eliminada por Administración.',
       data: nextUsers.map(sanitizeUserDto),
       errors: null,
     };
@@ -854,10 +995,27 @@ export const storageApi = {
     writeStorage(STORAGE_KEYS.COUPONS, coupons);
   },
   getTickets() {
-    return readStorage(STORAGE_KEYS.TICKETS, []);
+    return readStorage(STORAGE_KEYS.TICKETS, DEFAULT_TICKETS);
   },
   saveTickets(tickets) {
     writeStorage(STORAGE_KEYS.TICKETS, tickets);
+  },
+  addTicket(ticketPayload) {
+    const current = this.getTickets();
+    const newTicket = {
+      id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
+      fecha: new Date().toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      }),
+      estado: 'Abierto',
+      respuestaAdmin: '',
+      ...ticketPayload,
+    };
+    const next = [newTicket, ...current];
+    writeStorage(STORAGE_KEYS.TICKETS, next);
+    return newTicket;
   },
   getCompany() {
     return readStorage(STORAGE_KEYS.COMPANY, {
