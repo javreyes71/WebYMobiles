@@ -404,6 +404,27 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+  const toggleFeaturedItem = (id, tipo = 'Producto') => {
+    const flip = (list) =>
+      list.map((item) =>
+        item.id === id ? { ...item, destacado: !item.destacado } : item
+      );
+
+    if (tipo === 'Servicio') {
+      setAllServicios((prev) => {
+        const next = flip(prev);
+        catalogApi.saveServicesLocal(next);
+        return next;
+      });
+    } else {
+      setAllProductos((prev) => {
+        const next = flip(prev);
+        catalogApi.saveProductsLocal(next);
+        return next;
+      });
+    }
+  };
+
   // ==================== GESTIÓN REAL DE OFERTAS ====================
   const applyOfferToItem = ({
     productoAsociado,
@@ -586,6 +607,7 @@ export const ProductProvider = ({ children }) => {
         deleteServicio,
         togglePauseItem,
         moderateCatalogItem,
+        toggleFeaturedItem,
         applyOfferToItem,
         addReview,
         findItemById,

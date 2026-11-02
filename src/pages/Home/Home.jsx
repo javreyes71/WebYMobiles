@@ -15,7 +15,9 @@ const Home = () => {
   const navigate = useNavigate();
   const { productos } = useProducts();
 
-  const featuredProducts = productos.slice(0, 4);
+  const featuredProducts = [...productos]
+    .sort((a, b) => Number(Boolean(b.destacado)) - Number(Boolean(a.destacado)))
+    .slice(0, 4);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

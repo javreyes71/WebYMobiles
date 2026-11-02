@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Alert } from '@mui/material';
 import { Leaf, Users, Mail, Send, MapPin, Phone } from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useToast } from '@/context/ToastContext';
+import { storageApi } from '@/services/api';
 import { validateEmail } from '@/utils/validators';
 
 const Contacto = () => {
@@ -15,19 +17,31 @@ const Contacto = () => {
     mensaje: '',
   });
   const [isSending, setIsSending] = useState(false);
+  const [ticketCreated, setTicketCreated] = useState(null);
   const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setTicketCreated(null);
     if (!contactForm.nombre.trim() || !validateEmail(contactForm.correo) || !contactForm.mensaje.trim()) {
       showToast('Completa tu nombre, un correo válido y tu mensaje.', 'warning');
       return;
     }
     setIsSending(true);
     await new Promise((r) => setTimeout(r, 700));
+    const savedTicket = storageApi.addTicket({
+      nombre: contactForm.nombre.trim(),
+      correo: contactForm.correo.trim(),
+      asunto: contactForm.asunto.trim() || 'Consulta general Vento',
+      mensaje: contactForm.mensaje.trim(),
+    });
     setIsSending(false);
+    setTicketCreated(savedTicket);
     setContactForm({ nombre: '', correo: '', asunto: '', mensaje: '' });
-    showToast('¡Mensaje enviado! Nuestro equipo te responderá dentro de 24 horas.', 'success');
+    showToast(
+      `¡Ticket ${savedTicket.id} registrado! Nuestro equipo te responderá pronto.`,
+      'success'
+    );
   };
 
   return (
@@ -144,6 +158,14 @@ const Contacto = () => {
             <p className="text-sm text-gray-500 mb-6">
               ¿Tienes dudas sobre un pedido, deseas vender como empresa o necesitas soporte?
             </p>
+
+            {ticketCreated && (
+              <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+                Hemos registrado tu consulta bajo el código{' '}
+                <strong>{ticketCreated.id}</strong>. El equipo de Administración de Vento la
+                atenderá en su bandeja de soporte.
+              </Alert>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
