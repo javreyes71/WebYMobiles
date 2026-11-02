@@ -21,6 +21,9 @@ WebYMobiles/
 │   ├── database/               # Scripts SQL 00..05 (49 tablas BD2, 23 triggers, vistas y RBAC)
 │   ├── postman/                # Colección oficial Postman v2.1 + Entorno {{baseUrl}} (63 pruebas)
 │   └── deploy/                 # Servicio systemd y script ARM64 para Raspberry Pi (0.0.0.0:5000)
+├── iniciar.bat                 # Lanzador rápido en 1 clic / consola para Windows
+├── iniciar.ps1                 # Script PowerShell orquestador (Full / Frontend / Backend)
+├── iniciar.sh                  # Script Bash multiplataforma (Linux / macOS / Git Bash / Raspberry Pi)
 ├── DESARROLLO_IMPLEMENTADO.md  # Informe técnico completo y matriz de cumplimiento
 ├── MINUTA.md                   # Registro histórico de reuniones y acuerdos del equipo
 └── README.md                   # Guía rápida de instalación y cuentas de prueba
@@ -38,31 +41,64 @@ WebYMobiles/
 
 ---
 
-## Instalación y Ejecución Local
+## Inicio Rápido en 1 Comando (Recomendado)
+
+En la raíz del repositorio dispones de scripts automáticos que detectan `.NET 8 SDK` y `Node.js`, instalan `node_modules` si es la primera vez, crean `appsettings.Development.json` desde la plantilla y levantan los servidores mostrando sus URLs (y deteniéndolos limpiamente con `Ctrl + C`):
+
+### En Windows (`CMD` o `PowerShell`)
+```powershell
+# Levantar Backend (.NET 8 en :5000) + Frontend (Vite en :5173)
+.\iniciar.bat
+
+# Levantar ambos conectando automáticamente VITE_API_URL=http://localhost:5000/api
+.\iniciar.bat -ConectarApi
+
+# Levantar únicamente el Frontend (modo demostración rápida en :5173)
+.\iniciar.bat -Modo Frontend
+
+# Levantar únicamente el Backend (.NET 8 API en :5000)
+.\iniciar.bat -Modo Backend
+
+# Abrir automáticamente el navegador en http://localhost:5173
+.\iniciar.bat -AbrirNavegador
+```
+
+### En Linux / macOS / Git Bash / Raspberry Pi
+```bash
+chmod +x iniciar.sh
+
+./iniciar.sh            # Levanta Backend (:5000) + Frontend (:5173)
+./iniciar.sh api        # Levanta ambos con VITE_API_URL=http://localhost:5000/api
+./iniciar.sh frontend   # Solo Frontend (:5173)
+./iniciar.sh backend    # Solo Backend (:5000)
+```
+
+---
+
+## Instalación y Ejecución Manual
 
 ### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/javreyes71/WebYMobiles.git
-cd WebYMobiles/frontend
+cd WebYMobiles
 ```
 
-### 2. Instalar dependencias
+### 2. Frontend (`/frontend`)
 ```bash
+cd frontend
 npm install
-```
-
-### 3. Configurar variables de entorno (opcional)
-Copia `.env.example` a `.env` si deseas apuntar a un servidor backend `.NET`:
-```bash
-cp .env.example .env
+cp .env.example .env   # Opcional: definir VITE_API_URL=http://localhost:5000/api
+npm run dev            # Disponible en http://localhost:5173
 ```
 *(Si `VITE_API_URL` está vacío, el frontend opera automáticamente con su capa persistente en `localStorage` respetando exactamente el contrato `{ success, message, data, errors }` y códigos HTTP).*
 
-### 4. Levantar servidor de desarrollo
+### 3. Backend (`/backend` + PostgreSQL `BD2`)
 ```bash
-npm run dev
+cd backend
+dotnet build Vento.sln
+dotnet run --project Vento.Api   # Disponible en http://localhost:5000/api/health
 ```
-Abre `http://localhost:5173` en tu navegador. Para compilar a producción ejecuta `npm run build`.
+Para inicializar las **49 tablas, triggers y vistas de `BD2`**, ejecutar las **63 pruebas en Postman** o desplegar en **Raspberry Pi**, consulta [`backend/README.md`](./backend/README.md).
 
 ---
 
