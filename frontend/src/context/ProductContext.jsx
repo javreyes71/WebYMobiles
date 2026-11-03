@@ -7,6 +7,8 @@ import React, {
   useMemo,
 } from 'react';
 import { API_URL, catalogApi, storageApi } from '@/services/api';
+import { mockProducts } from '@/data/products';
+import { mockServices } from '@/data/services';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -123,8 +125,43 @@ export const ProductProvider = ({ children }) => {
           }
         }
 
-        setAllProductos(prods);
-        setAllServicios(servs);
+        const mockProductBySku = new Map(mockProducts.map((p) => [p.sku, p]));
+        const mockServiceBySku = new Map(mockServices.map((s) => [s.sku, s]));
+
+        const enrichedProds = prods.map((p) => {
+          const mock = mockProductBySku.get(p.sku);
+          if (!mock) return p;
+          const isSvg = typeof p.image === 'string' && p.image.startsWith('data:image/svg+xml');
+          return {
+            ...mock,
+            ...p,
+            image: isSvg && mock.image ? mock.image : p.image || mock.image,
+            mainImage: isSvg && mock.mainImage ? mock.mainImage : p.mainImage || mock.mainImage,
+            thumbnails:
+              p.thumbnails && p.thumbnails.length > 0 && !p.thumbnails[0].startsWith('data:image/svg+xml')
+                ? p.thumbnails
+                : mock.thumbnails && mock.thumbnails.length > 0
+                ? mock.thumbnails
+                : [mock.image || p.image],
+            reviews: p.reviews && p.reviews.length > 0 ? p.reviews : mock.reviews || [],
+          };
+        });
+
+        const enrichedServs = servs.map((s) => {
+          const mock = mockServiceBySku.get(s.sku);
+          if (!mock) return s;
+          const isSvg = typeof s.image === 'string' && s.image.startsWith('data:image/svg+xml');
+          return {
+            ...mock,
+            ...s,
+            image: isSvg && mock.image ? mock.image : s.image || mock.image,
+            mainImage: isSvg && mock.mainImage ? mock.mainImage : s.mainImage || mock.mainImage,
+            reviews: s.reviews && s.reviews.length > 0 ? s.reviews : mock.reviews || [],
+          };
+        });
+
+        setAllProductos(enrichedProds);
+        setAllServicios(enrichedServs);
       }
     } catch {
       setCatalogError('Fallo de conexión al obtener productos y servicios.');
