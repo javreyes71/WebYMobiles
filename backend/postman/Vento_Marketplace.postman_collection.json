@@ -3798,6 +3798,146 @@
             "description": ""
           },
           "response": []
+        },
+        {
+          "name": "GET /api/analitica/catalogo-unificado - [200 OK] Vista BD2 vista_catalogo_unificado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP Status esperado: 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Formato JSON estandar { success, message, data, errors }\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"success\", true);",
+                  "    pm.expect(json).to.have.property(\"data\");",
+                  "    pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analitica/catalogo-unificado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analitica",
+                "catalogo-unificado"
+              ]
+            },
+            "description": "Matriz polimorfica de busqueda unificada (vista_catalogo_unificado de PostgreSQL BD2)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/analitica/geo-empresas - [200 OK] Vista BD2 vista_geo_empresas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP Status esperado: 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Formato JSON estandar { success, message, data, errors }\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"success\", true);",
+                  "    pm.expect(json).to.have.property(\"data\");",
+                  "    pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analitica/geo-empresas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analitica",
+                "geo-empresas"
+              ]
+            },
+            "description": "Cobertura territorial y superficie de comunas de empresas (vista_geo_empresas de PostgreSQL BD2)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/analitica/categorias-jerarquia - [200 OK] Vista BD2 vista_categorias_jerarquia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP Status esperado: 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Formato JSON estandar { success, message, data, errors }\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"success\", true);",
+                  "    pm.expect(json).to.have.property(\"data\");",
+                  "    pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analitica/categorias-jerarquia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analitica",
+                "categorias-jerarquia"
+              ]
+            },
+            "description": "Taxonomia y subdivision recursiva de categorias (vista_categorias_jerarquia de PostgreSQL BD2)."
+          },
+          "response": []
         }
       ]
     }
