@@ -36,6 +36,11 @@ import {
   Upload,
   TrendingUp,
   Search,
+  Database,
+  Layers,
+  AlertOctagon,
+  Activity,
+  RefreshCw,
 } from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
@@ -43,7 +48,7 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
-import { API_URL, apiFetch, authApi, usersApi, storageApi } from '@/services/api';
+import { API_URL, apiFetch, authApi, usersApi, storageApi, analyticsApi } from '@/services/api';
 import {
   validateRUT,
   formatRUT,
@@ -98,6 +103,41 @@ const AdminUsuarios = () => {
       if (res?.success && res.data) setEmpresa((prev) => ({ ...prev, ...res.data }));
     });
   }, []);
+
+  /* ── Vistas Analíticas PostgreSQL (BD2) ── */
+  const [bd2SubTab, setBd2SubTab] = useState('inventario'); // 'inventario' | 'rendimiento' | 'facturas' | 'unificado'
+  const [bd2Loading, setBd2Loading] = useState(false);
+  const [inventarioData, setInventarioData] = useState({ vistaInventarioCritico: [], alertasTriggerTrg08: [] });
+  const [rendimientoData, setRendimientoData] = useState({ vistaRendimientoEmprendedor: [], kpisGlobales: null });
+  const [facturasData, setFacturasData] = useState([]);
+  const [unificadoData, setUnificadoData] = useState([]);
+  const [unificadoQuery, setUnificadoQuery] = useState('');
+
+  const loadBd2Views = async () => {
+    setBd2Loading(true);
+    try {
+      const [invRes, rendRes, factRes, unifRes] = await Promise.all([
+        analyticsApi.getInventarioCritico(),
+        analyticsApi.getRendimientoEmprendedores(),
+        analyticsApi.getFacturasFiscales(),
+        analyticsApi.getCatalogoUnificado(),
+      ]);
+      if (invRes?.success && invRes.data) setInventarioData(invRes.data);
+      if (rendRes?.success && rendRes.data) setRendimientoData(rendRes.data);
+      if (factRes?.success && Array.isArray(factRes.data)) setFacturasData(factRes.data);
+      if (unifRes?.success && Array.isArray(unifRes.data)) setUnificadoData(unifRes.data);
+    } catch {
+      showToast('No fue posible consultar las vistas analíticas en PostgreSQL.', 'error');
+    } finally {
+      setBd2Loading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'vistas-bd2') {
+      loadBd2Views();
+    }
+  }, [activeTab]);
 
   /* ── Filtros de Moderación y Directorio de Usuarios ── */
   const [modCatalogType, setModCatalogType] = useState('Producto'); // 'Producto' | 'Servicio'
@@ -532,6 +572,11 @@ const AdminUsuarios = () => {
       id: 'empresa',
       label: 'Datos Corporativos',
       icon: Building2,
+    },
+    {
+      id: 'vistas-bd2',
+      label: 'Vistas PostgreSQL (BD2)',
+      icon: Database,
     },
   ];
 
@@ -1353,6 +1398,378 @@ const AdminUsuarios = () => {
               </CustomButton>
             </div>
           </form>
+        </section>
+      )}
+
+      {/* ==================== PESTAÑA VISTAS ANALÍTICAS POSTGRESQL (BD2) ==================== */}
+      {activeTab === 'vistas-bd2' && (
+        <section className="space-y-6" aria-label="Vistas Analíticas BD2">
+          {/* Cabecera de la sección analítica */}
+          <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">
+                <Database className="w-4 h-4" /> Motor Relacional PostgreSQL 17
+              </span>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+                Vistas Analíticas y Triggers de Base de Datos Avanzadas (BD2)
+              </h2>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                Estas tablas se alimentan directamente de las vistas SQL y los triggers automáticos
+                en PL/pgSQL compilados en PostgreSQL (<code className="text-sky-300 font-mono">vento_bd2</code>).
+              </p>
+            </div>
+            <CustomButton
+              variant="outline"
+              size="sm"
+              onClick={loadBd2Views}
+              isLoading={bd2Loading}
+              className="bg-slate-800 text-sky-400 hover:bg-slate-700 border-slate-700"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refrescar Vistas
+            </CustomButton>
+          </div>
+
+          {/* Sub-pestañas de Vistas */}
+          <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+            {[
+              { id: 'inventario', label: '1. Inventario Crítico & Trigger 08', icon: AlertOctagon },
+              { id: 'rendimiento', label: '2. Rendimiento Emprendedores', icon: TrendingUp },
+              { id: 'facturas', label: '3. Facturación Cliente (IVA 19%)', icon: Layers },
+              { id: 'unificado', label: '4. Catálogo Unificado', icon: Activity },
+            ].map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setBd2SubTab(st.id)}
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  bd2SubTab === st.id
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <st.icon className="w-3.5 h-3.5" />
+                {st.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sub-vista 1: Inventario Crítico & Trigger 08 */}
+          {bd2SubTab === 'inventario' && (
+            <div className="space-y-6">
+              <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-xl text-xs text-amber-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">vista_inventario_critico</code> + <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">trg_08_alerta_inventario_critico</code>
+                </p>
+                <p>
+                  PostgreSQL filtra automáticamente productos con stock &le; 3 y dispara el Trigger 8
+                  cuando la cantidad cae por debajo de 10 unidades, registrando la alerta en la tabla transaccional.
+                </p>
+              </div>
+
+              {/* Tabla vista_inventario_critico */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertOctagon className="w-4 h-4 text-rose-600" />
+                  Productos en Inventario Crítico (Stock &le; 3)
+                </h3>
+                {inventarioData.vistaInventarioCritico?.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-6 text-center">
+                    No hay productos con stock crítico (&le; 3) en este momento.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>SKU</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Producto</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Stock Actual</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Estado BD2</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {inventarioData.vistaInventarioCritico.map((row) => (
+                          <TableRow key={row.sku} hover>
+                            <TableCell className="font-mono font-bold text-xs">{row.sku}</TableCell>
+                            <TableCell className="text-xs font-semibold">{row.nombre}</TableCell>
+                            <TableCell align="center">
+                              <span className="inline-block bg-rose-100 text-rose-800 font-extrabold px-2.5 py-0.5 rounded-full text-xs">
+                                {row.stockActual} unidades
+                              </span>
+                            </TableCell>
+                            <TableCell align="center">
+                              <span className="text-[11px] text-rose-600 font-bold uppercase tracking-wide">
+                                Crítico (&le; 3)
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+
+              {/* Registro de Alertas automáticas generadas por el Trigger 8 */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-amber-600" />
+                  Alertas Generadas por Trigger en PostgreSQL (<code className="font-mono text-xs">trg_08</code>)
+                </h3>
+                {inventarioData.alertasTriggerTrg08?.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-4 text-center">
+                    Aún no se han disparado alertas de trigger en la tabla transaccional.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>ID Alerta</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>SKU</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Stock Disparador</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Mensaje Automático Trigger</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Timestamp</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {inventarioData.alertasTriggerTrg08.map((a) => (
+                          <TableRow key={a.idAlerta || a.id} hover>
+                            <TableCell className="font-mono text-xs">#{a.idAlerta || a.id}</TableCell>
+                            <TableCell className="font-mono font-bold text-xs">{a.skuProducto || 'N/A'}</TableCell>
+                            <TableCell align="center" className="text-xs font-bold text-amber-700">
+                              {a.cantidad}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-700">{a.mensaje}</TableCell>
+                            <TableCell className="text-[11px] text-gray-500">
+                              {a.fecha ? new Date(a.fecha).toLocaleString('es-CL') : 'Automático'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-vista 2: Rendimiento Emprendedores */}
+          {bd2SubTab === 'rendimiento' && (
+            <div className="space-y-6">
+              <div className="bg-emerald-50/70 border border-emerald-200 p-4 rounded-xl text-xs text-emerald-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-emerald-100 px-1 py-0.5 rounded">vista_rendimiento_emprendedor</code>
+                </p>
+                <p>
+                  Calcula la facturación trimestral consolidada y el conteo de transacciones exitosas
+                  por cada emprendedor registrado en la tabla <code className="font-mono">usuario</code> vinculando con <code className="font-mono">venta</code> y <code className="font-mono">medio_pago</code>.
+                </p>
+              </div>
+
+              {/* KPIs de Rendimiento */}
+              {rendimientoData.kpisGlobales && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-200">
+                    <span className="text-[10px] uppercase font-bold text-gray-500">Total Usuarios</span>
+                    <p className="text-lg font-extrabold text-gray-900">{rendimientoData.kpisGlobales.totalUsuarios}</p>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-200">
+                    <span className="text-[10px] uppercase font-bold text-gray-500">Cuentas Pendientes</span>
+                    <p className="text-lg font-extrabold text-amber-600">{rendimientoData.kpisGlobales.cuentasPendientes}</p>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-200">
+                    <span className="text-[10px] uppercase font-bold text-gray-500">Ventas Brutas CLP</span>
+                    <p className="text-lg font-extrabold text-emerald-600">{formatCurrency(rendimientoData.kpisGlobales.ventasBrutasClp || 0)}</p>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-200">
+                    <span className="text-[10px] uppercase font-bold text-gray-500">Comisión Vento (5%)</span>
+                    <p className="text-lg font-extrabold text-indigo-600">{formatCurrency(rendimientoData.kpisGlobales.comisionPlataforma5Porciento || 0)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabla vista_rendimiento_emprendedor */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  Métricas de Facturación por Emprendedor
+                </h3>
+                {rendimientoData.vistaRendimientoEmprendedor?.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-6 text-center">
+                    No se registran compras cerradas este trimestre. Al completar una orden en Checkout, se calculará aquí.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>RUN Emprendedor</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Nombre Comercial</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">Facturación Trimestral</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Transacciones Exitosas</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {rendimientoData.vistaRendimientoEmprendedor.map((r) => (
+                          <TableRow key={r.run} hover>
+                            <TableCell className="font-mono font-bold text-xs">{r.run}</TableCell>
+                            <TableCell className="text-xs font-semibold">{r.nombre}</TableCell>
+                            <TableCell align="right" className="text-xs font-extrabold text-emerald-700">
+                              {formatCurrency(r.facturacionTrimestral || 0)}
+                            </TableCell>
+                            <TableCell align="center" className="text-xs font-bold text-gray-800">
+                              {r.transaccionesExitosas || 0}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-vista 3: Facturación Cliente (IVA 19%) */}
+          {bd2SubTab === 'facturas' && (
+            <div className="space-y-6">
+              <div className="bg-sky-50/70 border border-sky-200 p-4 rounded-xl text-xs text-sky-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-sky-100 px-1 py-0.5 rounded">vista_factura_cliente</code>
+                </p>
+                <p>
+                  Muestra la liquidación tributaria chilena calculada por el motor relacional:
+                  <strong> Valor Neto</strong>, <strong>IVA 19%</strong> y <strong>Total Pagado</strong>,
+                  vinculando las tablas <code className="font-mono">usuario</code> y <code className="font-mono">venta</code>.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-sky-600" />
+                  Facturación Fiscal y Desglose Tributario (BD2)
+                </h3>
+                {facturasData.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-6 text-center">
+                    Aún no se registran facturas en la base de datos.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>ID Venta</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>RUN Cliente</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Nombre Cliente</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">Valor Neto (CLP)</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">IVA (19%)</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">Total Factura</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Fecha Emisión</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {facturasData.map((f) => (
+                          <TableRow key={f.idVenta} hover>
+                            <TableCell className="font-mono font-bold text-xs">#{f.idVenta}</TableCell>
+                            <TableCell className="font-mono text-xs">{f.run}</TableCell>
+                            <TableCell className="text-xs font-semibold">{f.cliente}</TableCell>
+                            <TableCell align="right" className="text-xs">{formatCurrency(f.valorNeto || 0)}</TableCell>
+                            <TableCell align="right" className="text-xs text-amber-700">{formatCurrency(f.iva || 0)}</TableCell>
+                            <TableCell align="right" className="text-xs font-extrabold text-emerald-700">
+                              {formatCurrency(f.totalPagado || 0)}
+                            </TableCell>
+                            <TableCell className="text-[11px] text-gray-500">
+                              {f.fecha ? new Date(f.fecha).toLocaleDateString('es-CL') : 'N/A'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-vista 4: Catálogo Unificado */}
+          {bd2SubTab === 'unificado' && (
+            <div className="space-y-6">
+              <div className="bg-indigo-50/70 border border-indigo-200 p-4 rounded-xl text-xs text-indigo-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-indigo-100 px-1 py-0.5 rounded">vista_catalogo_unificado</code>
+                </p>
+                <p>
+                  Unifica en una sola vista polimórfica la oferta completa del marketplace (Productos físicos y Servicios profesionales),
+                  resolviendo diferencias de columnas mediante el operador <code className="font-mono">UNION ALL</code> en PostgreSQL.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <h3 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-indigo-600" />
+                    Matriz de Catálogo Unificado ({unificadoData.length} ítems en PostgreSQL)
+                  </h3>
+                  <div className="w-full sm:w-64">
+                    <CustomTextField
+                      size="small"
+                      placeholder="Buscar por código o nombre..."
+                      value={unificadoQuery}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setUnificadoQuery(val);
+                        analyticsApi.getCatalogoUnificado(val).then((res) => {
+                          if (res.success && Array.isArray(res.data)) setUnificadoData(res.data);
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <TableContainer component={Paper} elevation={0}>
+                  <Table size="small">
+                    <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 800 }}>Código / SKU</TableCell>
+                        <TableCell sx={{ fontWeight: 800 }}>Título / Publicación</TableCell>
+                        <TableCell sx={{ fontWeight: 800 }} align="center">Tipo de Ítem</TableCell>
+                        <TableCell sx={{ fontWeight: 800 }}>Detalle (Marca / Tiempo)</TableCell>
+                        <TableCell sx={{ fontWeight: 800 }} align="center">Restricción Edad</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {unificadoData.map((item) => (
+                        <TableRow key={item.codigo} hover>
+                          <TableCell className="font-mono font-bold text-xs">{item.codigo}</TableCell>
+                          <TableCell className="text-xs font-semibold">{item.nombre}</TableCell>
+                          <TableCell align="center">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
+                                item.tipo === 'Producto'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {item.tipo}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-600">{item.detalle || 'Estándar'}</TableCell>
+                          <TableCell align="center">
+                            {item.restriccionEdad ? (
+                              <span className="text-[11px] font-bold text-rose-600 uppercase">+18 años</span>
+                            ) : (
+                              <span className="text-[11px] font-medium text-gray-400">Todo público</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+            </div>
+          )}
         </section>
       )}
 

@@ -1374,3 +1374,24 @@ export const storageApi = {
     writeStorage(STORAGE_KEYS.ADMINS, admins);
   },
 };
+
+// ==================== SERVICIO DE VISTAS ANALÍTICAS BD2 (POSTGRESQL) ====================
+
+export const analyticsApi = {
+  async getInventarioCritico() {
+    if (API_URL) return apiFetch('/analitica/inventario-critico');
+    return { success: true, data: { vistaInventarioCritico: [], alertasTriggerTrg08: [] } };
+  },
+  async getRendimientoEmprendedores() {
+    if (API_URL) return apiFetch('/analitica/rendimiento-emprendedores');
+    return { success: true, data: { vistaRendimientoEmprendedor: [], kpisGlobales: {} } };
+  },
+  async getFacturasFiscales() {
+    if (API_URL) return apiFetch('/analitica/facturas');
+    return { success: true, data: [] };
+  },
+  async getCatalogoUnificado(query = '') {
+    if (API_URL) return apiFetch(`/analitica/catalogo-unificado${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+    return { success: true, data: [] };
+  },
+};
