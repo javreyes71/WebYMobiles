@@ -698,7 +698,9 @@ const AdminUsuarios = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-colors ${
                 active
-                  ? 'bg-indigo-900 text-white'
+                  ? 'bg-indigo-900 text-white shadow-sm'
+                  : tab.id === 'vistas-bd2'
+                  ? 'bg-sky-50 text-sky-800 border border-sky-300 hover:bg-sky-100'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
