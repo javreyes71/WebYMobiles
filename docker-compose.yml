@@ -1,0 +1,76 @@
+# ==============================================================================
+# Vento Marketplace (WYM) — Orquestación Completa en 1 Comando
+# Compatible con Docker Desktop (Windows/macOS/Linux x86_64) y Raspberry Pi (ARM64)
+#
+# Uso:
+#   docker compose up --build          # Levanta PostgreSQL BD2 + .NET 8 API + React
+#   docker compose up -d --build       # En segundo plano
+#   docker compose down                # Detiene contenedores (conserva datos BD2)
+#   docker compose down -v             # Detiene y reinicia base desde cero
+#
+# Nota: Para despliegue nativo en Raspberry Pi con systemd (sin Docker),
+#       utiliza ./backend/deploy/deploy_raspberry.sh o ./iniciar.sh
+# ==============================================================================
+
+services:
+  vento-db:
+    image: postgres:17-alpine
+    container_name: vento-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vento_bd2}
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-vento_postgres_local}
+      TZ: America/Santiago
+    ports:
+      # Se expone en 5433 del host por defecto para no chocar con un PostgreSQL local en 5432
+      - "${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - vento_pgdata:/var/lib/postgresql/data
+      # Ejecuta automáticamente 00..05 (49 tablas BD2, 23 triggers, vistas y RBAC) la 1ra vez
+      - ./backend/database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  vento-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vento-api
+    restart: unless-stopped
+    depends_on:
+      vento-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+      # Conecta usando exclusivamente el rol de mínimo privilegio vento_app (Diap. 20 PDF)
+      ConnectionStrings__DefaultConnection: >-
+        Host=vento-db;Port=5432;Database=${POSTGRES_DB:-vento_bd2};Username=vento_app;Password=${VENTO_APP_PASSWORD:-CAMBIAR_PASSWORD_SEGURO}
+      Jwt__Key: ${JWT_SECRET_KEY:-Clave_Desarrollo_Docker_Vento_Marketplace_2026_Segura!}
+      Jwt__Issuer: Vento.Api
+      Jwt__Audience: Vento.Frontend
+      Cors__AllowedOrigins__0: http://localhost:5173
+      Cors__AllowedOrigins__1: http://127.0.0.1:5173
+    ports:
+      - "${API_HOST_PORT:-5000}:5000"
+
+  vento-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vento-web
+    restart: unless-stopped
+    depends_on:
+      - vento-api
+    environment:
+      # URL accesible desde el navegador del cliente (en Raspberry Pi usar http://IP_RASPBERRY:5000/api)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    ports:
+      - "${WEB_HOST_PORT:-5173}:5173"
+
+volumes:
+  vento_pgdata:

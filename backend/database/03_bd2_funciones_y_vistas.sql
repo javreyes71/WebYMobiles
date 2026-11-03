@@ -1,4 +1,4 @@
--- Firmas de la version anterior
+﻿-- Firmas de la version anterior
 DROP FUNCTION IF EXISTS fn_atributo_json_producto(VARCHAR, VARCHAR);
 DROP FUNCTION IF EXISTS fn_ciudades_por_item(VARCHAR, VARCHAR);
 DROP FUNCTION IF EXISTS fn_clientes_frecuentes(INTEGER, NUMERIC);
@@ -2731,9 +2731,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_region(999, 'Region Prueba', 100);
-SELECT fn_upd_region(999, 'Region Prueba Editada');
-SELECT fn_del_region(999);
+-- SELECT fn_ins_region(999, 'Region Prueba', 100);
+-- SELECT fn_upd_region(999, 'Region Prueba Editada');
+-- SELECT fn_del_region(999);
 
 
 -- 11. Tabla provincia
@@ -2837,9 +2837,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_provincia(9999, 'Provincia Prueba', 50, 1);
-SELECT fn_upd_provincia(9999, 'Provincia Prueba Editada');
-SELECT fn_del_provincia(9999);
+-- SELECT fn_ins_provincia(9999, 'Provincia Prueba', 50, 1);
+-- SELECT fn_upd_provincia(9999, 'Provincia Prueba Editada');
+-- SELECT fn_del_provincia(9999);
 
 
 -- 12. Tabla comuna
@@ -2943,9 +2943,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_comuna(99999, 'Comuna Prueba', 10, 1);
-SELECT fn_upd_comuna(99999, 'Comuna Prueba Editada');
-SELECT fn_del_comuna(99999);
+-- SELECT fn_ins_comuna(99999, 'Comuna Prueba', 10, 1);
+-- SELECT fn_upd_comuna(99999, 'Comuna Prueba Editada');
+-- SELECT fn_del_comuna(99999);
 
 
 -- 13. Tabla empresa
@@ -3045,9 +3045,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_empresa('99000000-9', 'Empresa Prueba', 'https://www.prueba.cl');
-SELECT fn_upd_empresa('99000000-9', 'Empresa Prueba Editada');
-SELECT fn_del_empresa('99000000-9');
+-- SELECT fn_ins_empresa('99000000-9', 'Empresa Prueba', 'https://www.prueba.cl');
+-- SELECT fn_upd_empresa('99000000-9', 'Empresa Prueba Editada');
+-- SELECT fn_del_empresa('99000000-9');
 
 
 -- 14. Tabla usuario
@@ -3211,10 +3211,10 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_usuario('99999999-9', 'Cliente Prueba', 'clave9999', DATE '1990-05-10', DATE '2024-01-10', TRUE, FALSE, NULL);
-SELECT fn_upd_usuario('99999999-9', 'Cliente Prueba Editado');
-SELECT fn_upd_usuario_empresa('99999999-9', '76000001-2');
-SELECT fn_del_usuario('99999999-9');
+-- SELECT fn_ins_usuario('99999999-9', 'Cliente Prueba', 'clave9999', DATE '1990-05-10', DATE '2024-01-10', TRUE, FALSE, NULL);
+-- SELECT fn_upd_usuario('99999999-9', 'Cliente Prueba Editado');
+-- SELECT fn_upd_usuario_empresa('99999999-9', '76000001-2');
+-- SELECT fn_del_usuario('99999999-9');
 
 
 -- 15. Tabla categoria
@@ -3310,9 +3310,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_categoria('Cat_PRUEBA', 'Producto');
-SELECT fn_upd_categoria('Cat_PRUEBA', 'Servicio');
-SELECT fn_del_categoria('Cat_PRUEBA');
+-- SELECT fn_ins_categoria('Cat_PRUEBA', 'Producto');
+-- SELECT fn_upd_categoria('Cat_PRUEBA', 'Servicio');
+-- SELECT fn_del_categoria('Cat_PRUEBA');
 
 
 -- 16. Tabla stock
@@ -3408,9 +3408,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_stock(999999, 20);
-SELECT fn_upd_stock(999999, 35);
-SELECT fn_del_stock(999999);
+-- SELECT fn_ins_stock(999999, 20);
+-- SELECT fn_upd_stock(999999, 35);
+-- SELECT fn_del_stock(999999);
 
 
 -- 17. Tabla caracteristicas
@@ -3510,9 +3510,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_caracteristicas(999999, '{"color":"rojo"}'::json, 1);
-SELECT fn_upd_caracteristicas(999999, '{"color":"azul"}'::json);
-SELECT fn_del_caracteristicas(999999);
+-- SELECT fn_ins_caracteristicas(999999, '{"color":"rojo"}'::json, 1);
+-- SELECT fn_upd_caracteristicas(999999, '{"color":"azul"}'::json);
+-- SELECT fn_del_caracteristicas(999999);
 
 
 -- 18. Tabla oferta
@@ -3608,9 +3608,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_oferta(999999, 15.5);
-SELECT fn_upd_oferta(999999, 20);
-SELECT fn_del_oferta(999999);
+-- SELECT fn_ins_oferta(999999, 15.5);
+-- SELECT fn_upd_oferta(999999, 20);
+-- SELECT fn_del_oferta(999999);
 
 
 -- 19. Tabla cotizacion
@@ -3710,9 +3710,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_cotizacion(999999, DATE '2024-03-15', '76000001-2');
-SELECT fn_upd_cotizacion(999999, DATE '2024-03-10');
-SELECT fn_del_cotizacion(999999);
+-- SELECT fn_ins_cotizacion(999999, DATE '2024-03-15', '76000001-2');
+-- SELECT fn_upd_cotizacion(999999, DATE '2024-03-10');
+-- SELECT fn_del_cotizacion(999999);
 
 
 -- 20. Tabla producto
@@ -3824,9 +3824,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_producto('P9999999', 'Producto Prueba', FALSE, '{"color":"rojo"}'::json, 'MarcaX', NULL);
-SELECT fn_upd_producto('P9999999', 'Producto Prueba Editado');
-SELECT fn_del_producto('P9999999');
+-- SELECT fn_ins_producto('P9999999', 'Producto Prueba', FALSE, '{"color":"rojo"}'::json, 'MarcaX', NULL);
+-- SELECT fn_upd_producto('P9999999', 'Producto Prueba Editado');
+-- SELECT fn_del_producto('P9999999');
 
 
 -- 21. Tabla servicio
@@ -3938,9 +3938,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_servicio('S9999999', 'Servicio Prueba', FALSE, '{"modalidad":"Remoto"}'::json, 60, NULL);
-SELECT fn_upd_servicio('S9999999', 'Servicio Prueba Editado');
-SELECT fn_del_servicio('S9999999');
+-- SELECT fn_ins_servicio('S9999999', 'Servicio Prueba', FALSE, '{"modalidad":"Remoto"}'::json, 60, NULL);
+-- SELECT fn_upd_servicio('S9999999', 'Servicio Prueba Editado');
+-- SELECT fn_del_servicio('S9999999');
 
 
 -- 22. Tabla venta
@@ -4044,9 +4044,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_venta(999999, 2, 10000, 1900);
-SELECT fn_upd_venta(999999, 3);
-SELECT fn_del_venta(999999);
+-- SELECT fn_ins_venta(999999, 2, 10000, 1900);
+-- SELECT fn_upd_venta(999999, 3);
+-- SELECT fn_del_venta(999999);
 
 
 -- 23. Tabla medio_pago
@@ -4170,9 +4170,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_medio_pago('TRF9999999', 'Tarjeta', DATE '2024-03-15', '1234', 1, 1, 1900, 10000, 11900);
-SELECT fn_upd_medio_pago('TRF9999999', 'Debito');
-SELECT fn_del_medio_pago('TRF9999999');
+-- SELECT fn_ins_medio_pago('TRF9999999', 'Tarjeta', DATE '2024-03-15', '1234', 1, 1, 1900, 10000, 11900);
+-- SELECT fn_upd_medio_pago('TRF9999999', 'Debito');
+-- SELECT fn_del_medio_pago('TRF9999999');
 
 
 -- 24. Tabla historial_compra
@@ -4272,9 +4272,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_historial_compra(999999, DATE '2018-02-01', DATE '2018-02-10');
-SELECT fn_upd_historial_compra(999999, DATE '2018-02-02');
-SELECT fn_del_historial_compra(999999);
+-- SELECT fn_ins_historial_compra(999999, DATE '2018-02-01', DATE '2018-02-10');
+-- SELECT fn_upd_historial_compra(999999, DATE '2018-02-02');
+-- SELECT fn_del_historial_compra(999999);
 
 
 -- 25. Tabla despacho
@@ -4382,9 +4382,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_despacho(999999, 3500, DATE '2024-03-15', 'En Preparación', 1);
-SELECT fn_upd_despacho(999999, NULL, NULL, 'Entregado');
-SELECT fn_del_despacho(999999);
+-- SELECT fn_ins_despacho(999999, 3500, DATE '2024-03-15', 'En Preparación', 1);
+-- SELECT fn_upd_despacho(999999, NULL, NULL, 'Entregado');
+-- SELECT fn_del_despacho(999999);
 
 
 -- 26. Tabla direccion
@@ -4498,9 +4498,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_direccion(999999, 5290000, 'Calle Prueba', 123, '11000001-2', NULL, 1);
-SELECT fn_upd_direccion(999999, NULL, 'Pasaje Prueba');
-SELECT fn_del_direccion(999999);
+-- SELECT fn_ins_direccion(999999, 5290000, 'Calle Prueba', 123, '11000001-2', NULL, 1);
+-- SELECT fn_upd_direccion(999999, NULL, 'Pasaje Prueba');
+-- SELECT fn_del_direccion(999999);
 
 
 -- 27. Tabla empresa_transporte_despacho
@@ -4600,9 +4600,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_empresa_transporte_despacho('SEG9999999', 1, '76000001-2');
-SELECT fn_upd_empresa_transporte_despacho('SEG9999999', 2);
-SELECT fn_del_empresa_transporte_despacho('SEG9999999');
+-- SELECT fn_ins_empresa_transporte_despacho('SEG9999999', 1, '76000001-2');
+-- SELECT fn_upd_empresa_transporte_despacho('SEG9999999', 2);
+-- SELECT fn_del_empresa_transporte_despacho('SEG9999999');
 
 
 -- 28. Tabla correo
@@ -4698,9 +4698,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_correo('prueba@correo.cl', '11000001-2', NULL);
-SELECT fn_upd_correo('prueba@correo.cl', 'prueba2@correo.cl');
-SELECT fn_del_correo('prueba2@correo.cl');
+-- SELECT fn_ins_correo('prueba@correo.cl', '11000001-2', NULL);
+-- SELECT fn_upd_correo('prueba@correo.cl', 'prueba2@correo.cl');
+-- SELECT fn_del_correo('prueba2@correo.cl');
 
 
 -- 29. Tabla telefono
@@ -4798,9 +4798,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_telefono('980099999', 56, '11000001-2');
-SELECT fn_upd_telefono('980099999', '980088888', 56);
-SELECT fn_del_telefono('980088888');
+-- SELECT fn_ins_telefono('980099999', 56, '11000001-2');
+-- SELECT fn_upd_telefono('980099999', '980088888', 56);
+-- SELECT fn_del_telefono('980088888');
 
 
 -- 30. Tabla mensajeria
@@ -4904,9 +4904,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_mensajeria(999999, 'Consulta de prueba', DATE '2024-03-15', '76000001-2');
-SELECT fn_upd_mensajeria(999999, 'Consulta de prueba editada');
-SELECT fn_del_mensajeria(999999);
+-- SELECT fn_ins_mensajeria(999999, 'Consulta de prueba', DATE '2024-03-15', '76000001-2');
+-- SELECT fn_upd_mensajeria(999999, 'Consulta de prueba editada');
+-- SELECT fn_del_mensajeria(999999);
 
 
 -- 31. Tabla devolucion
@@ -5018,9 +5018,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_devolucion(999999, 'Producto danado', DATE '2024-03-15', NULL, 1, 'Pendiente');
-SELECT fn_upd_devolucion(999999, NULL, NULL, NULL, NULL, 'Aprobada');
-SELECT fn_del_devolucion(999999);
+-- SELECT fn_ins_devolucion(999999, 'Producto danado', DATE '2024-03-15', NULL, 1, 'Pendiente');
+-- SELECT fn_upd_devolucion(999999, NULL, NULL, NULL, NULL, 'Aprobada');
+-- SELECT fn_del_devolucion(999999);
 
 
 -- 32. Tabla lista_deseos_wishlist
@@ -5110,9 +5110,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_lista_deseos_wishlist('Lista_Prueba');
-SELECT fn_upd_lista_deseos_wishlist('Lista_Prueba', 'Lista_Prueba2');
-SELECT fn_del_lista_deseos_wishlist('Lista_Prueba2');
+-- SELECT fn_ins_lista_deseos_wishlist('Lista_Prueba');
+-- SELECT fn_upd_lista_deseos_wishlist('Lista_Prueba', 'Lista_Prueba2');
+-- SELECT fn_del_lista_deseos_wishlist('Lista_Prueba2');
 
 
 -- 33. Tabla solicita
@@ -5228,9 +5228,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_solicita(999999, 1, '11000001-2', 15000, 'Solicitada', DATE '2024-03-01', DATE '2024-03-15');
-SELECT fn_upd_solicita(999999, NULL, NULL, NULL, 'Respondida');
-SELECT fn_del_solicita(999999);
+-- SELECT fn_ins_solicita(999999, 1, '11000001-2', 15000, 'Solicitada', DATE '2024-03-01', DATE '2024-03-15');
+-- SELECT fn_upd_solicita(999999, NULL, NULL, NULL, 'Respondida');
+-- SELECT fn_del_solicita(999999);
 
 
 -- 34. Tabla contacto
@@ -5326,9 +5326,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_contacto(999999, '11000001-2');
-SELECT fn_upd_contacto(999999, '11000002-3');
-SELECT fn_del_contacto(999999);
+-- SELECT fn_ins_contacto(999999, '11000001-2');
+-- SELECT fn_upd_contacto(999999, '11000002-3');
+-- SELECT fn_del_contacto(999999);
 
 
 -- 35. Tabla paga
@@ -5424,9 +5424,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_paga(999, 'TRF0000001');
-SELECT fn_upd_paga(999, 'TRF0000002');
-SELECT fn_del_paga(999);
+-- SELECT fn_ins_paga(999, 'TRF0000001');
+-- SELECT fn_upd_paga(999, 'TRF0000002');
+-- SELECT fn_del_paga(999);
 
 
 -- 36. Tabla genera
@@ -5527,9 +5527,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_genera('TRF0000002', 1, 'Pendiente');
-SELECT fn_upd_genera('TRF0000002', 1, 'Completada');
-SELECT fn_del_genera('TRF0000002', 1);
+-- SELECT fn_ins_genera('TRF0000002', 1, 'Pendiente');
+-- SELECT fn_upd_genera('TRF0000002', 1, 'Completada');
+-- SELECT fn_del_genera('TRF0000002', 1);
 
 
 -- 37. Tabla subdivide
@@ -5626,9 +5626,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_subdivide('Cat_0001', 'Cat_0003');
-SELECT fn_upd_subdivide('Cat_0001', 'Cat_0003', 'Cat_0001', 'Cat_0004');
-SELECT fn_del_subdivide('Cat_0001', 'Cat_0004');
+-- SELECT fn_ins_subdivide('Cat_0001', 'Cat_0003');
+-- SELECT fn_upd_subdivide('Cat_0001', 'Cat_0003', 'Cat_0001', 'Cat_0004');
+-- SELECT fn_del_subdivide('Cat_0001', 'Cat_0004');
 
 
 -- 38. Tabla incluye
@@ -5733,9 +5733,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_incluye(2, 'P0000002', 'S0000002', '11000001-2');
-SELECT fn_upd_incluye(2, 'P0000002', 'S0000002', 3, 'P0000003', 'S0000003');
-SELECT fn_del_incluye(3, 'P0000003', 'S0000003');
+-- SELECT fn_ins_incluye(2, 'P0000002', 'S0000002', '11000001-2');
+-- SELECT fn_upd_incluye(2, 'P0000002', 'S0000002', 3, 'P0000003', 'S0000003');
+-- SELECT fn_del_incluye(3, 'P0000003', 'S0000003');
 
 
 -- 39. Tabla vende
@@ -5840,9 +5840,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_vende('11000001-2', 'P0000500', 1, 15000::money);
-SELECT fn_upd_vende('11000001-2', 'P0000500', NULL, 16000::money);
-SELECT fn_del_vende('11000001-2', 'P0000500');
+-- SELECT fn_ins_vende('11000001-2', 'P0000500', 1, 15000::money);
+-- SELECT fn_upd_vende('11000001-2', 'P0000500', NULL, 16000::money);
+-- SELECT fn_del_vende('11000001-2', 'P0000500');
 
 
 -- 40. Tabla comercializa
@@ -5947,9 +5947,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_comercializa('76000001-2', 'P0000500', 1, 12000::money);
-SELECT fn_upd_comercializa('76000001-2', 'P0000500', NULL, 13000::money);
-SELECT fn_del_comercializa('76000001-2', 'P0000500');
+-- SELECT fn_ins_comercializa('76000001-2', 'P0000500', 1, 12000::money);
+-- SELECT fn_upd_comercializa('76000001-2', 'P0000500', NULL, 13000::money);
+-- SELECT fn_del_comercializa('76000001-2', 'P0000500');
 
 
 -- 41. Tabla pertenece
@@ -6046,9 +6046,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_pertenece('Cat_0002', 'P0000001');
-SELECT fn_upd_pertenece('Cat_0002', 'P0000001', 'Cat_0003', 'P0000001');
-SELECT fn_del_pertenece('Cat_0003', 'P0000001');
+-- SELECT fn_ins_pertenece('Cat_0002', 'P0000001');
+-- SELECT fn_upd_pertenece('Cat_0002', 'P0000001', 'Cat_0003', 'P0000001');
+-- SELECT fn_del_pertenece('Cat_0003', 'P0000001');
 
 
 -- 42. Tabla vincula
@@ -6145,9 +6145,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_vincula('S0000001', 'Cat_0002');
-SELECT fn_upd_vincula('S0000001', 'Cat_0002', 'S0000001', 'Cat_0003');
-SELECT fn_del_vincula('S0000001', 'Cat_0003');
+-- SELECT fn_ins_vincula('S0000001', 'Cat_0002');
+-- SELECT fn_upd_vincula('S0000001', 'Cat_0002', 'S0000001', 'Cat_0003');
+-- SELECT fn_del_vincula('S0000001', 'Cat_0003');
 
 
 -- 43. Tabla contiene
@@ -6244,9 +6244,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_contiene(2, 'P0000001');
-SELECT fn_upd_contiene(2, 'P0000001', 3, 'P0000001');
-SELECT fn_del_contiene(3, 'P0000001');
+-- SELECT fn_ins_contiene(2, 'P0000001');
+-- SELECT fn_upd_contiene(2, 'P0000001', 3, 'P0000001');
+-- SELECT fn_del_contiene(3, 'P0000001');
 
 
 -- 44. Tabla detalle
@@ -6350,9 +6350,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_detalle('P0000500', '76000001-2', 2);
-SELECT fn_upd_detalle('P0000500', '76000001-2', 2, 'P0000501', '76000001-2', 3);
-SELECT fn_del_detalle('P0000501', '76000001-2', 3);
+-- SELECT fn_ins_detalle('P0000500', '76000001-2', 2);
+-- SELECT fn_upd_detalle('P0000500', '76000001-2', 2, 'P0000501', '76000001-2', 3);
+-- SELECT fn_del_detalle('P0000501', '76000001-2', 3);
 
 
 -- 45. Tabla critica
@@ -6456,9 +6456,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_critica(1, '11000001-2', 'S0000002');
-SELECT fn_upd_critica(1, '11000001-2', 'S0000002', 2, '11000001-2', 'S0000003');
-SELECT fn_del_critica(2, '11000001-2', 'S0000003');
+-- SELECT fn_ins_critica(1, '11000001-2', 'S0000002');
+-- SELECT fn_upd_critica(1, '11000001-2', 'S0000002', 2, '11000001-2', 'S0000003');
+-- SELECT fn_del_critica(2, '11000001-2', 'S0000003');
 
 
 -- 46. Tabla preguntar
@@ -6562,9 +6562,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_preguntar('11000001-2', 'P0000002', 1);
-SELECT fn_upd_preguntar('11000001-2', 'P0000002', 1, '11000001-2', 'P0000003', 2);
-SELECT fn_del_preguntar('11000001-2', 'P0000003', 2);
+-- SELECT fn_ins_preguntar('11000001-2', 'P0000002', 1);
+-- SELECT fn_upd_preguntar('11000001-2', 'P0000002', 1, '11000001-2', 'P0000003', 2);
+-- SELECT fn_del_preguntar('11000001-2', 'P0000003', 2);
 
 
 -- 47. Tabla indaga
@@ -6668,9 +6668,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_indaga('11000001-2', 'S0000001', 2);
-SELECT fn_upd_indaga('11000001-2', 'S0000001', 2, '11000001-2', 'S0000002', 3);
-SELECT fn_del_indaga('11000001-2', 'S0000002', 3);
+-- SELECT fn_ins_indaga('11000001-2', 'S0000001', 2);
+-- SELECT fn_upd_indaga('11000001-2', 'S0000001', 2, '11000001-2', 'S0000002', 3);
+-- SELECT fn_del_indaga('11000001-2', 'S0000002', 3);
 
 
 -- 48. Tabla promociona
@@ -6780,9 +6780,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_promociona(1, 'S0000001', 'P0000500', DATE '2024-01-01', DATE '2024-12-31');
-SELECT fn_upd_promociona(1, 'S0000001', 'P0000500', DATE '2024-02-01');
-SELECT fn_del_promociona(1, 'S0000001', 'P0000500');
+-- SELECT fn_ins_promociona(1, 'S0000001', 'P0000500', DATE '2024-01-01', DATE '2024-12-31');
+-- SELECT fn_upd_promociona(1, 'S0000001', 'P0000500', DATE '2024-02-01');
+-- SELECT fn_del_promociona(1, 'S0000001', 'P0000500');
 
 
 -- 49. Tabla promueve
@@ -6887,9 +6887,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_promueve(1, 'S0000500', DATE '2024-01-01', DATE '2024-12-31');
-SELECT fn_upd_promueve(1, 'S0000500', DATE '2024-02-01');
-SELECT fn_del_promueve(1, 'S0000500');
+-- SELECT fn_ins_promueve(1, 'S0000500', DATE '2024-01-01', DATE '2024-12-31');
+-- SELECT fn_upd_promueve(1, 'S0000500', DATE '2024-02-01');
+-- SELECT fn_del_promueve(1, 'S0000500');
 
 
 -- 50. Tabla compra
@@ -6986,9 +6986,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_compra('11000002-3', 999);
-SELECT fn_upd_compra('11000002-3', 999, '11000003-4', 998);
-SELECT fn_del_compra('11000003-4', 998);
+-- SELECT fn_ins_compra('11000002-3', 999);
+-- SELECT fn_upd_compra('11000002-3', 999, '11000003-4', 998);
+-- SELECT fn_del_compra('11000003-4', 998);
 
 
 -- 51. Tabla consultar
@@ -7085,9 +7085,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_consultar('11000001-2', 10);
-SELECT fn_upd_consultar('11000001-2', 10, '11000001-2', 11);
-SELECT fn_del_consultar('11000001-2', 11);
+-- SELECT fn_ins_consultar('11000001-2', 10);
+-- SELECT fn_upd_consultar('11000001-2', 10, '11000001-2', 11);
+-- SELECT fn_del_consultar('11000001-2', 11);
 
 
 -- 52. Tabla ejerce
@@ -7191,9 +7191,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_ejerce(999999, '11000001-2', 1, 'Pendiente');
-SELECT fn_upd_ejerce(999999, NULL, NULL, 'Aprobada');
-SELECT fn_del_ejerce(999999);
+-- SELECT fn_ins_ejerce(999999, '11000001-2', 1, 'Pendiente');
+-- SELECT fn_upd_ejerce(999999, NULL, NULL, 'Aprobada');
+-- SELECT fn_del_ejerce(999999);
 
 
 -- 53. Tabla crear
@@ -7290,9 +7290,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_crear('11000001-2', 'Lista_0002');
-SELECT fn_upd_crear('11000001-2', 'Lista_0002', '11000001-2', 'Lista_0003');
-SELECT fn_del_crear('11000001-2', 'Lista_0003');
+-- SELECT fn_ins_crear('11000001-2', 'Lista_0002');
+-- SELECT fn_upd_crear('11000001-2', 'Lista_0002', '11000001-2', 'Lista_0003');
+-- SELECT fn_del_crear('11000001-2', 'Lista_0003');
 
 
 -- 54. Tabla considera
@@ -7402,9 +7402,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_considera(999, 1, 'TRF0000001', 1, NULL);
-SELECT fn_upd_considera(999, 1, 'TRF0000001', 2);
-SELECT fn_del_considera(999, 1, 'TRF0000001');
+-- SELECT fn_ins_considera(999, 1, 'TRF0000001', 1, NULL);
+-- SELECT fn_upd_considera(999, 1, 'TRF0000001', 2);
+-- SELECT fn_del_considera(999, 1, 'TRF0000001');
 
 
 -- 55. Tabla asocia
@@ -7508,9 +7508,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_asocia('S0000001', '76000001-2', 2);
-SELECT fn_upd_asocia('S0000001', '76000001-2', 2, 'S0000002', '76000001-2', 3);
-SELECT fn_del_asocia('S0000002', '76000001-2', 3);
+-- SELECT fn_ins_asocia('S0000001', '76000001-2', 2);
+-- SELECT fn_upd_asocia('S0000001', '76000001-2', 2, 'S0000002', '76000001-2', 3);
+-- SELECT fn_del_asocia('S0000002', '76000001-2', 3);
 
 
 -- 56. Tabla evalua
@@ -7606,9 +7606,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_evalua(2, '11000001-2');
-SELECT fn_upd_evalua(2, '11000001-2');
-SELECT fn_del_evalua(2);
+-- SELECT fn_ins_evalua(2, '11000001-2');
+-- SELECT fn_upd_evalua(2, '11000001-2');
+-- SELECT fn_del_evalua(2);
 
 
 -- 57. Tabla posee
@@ -7705,9 +7705,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_posee('Lista_0001', 'S0000002');
-SELECT fn_upd_posee('Lista_0001', 'S0000002', 'Lista_0001', 'S0000003');
-SELECT fn_del_posee('Lista_0001', 'S0000003');
+-- SELECT fn_ins_posee('Lista_0001', 'S0000002');
+-- SELECT fn_upd_posee('Lista_0001', 'S0000002', 'Lista_0001', 'S0000003');
+-- SELECT fn_del_posee('Lista_0001', 'S0000003');
 
 
 -- 58. Tabla administra
@@ -7804,9 +7804,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_administra('11000001-2', '76000002-3');
-SELECT fn_upd_administra('11000001-2', '76000002-3', '11000001-2', '76000003-4');
-SELECT fn_del_administra('11000001-2', '76000003-4');
+-- SELECT fn_ins_administra('11000001-2', '76000002-3');
+-- SELECT fn_upd_administra('11000001-2', '76000002-3', '11000001-2', '76000003-4');
+-- SELECT fn_del_administra('11000001-2', '76000003-4');
 
 
 -- 59. Tabla conforma
@@ -7910,9 +7910,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_conforma(1, 'S0000001', '11000001-2');
-SELECT fn_upd_conforma(1, 'S0000001', '11000001-2', 2, 'S0000002', '11000001-2');
-SELECT fn_del_conforma(2, 'S0000002', '11000001-2');
+-- SELECT fn_ins_conforma(1, 'S0000001', '11000001-2');
+-- SELECT fn_upd_conforma(1, 'S0000001', '11000001-2', 2, 'S0000002', '11000001-2');
+-- SELECT fn_del_conforma(2, 'S0000002', '11000001-2');
 
 
 -- 60. Tabla definir
@@ -8016,9 +8016,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_definir(1, 'P0000001', 2);
-SELECT fn_upd_definir(1, 'P0000001', 2, 1, 'P0000002', 3);
-SELECT fn_del_definir(1, 'P0000002', 3);
+-- SELECT fn_ins_definir(1, 'P0000001', 2);
+-- SELECT fn_upd_definir(1, 'P0000001', 2, 1, 'P0000002', 3);
+-- SELECT fn_del_definir(1, 'P0000002', 3);
 
 
 -- 61. Tabla añadir
@@ -8122,9 +8122,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_añadir('Lista_0001', 'S0000001', 'P0000002');
-SELECT fn_upd_añadir('Lista_0001', 'S0000001', 'P0000002', 'Lista_0001', 'S0000002', 'P0000003');
-SELECT fn_del_añadir('Lista_0001', 'S0000002', 'P0000003');
+-- SELECT fn_ins_añadir('Lista_0001', 'S0000001', 'P0000002');
+-- SELECT fn_upd_añadir('Lista_0001', 'S0000001', 'P0000002', 'Lista_0001', 'S0000002', 'P0000003');
+-- SELECT fn_del_añadir('Lista_0001', 'S0000002', 'P0000003');
 
 
 -- 62. Tabla reseña
@@ -8228,9 +8228,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_reseña(999999, 5, 'Comentario de prueba', '11000001-2');
-SELECT fn_upd_reseña(999999, 4);
-SELECT fn_del_reseña(999999);
+-- SELECT fn_ins_reseña(999999, 5, 'Comentario de prueba', '11000001-2');
+-- SELECT fn_upd_reseña(999999, 4);
+-- SELECT fn_del_reseña(999999);
 
 
 -- 63. Tabla reseñar
@@ -8334,9 +8334,9 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT fn_ins_reseñar(1, '11000001-2', 'P0000002');
-SELECT fn_upd_reseñar(1, '11000001-2', 'P0000002', 2, '11000001-2', 'P0000003');
-SELECT fn_del_reseñar(2, '11000001-2', 'P0000003');
+-- SELECT fn_ins_reseñar(1, '11000001-2', 'P0000002');
+-- SELECT fn_upd_reseñar(1, '11000001-2', 'P0000002', 2, '11000001-2', 'P0000003');
+-- SELECT fn_del_reseñar(2, '11000001-2', 'P0000003');
 
 -- vistas.txt
 -- Proyecto Compra y Venta | Universidad de Los Lagos

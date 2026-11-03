@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Full", "Frontend", "Backend")]
+    [ValidateSet("Full", "Frontend", "Backend", "Docker")]
     [string]$Modo = "Full",
 
     [switch]$ConectarApi,
@@ -19,6 +19,22 @@ Write-Host "============================================================" -Foreg
 Write-Host "   VENTO MARKETPLACE (WYM) - INICIADOR DE ENTORNO LOCAL     " -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host " Modo seleccionado : $Modo" -ForegroundColor Gray
+
+if ($Modo -eq "Docker") {
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        Write-Host "[ERROR] Docker Desktop no esta instalado o no esta en PATH." -ForegroundColor Red
+        Write-Host "        Instala Docker Desktop o usa '.\iniciar.bat' para modo nativo." -ForegroundColor Yellow
+        exit 1
+    }
+    Push-Location $RepoRoot
+    try {
+        Write-Host "[DOCKER] Levantando PostgreSQL BD2 + Vento.Api (.NET 8) + Frontend (Vite)..." -ForegroundColor Cyan
+        docker compose up --build
+    } finally {
+        Pop-Location
+    }
+    exit 0
+}
 
 # 1. Resolver ejecutable de .NET 8 SDK (global o instalado en perfil de usuario)
 function Resolve-DotnetPath {

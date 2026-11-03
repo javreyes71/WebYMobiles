@@ -21,7 +21,11 @@ $$;
 -- CREATE DATABASE vento_bd2 OWNER vento_app ENCODING 'UTF8';
 
 -- Ejecutar conectado a la base de datos del proyecto (\c BD2 o \c vento_bd2):
-GRANT CONNECT ON DATABASE current_database() TO vento_app;
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO vento_app', current_database());
+END
+$$;
 GRANT USAGE, CREATE ON SCHEMA public TO vento_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO vento_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO vento_app;

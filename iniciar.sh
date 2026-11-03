@@ -34,6 +34,15 @@ echo "============================================================"
 echo "   VENTO MARKETPLACE (WYM) - INICIADOR DE ENTORNO LOCAL"
 echo "============================================================"
 
+if [ "$MODO_LOWER" = "docker" ]; then
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "[ERROR] Docker no está instalado. Usa './iniciar.sh' para modo nativo."
+    exit 1
+  fi
+  cd "$REPO_ROOT"
+  exec docker compose up --build
+fi
+
 if [ "$MODO_LOWER" = "full" ] || [ "$MODO_LOWER" = "backend" ] || [ "$MODO_LOWER" = "api" ]; then
   if [ ! -f "$REPO_ROOT/backend/Vento.Api/appsettings.Development.json" ] && [ -f "$REPO_ROOT/backend/Vento.Api/appsettings.Example.json" ]; then
     cp "$REPO_ROOT/backend/Vento.Api/appsettings.Example.json" "$REPO_ROOT/backend/Vento.Api/appsettings.Development.json"

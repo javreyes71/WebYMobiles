@@ -21,9 +21,12 @@ WebYMobiles/
 │   ├── database/               # Scripts SQL 00..05 (49 tablas BD2, 23 triggers, vistas y RBAC)
 │   ├── postman/                # Colección oficial Postman v2.1 + Entorno {{baseUrl}} (63 pruebas)
 │   └── deploy/                 # Servicio systemd y script ARM64 para Raspberry Pi (0.0.0.0:5000)
+├── docker-compose.yml          # Levanta PostgreSQL BD2 + .NET 8 + React en 1 comando
 ├── iniciar.bat                 # Lanzador rápido en 1 clic / consola para Windows
-├── iniciar.ps1                 # Script PowerShell orquestador (Full / Frontend / Backend)
+├── iniciar.ps1                 # Script PowerShell orquestador (Full / Frontend / Backend / Docker)
 ├── iniciar.sh                  # Script Bash multiplataforma (Linux / macOS / Git Bash / Raspberry Pi)
+├── inicializar-bd.bat          # Crea vento_bd2 y carga los 6 SQL (00..05) en PostgreSQL local
+├── inicializar-bd.ps1          # Script PowerShell de inicialización de BD2 local
 ├── DESARROLLO_IMPLEMENTADO.md  # Informe técnico completo y matriz de cumplimiento
 ├── MINUTA.md                   # Registro histórico de reuniones y acuerdos del equipo
 └── README.md                   # Guía rápida de instalación y cuentas de prueba
@@ -41,29 +44,40 @@ WebYMobiles/
 
 ---
 
-## Inicio Rápido en 1 Comando (Recomendado)
+## Inicio Rápido en 1 Comando (2 Modalidades Conviviendo)
 
-En la raíz del repositorio dispones de scripts automáticos que detectan `.NET 8 SDK` y `Node.js`, instalan `node_modules` si es la primera vez, crean `appsettings.Development.json` desde la plantilla y levantan los servidores mostrando sus URLs (y deteniéndolos limpiamente con `Ctrl + C`):
+El repositorio soporta **ambas modalidades** sin conflicto: contenedores listos en un comando (`Docker Compose`) y ejecución nativa liviana pensada para desarrollo directo y **Raspberry Pi** (`systemd`).
 
-### En Windows (`CMD` o `PowerShell`)
+### Opción A — Contenedores Todo-en-Uno (`Docker Compose`)
+Levanta automáticamente **PostgreSQL 18** (ejecutando los 6 scripts `00..05` de `BD2` en el primer arranque), **Vento.Api (`.NET 8`)** con el usuario de mínimo privilegio `vento_app` y **Frontend (`React + Vite`)**:
+```bash
+docker compose up --build
+# (o bien: .\iniciar.bat -Modo Docker  /  ./iniciar.sh docker)
+```
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:5000/api/health`
+- PostgreSQL `BD2`: `localhost:5433` *(usa `5433` en el host para no chocar con un PostgreSQL local en `5432`)*
+
+### Opción B — Ejecución Nativa (Windows, Linux y Raspberry Pi)
+Detecta automáticamente `.NET 8 SDK` y `Node.js`, instala `node_modules` si falta, crea `appsettings.Development.json` desde plantilla y detiene todo limpiamente con `Ctrl + C`:
+
+#### En Windows (`CMD` o `PowerShell`)
 ```powershell
+# (Opcional 1 sola vez) Crear vento_bd2 y cargar los 6 SQL (00..05) en tu PostgreSQL local:
+.\inicializar-bd.bat
+
 # Levantar Backend (.NET 8 en :5000) + Frontend (Vite en :5173)
 .\iniciar.bat
 
 # Levantar ambos conectando automáticamente VITE_API_URL=http://localhost:5000/api
 .\iniciar.bat -ConectarApi
 
-# Levantar únicamente el Frontend (modo demostración rápida en :5173)
+# Levantar únicamente Frontend (:5173) o únicamente Backend (:5000)
 .\iniciar.bat -Modo Frontend
-
-# Levantar únicamente el Backend (.NET 8 API en :5000)
 .\iniciar.bat -Modo Backend
-
-# Abrir automáticamente el navegador en http://localhost:5173
-.\iniciar.bat -AbrirNavegador
 ```
 
-### En Linux / macOS / Git Bash / Raspberry Pi
+#### En Linux / macOS / Git Bash / Raspberry Pi
 ```bash
 chmod +x iniciar.sh
 
@@ -72,6 +86,7 @@ chmod +x iniciar.sh
 ./iniciar.sh frontend   # Solo Frontend (:5173)
 ./iniciar.sh backend    # Solo Backend (:5000)
 ```
+*(Para despliegue permanente en **Raspberry Pi** como servicio `systemd` en `0.0.0.0:5000`, usa [`backend/deploy/deploy_raspberry.sh`](./backend/deploy/deploy_raspberry.sh)).*
 
 ---
 

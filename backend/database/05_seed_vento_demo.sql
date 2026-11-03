@@ -43,3 +43,15 @@ INSERT INTO cupon (codigo, tipo, valor, minimo_compra, activo, descripcion) VALU
     ('BIENVENIDA', 'fijo', 5000, 25000, TRUE, '$5.000 CLP de descuento directo en tu primera compra'),
     ('ENVIOGRATIS', 'envio', 100, 15000, TRUE, 'Despacho gratuito nacional en productos seleccionados')
 ON CONFLICT (codigo) DO NOTHING;
+
+-- Asegurar permisos completos para el rol de mínimo privilegio vento_app sobre todas las tablas y vistas creadas
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'vento_app') THEN
+        GRANT USAGE ON SCHEMA public TO vento_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO vento_app;
+        GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO vento_app;
+        GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO vento_app;
+    END IF;
+END
+$$;

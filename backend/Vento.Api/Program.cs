@@ -38,8 +38,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 2. Conexión a PostgreSQL mediante Entity Framework Core + Npgsql (Diap. 19 y 29)
-var connectionString = builder.Configuration.GetConnectionString("Default")
-    ?? "Host=localhost;Port=5432;Database=BD2;Username=vento_app;Password=PASSWORD";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("Default")
+    ?? "Host=localhost;Port=5432;Database=vento_bd2;Username=vento_app;Password=CAMBIAR_PASSWORD_SEGURO";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
