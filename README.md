@@ -18,7 +18,7 @@ WebYMobiles/
 ├── backend/                    # API REST Vento.Api (.NET 8 + EF Core + PostgreSQL BD2)
 │   ├── Vento.sln
 │   ├── Vento.Api/              # Controladores, DTOs, Middleware global, JWT, BCrypt y DbSeeder
-│   ├── database/               # Scripts SQL 00..05 (49 tablas BD2, 23 triggers, vistas y RBAC)
+│   ├── database/               # Scripts SQL 00..06 (49 tablas BD2, 23 triggers, 6 vistas y RBAC)
 │   ├── postman/                # Colección oficial Postman v2.1 + Entorno {{baseUrl}} (63 pruebas)
 │   └── deploy/                 # Servicio systemd y script ARM64 para Raspberry Pi (0.0.0.0:5000)
 ├── docker-compose.yml          # Levanta PostgreSQL BD2 + .NET 8 + React en 1 comando
@@ -49,7 +49,7 @@ WebYMobiles/
 El repositorio soporta **ambas modalidades** sin conflicto: contenedores listos en un comando (`Docker Compose`) y ejecución nativa liviana pensada para desarrollo directo y **Raspberry Pi** (`systemd`).
 
 ### Opción A — Contenedores Todo-en-Uno (`Docker Compose`)
-Levanta automáticamente **PostgreSQL 18** (ejecutando los 6 scripts `00..05` de `BD2` en el primer arranque), **Vento.Api (`.NET 8`)** con el usuario de mínimo privilegio `vento_app` y **Frontend (`React + Vite`)**:
+Levanta automáticamente **PostgreSQL 17** (ejecutando los 7 scripts `00..06` de `BD2` en el primer arranque), **Vento.Api (`.NET 8`)** con el usuario de mínimo privilegio `vento_app` y **Frontend (`React + Vite`)**:
 ```bash
 docker compose up --build
 # (o bien: .\iniciar.bat -Modo Docker  /  ./iniciar.sh docker)
@@ -123,7 +123,7 @@ En el modal de **Iniciar Sesión** dispones de botones de acceso rápido para pr
 
 | Perfil / Rol | RUT | Contraseña | Capacidades Clave |
 | :--- | :--- | :--- | :--- |
-| **Administrador (`Admin`)** | `12.345.678-5` | `admin1234` | Centro de Gobierno (`/admin/usuarios`): aprobar/rechazar cuentas comerciales y publicaciones, destacar ítems, suspender usuarios (`403`), cupones dinámicos y tickets de soporte. |
+| **Administrador (`Admin`)** | `12.345.678-5` | `admin1234` | Centro de Gobierno (`/admin/usuarios`): aprobar/rechazar cuentas comerciales y publicaciones, destacar ítems, suspender usuarios (`403`), cupones dinámicos, tickets de soporte y panel interactivo con las **6 Vistas SQL de BD2**. |
 | **Vendedor Productos (`VendedorProducto` - Aprobado)** | `11.111.111-1` | `vento1234` | Dashboard de ventas (`/admin/productos`), alertas de stock crítico (`≤ 3`), ofertas reales, bandeja logística con courier/tracking y tienda pública (`/tienda/vendedor/2`). |
 | **Proveedor Servicios (`ProveedorServicio` - Aprobado)** | `22.222.222-2` | `servicio1234` | Portafolio profesional (`/admin/servicios`), CRM de cotizaciones con envío de propuesta formal en CLP, control de ejecución y perfil público (`/servicios/proveedor/3`). |
 | **Comprador (`Comprador`)** | `15.555.555-6` | `compra1234` | Compra en Tienda, libreta de direcciones chilenas, tracking con `Stepper` MUI + boleta imprimible, aceptación y pago de cotizaciones, reseñas verificadas y postulación comercial. |

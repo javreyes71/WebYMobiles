@@ -2,7 +2,7 @@
 
 API RESTful construida en **ASP.NET Core Web API (.NET 8.0 LTS)** con **Entity Framework Core + Npgsql**, alineada **100 %** con:
 1. Los lineamientos oficiales de *Tecnologías Web y Móviles* (`pdfs/Contenido backend-1.pdf`).
-2. El modelo relacional completo del ramo *Base de Datos Avanzadas* (`BD2`): **49 tablas**, **9 restricciones `CHECK`**, **25 índices**, **23 triggers PL/pgSQL**, funciones almacenadas y vistas analíticas (`vista_inventario_critico`, `vista_factura_cliente`, `vista_rendimiento_emprendedor`, `vista_catalogo_unificado`).
+2. El modelo relacional completo del ramo *Base de Datos Avanzadas* (`BD2`): **49 tablas**, **9 restricciones `CHECK`**, **25 índices**, **23 triggers PL/pgSQL**, funciones almacenadas y las **6 vistas analíticas** (`vista_inventario_critico`, `vista_factura_cliente`, `vista_rendimiento_emprendedor`, `vista_catalogo_unificado`, `vista_geo_empresas`, `vista_categorias_jerarquia`).
 
 ---
 
@@ -26,9 +26,10 @@ backend/
 │   ├── 00_setup_usuario_bd.sql                 # Rol dedicado vento_app (mínimo privilegio, nunca postgres)
 │   ├── 01_bd2_tablas_restricciones_indices.sql # 49 tablas, CHECKs e índices de BD2
 │   ├── 02_bd2_triggers.sql                     # 23 triggers de BD2 (control de stock, alerta_inventario, etc.)
-│   ├── 03_bd2_funciones_y_vistas.sql           # Funciones y 4 vistas analíticas de BD2
+│   ├── 03_bd2_funciones_y_vistas.sql           # Funciones y las 6 vistas analíticas de BD2
 │   ├── 04_extension_vento_rbac.sql             # Extensión no destructiva RBAC y moderación previa
-│   └── 05_seed_vento_demo.sql                  # Semilla SQL opcional para pruebas directas
+│   ├── 05_seed_vento_demo.sql                  # Semilla SQL base para pruebas directas
+│   └── 06_seed_3filas_vistas.sql               # Demostración práctica activa (>= 3 filas en cada vista)
 ├── postman/
 │   ├── Vento_Marketplace.postman_collection.json
 │   └── Vento_Local_Raspberry.postman_environment.json
@@ -51,9 +52,10 @@ psql -U postgres -d vento_bd2 -f database/02_bd2_triggers.sql
 psql -U postgres -d vento_bd2 -f database/03_bd2_funciones_y_vistas.sql
 psql -U postgres -d vento_bd2 -f database/04_extension_vento_rbac.sql
 psql -U postgres -d vento_bd2 -f database/05_seed_vento_demo.sql
+psql -U postgres -d vento_bd2 -f database/06_seed_3filas_vistas.sql
 ```
 
-> **Coexistencia con `insertsll.txt` de BD2:** Los scripts `04` y `05` utilizan `ADD COLUMN IF NOT EXISTS` e identificadores `>= 5001` para convivir sin colisiones con los registros `1..1000` de *Base de Datos Avanzadas*. Además, si un usuario histórico de `BD2` inicia sesión con su contraseña legada, `AuthAndUserService` la migra automáticamente a hash `BCrypt`.
+> **Coexistencia con `insertsll.txt` de BD2:** Los scripts `04`, `05` y `06` utilizan `ADD COLUMN IF NOT EXISTS`, `ON CONFLICT DO NOTHING` e identificadores `>= 5001` para convivir sin colisiones con los registros `1..1000` de *Base de Datos Avanzadas*. Además, si un usuario histórico de `BD2` inicia sesión con su contraseña legada, `AuthAndUserService` la migra automáticamente a hash `BCrypt`.
 
 ---
 
