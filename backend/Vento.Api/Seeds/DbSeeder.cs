@@ -370,54 +370,83 @@ public static class DbSeeder
                         genero = p.Genero
                     });
 
-                    context.Stocks.Add(new Stock { IdStock = p.StockId, Cantidad = p.Stock });
-                    context.Caracteristicas.Add(new Caracteristicas
+                    // 1. Persistir Stock primero en PostgreSQL para satisfacer fk_caracteristicas_stock
+                    if (!await context.Stocks.AnyAsync(s => s.IdStock == p.StockId))
                     {
-                        IdCaracteristicas = p.StockId,
-                        Atributos = attrsJson,
-                        IdStock = p.StockId
-                    });
-                    context.Productos.Add(new Producto
-                    {
-                        Sku = p.Sku,
-                        Nombre = p.Nombre,
-                        Marca = p.Marca,
-                        RestriccionEdad = false,
-                        Atributos = attrsJson,
-                        Visible = true,
-                        UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                        OwnerRun = p.OwnerRun,
-                        EstadoModeracion = p.Moderacion,
-                        Destacado = p.Destacado,
-                        CategoriaNombre = p.Categoria,
-                        Genero = p.Genero,
-                        PrecioActual = p.Precio,
-                        PrecioOriginal = p.PrecioOriginal,
-                        DescuentoPorcentaje = p.Descuento,
-                        OfertaActiva = p.Descuento > 0,
-                        StockActual = p.Stock,
-                        Descripcion = p.Descripcion
-                    });
-                    await context.SaveChangesAsync();
+                        context.Stocks.Add(new Stock { IdStock = p.StockId, Cantidad = p.Stock });
+                        await context.SaveChangesAsync();
+                    }
 
-                    context.Contiene.Add(new Contiene { IdCaracteristicas = p.StockId, SkuProducto = p.Sku });
-                    context.Vende.Add(new Vende
+                    // 2. Persistir Caracteristicas (clave foranea hacia Stock)
+                    if (!await context.Caracteristicas.AnyAsync(c => c.IdCaracteristicas == p.StockId))
                     {
-                        IdUsuario = p.OwnerRun,
-                        IdProducto = p.Sku,
-                        IdCaracteristicas = p.StockId,
-                        Precio = p.Precio
-                    });
-                    context.Comercializa.Add(new Comercializa
+                        context.Caracteristicas.Add(new Caracteristicas
+                        {
+                            IdCaracteristicas = p.StockId,
+                            Atributos = attrsJson,
+                            IdStock = p.StockId
+                        });
+                        await context.SaveChangesAsync();
+                    }
+
+                    // 3. Persistir Producto en catalogo general
+                    if (!await context.Productos.AnyAsync(pr => pr.Sku == p.Sku))
                     {
-                        IdEmpresa = p.EmpresaRun,
-                        IdProducto = p.Sku,
-                        IdCaracteristicas = p.StockId,
-                        Precio = p.Precio
-                    });
-                    context.Pertenece.Add(new Pertenece { NombreCategoria = p.Categoria, IdProducto = p.Sku });
+                        context.Productos.Add(new Producto
+                        {
+                            Sku = p.Sku,
+                            Nombre = p.Nombre,
+                            Marca = p.Marca,
+                            RestriccionEdad = false,
+                            Atributos = attrsJson,
+                            Visible = true,
+                            UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
+                            OwnerRun = p.OwnerRun,
+                            EstadoModeracion = p.Moderacion,
+                            Destacado = p.Destacado,
+                            CategoriaNombre = p.Categoria,
+                            Genero = p.Genero,
+                            PrecioActual = p.Precio,
+                            PrecioOriginal = p.PrecioOriginal,
+                            DescuentoPorcentaje = p.Descuento,
+                            OfertaActiva = p.Descuento > 0,
+                            StockActual = p.Stock,
+                            Descripcion = p.Descripcion
+                        });
+                        await context.SaveChangesAsync();
+                    }
+
+                    // 4. Persistir relaciones asociativas BD2 (Contiene, Vende, Comercializa, Pertenece)
+                    if (!await context.Contiene.AnyAsync(c => c.IdCaracteristicas == p.StockId && c.SkuProducto == p.Sku))
+                    {
+                        context.Contiene.Add(new Contiene { IdCaracteristicas = p.StockId, SkuProducto = p.Sku });
+                    }
+                    if (!await context.Vende.AnyAsync(v => v.IdUsuario == p.OwnerRun && v.IdProducto == p.Sku))
+                    {
+                        context.Vende.Add(new Vende
+                        {
+                            IdUsuario = p.OwnerRun,
+                            IdProducto = p.Sku,
+                            IdCaracteristicas = p.StockId,
+                            Precio = p.Precio
+                        });
+                    }
+                    if (!await context.Comercializa.AnyAsync(c => c.IdEmpresa == p.EmpresaRun && c.IdProducto == p.Sku))
+                    {
+                        context.Comercializa.Add(new Comercializa
+                        {
+                            IdEmpresa = p.EmpresaRun,
+                            IdProducto = p.Sku,
+                            IdCaracteristicas = p.StockId,
+                            Precio = p.Precio
+                        });
+                    }
+                    if (!await context.Pertenece.AnyAsync(pe => pe.NombreCategoria == p.Categoria && pe.IdProducto == p.Sku))
+                    {
+                        context.Pertenece.Add(new Pertenece { NombreCategoria = p.Categoria, IdProducto = p.Sku });
+                    }
+                    await context.SaveChangesAsync();
                 }
-                await context.SaveChangesAsync();
             }
 
             // 7. Catálogo curado de Servicios Profesionales (tablas servicio + vincula de BD2)
@@ -505,14 +534,23 @@ public static class DbSeeder
                     }
                 };
 
-                context.Servicios.AddRange(serviciosSeed);
+                foreach (var srv in serviciosSeed)
+                {
+                    if (!await context.Servicios.AnyAsync(s => s.Sku == srv.Sku))
+                    {
+                        context.Servicios.Add(srv);
+                    }
+                }
                 await context.SaveChangesAsync();
 
                 foreach (var srv in serviciosSeed)
                 {
                     if (!string.IsNullOrWhiteSpace(srv.CategoriaNombre))
                     {
-                        context.Vincula.Add(new Vincula { IdCategoria = srv.CategoriaNombre, IdServicio = srv.Sku });
+                        if (!await context.Vincula.AnyAsync(v => v.IdCategoria == srv.CategoriaNombre && v.IdServicio == srv.Sku))
+                        {
+                            context.Vincula.Add(new Vincula { IdCategoria = srv.CategoriaNombre, IdServicio = srv.Sku });
+                        }
                     }
                 }
                 await context.SaveChangesAsync();

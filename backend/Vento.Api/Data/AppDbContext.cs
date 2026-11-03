@@ -108,6 +108,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Solicita>().Property(s => s.IdSolicitud).ValueGeneratedNever();
         modelBuilder.Entity<Resena>().Property(r => r.NumeroResena).ValueGeneratedNever();
 
+        // Relaciones explícitas de integridad referencial BD2
+        modelBuilder.Entity<Caracteristicas>()
+            .HasOne<Stock>()
+            .WithMany()
+            .HasForeignKey(c => c.IdStock)
+            .IsRequired(false);
+
         // Vistas sin clave primaria de BD2
         modelBuilder.Entity<VistaFacturaCliente>().HasNoKey().ToView("vista_factura_cliente");
         modelBuilder.Entity<VistaInventarioCritico>().HasNoKey().ToView("vista_inventario_critico");
