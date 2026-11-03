@@ -1113,3 +1113,27 @@ public class VistaCatalogoUnificado
     [Column("restriccion_edad")]
     public bool? RestriccionEdad { get; set; }
 }
+
+public class VistaGeoEmpresas
+{
+    [Column("run_empresa")]
+    public string RunEmpresa { get; set; } = string.Empty;
+
+    [Column("empresa")]
+    public string Empresa { get; set; } = string.Empty;
+
+    [Column("giro")]
+    public string Giro { get; set; } = string.Empty;
+
+    [Column("superficie_total_comunas")]
+    public long SuperficieTotalComunas { get; set; }
+}
+
+public class VistaCategoriasJerarquia
+{
+    [Column("categoria_padre")]
+    public string CategoriaPadre { get; set; } = string.Empty;
+
+    [Column("subcategoria")]
+    public string Subcategoria { get; set; } = string.Empty;
+}

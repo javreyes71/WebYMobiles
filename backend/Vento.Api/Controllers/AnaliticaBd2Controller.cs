@@ -120,4 +120,19 @@ public class AnaliticaBd2Controller : ControllerBase
         var resultados = await query.Take(60).ToListAsync();
         return Ok(ApiResponse<object>.Ok(resultados, "Matriz de búsqueda unificada (vista_catalogo_unificado BD2) obtenida."));
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("geo-empresas")]
+    public async Task<IActionResult> GetGeoEmpresas()
+    {
+        var geo = await _context.VistaGeoEmpresas.AsNoTracking().ToListAsync();
+        return Ok(ApiResponse<object>.Ok(geo, "Distribución geográfica de empresas (vista_geo_empresas BD2) obtenida."));
+    }
+
+    [HttpGet("categorias-jerarquia")]
+    public async Task<IActionResult> GetCategoriasJerarquia()
+    {
+        var jerarquia = await _context.VistaCategoriasJerarquias.AsNoTracking().ToListAsync();
+        return Ok(ApiResponse<object>.Ok(jerarquia, "Jerarquía de categorías y subcategorías (vista_categorias_jerarquia BD2) obtenida."));
+    }
 }

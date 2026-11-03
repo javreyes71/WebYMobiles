@@ -41,6 +41,8 @@ import {
   AlertOctagon,
   Activity,
   RefreshCw,
+  MapPin,
+  FolderTree,
 } from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
@@ -105,27 +107,33 @@ const AdminUsuarios = () => {
   }, []);
 
   /* ── Vistas Analíticas PostgreSQL (BD2) ── */
-  const [bd2SubTab, setBd2SubTab] = useState('inventario'); // 'inventario' | 'rendimiento' | 'facturas' | 'unificado'
+  const [bd2SubTab, setBd2SubTab] = useState('inventario'); // 'inventario' | 'rendimiento' | 'facturas' | 'unificado' | 'geo' | 'jerarquia'
   const [bd2Loading, setBd2Loading] = useState(false);
   const [inventarioData, setInventarioData] = useState({ vistaInventarioCritico: [], alertasTriggerTrg08: [] });
   const [rendimientoData, setRendimientoData] = useState({ vistaRendimientoEmprendedor: [], kpisGlobales: null });
   const [facturasData, setFacturasData] = useState([]);
   const [unificadoData, setUnificadoData] = useState([]);
+  const [geoData, setGeoData] = useState([]);
+  const [jerarquiaData, setJerarquiaData] = useState([]);
   const [unificadoQuery, setUnificadoQuery] = useState('');
 
   const loadBd2Views = async () => {
     setBd2Loading(true);
     try {
-      const [invRes, rendRes, factRes, unifRes] = await Promise.all([
+      const [invRes, rendRes, factRes, unifRes, geoRes, jerRes] = await Promise.all([
         analyticsApi.getInventarioCritico(),
         analyticsApi.getRendimientoEmprendedores(),
         analyticsApi.getFacturasFiscales(),
         analyticsApi.getCatalogoUnificado(),
+        analyticsApi.getGeoEmpresas(),
+        analyticsApi.getCategoriasJerarquia(),
       ]);
       if (invRes?.success && invRes.data) setInventarioData(invRes.data);
       if (rendRes?.success && rendRes.data) setRendimientoData(rendRes.data);
       if (factRes?.success && Array.isArray(factRes.data)) setFacturasData(factRes.data);
       if (unifRes?.success && Array.isArray(unifRes.data)) setUnificadoData(unifRes.data);
+      if (geoRes?.success && Array.isArray(geoRes.data)) setGeoData(geoRes.data);
+      if (jerRes?.success && Array.isArray(jerRes.data)) setJerarquiaData(jerRes.data);
     } catch {
       showToast('No fue posible consultar las vistas analíticas en PostgreSQL.', 'error');
     } finally {
@@ -1438,6 +1446,8 @@ const AdminUsuarios = () => {
               { id: 'rendimiento', label: '2. Rendimiento Emprendedores', icon: TrendingUp },
               { id: 'facturas', label: '3. Facturación Cliente (IVA 19%)', icon: Layers },
               { id: 'unificado', label: '4. Catálogo Unificado', icon: Activity },
+              { id: 'geo', label: '5. Presencia Geográfica Empresas', icon: MapPin },
+              { id: 'jerarquia', label: '6. Jerarquía de Categorías', icon: FolderTree },
             ].map((st) => (
               <button
                 key={st.id}
@@ -1607,9 +1617,9 @@ const AdminUsuarios = () => {
                       <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 800 }}>RUN Emprendedor</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Nombre Comercial</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Nombre Emprendedor</TableCell>
                           <TableCell sx={{ fontWeight: 800 }} align="right">Facturación Trimestral</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }} align="center">Transacciones Exitosas</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Rango / Clasificación</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1620,8 +1630,18 @@ const AdminUsuarios = () => {
                             <TableCell align="right" className="text-xs font-extrabold text-emerald-700">
                               {formatCurrency(r.facturacionTrimestral || 0)}
                             </TableCell>
-                            <TableCell align="center" className="text-xs font-bold text-gray-800">
-                              {r.transaccionesExitosas || 0}
+                            <TableCell align="center">
+                              <span
+                                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                                  r.rango === 'Alto'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : r.rango === 'Medio'
+                                    ? 'bg-sky-50 text-sky-700 border-sky-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}
+                              >
+                                {r.rango || 'Bajo'}
+                              </span>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1666,8 +1686,8 @@ const AdminUsuarios = () => {
                           <TableCell sx={{ fontWeight: 800 }}>Nombre Cliente</TableCell>
                           <TableCell sx={{ fontWeight: 800 }} align="right">Valor Neto (CLP)</TableCell>
                           <TableCell sx={{ fontWeight: 800 }} align="right">IVA (19%)</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">Envío / Despacho</TableCell>
                           <TableCell sx={{ fontWeight: 800 }} align="right">Total Factura</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Fecha Emisión</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1677,12 +1697,10 @@ const AdminUsuarios = () => {
                             <TableCell className="font-mono text-xs">{f.run}</TableCell>
                             <TableCell className="text-xs font-semibold">{f.cliente}</TableCell>
                             <TableCell align="right" className="text-xs">{formatCurrency(f.valorNeto || 0)}</TableCell>
-                            <TableCell align="right" className="text-xs text-amber-700">{formatCurrency(f.iva || 0)}</TableCell>
+                            <TableCell align="right" className="text-xs text-amber-700">{formatCurrency(f.impuestoIva ?? f.iva ?? 0)}</TableCell>
+                            <TableCell align="right" className="text-xs text-slate-600">{formatCurrency(f.recargoEnvio || 0)}</TableCell>
                             <TableCell align="right" className="text-xs font-extrabold text-emerald-700">
-                              {formatCurrency(f.totalPagado || 0)}
-                            </TableCell>
-                            <TableCell className="text-[11px] text-gray-500">
-                              {f.fecha ? new Date(f.fecha).toLocaleDateString('es-CL') : 'N/A'}
+                              {formatCurrency(f.totalFactura ?? f.totalPagado ?? 0)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1769,6 +1787,122 @@ const AdminUsuarios = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-vista 5: Cobertura Geográfica de Empresas */}
+          {bd2SubTab === 'geo' && (
+            <div className="space-y-6">
+              <div className="bg-purple-50/70 border border-purple-200 p-4 rounded-xl text-xs text-purple-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-purple-100 px-1 py-0.5 rounded">vista_geo_empresas</code>
+                </p>
+                <p>
+                  Mapea la cobertura geográfica y superficie comunal total (km²) de las empresas
+                  asociadas en el ecosistema, vinculando <code className="font-mono">empresa</code>, <code className="font-mono">direccion</code>, <code className="font-mono">comuna</code> y el catálogo en <code className="font-mono">comercializa</code>.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-purple-600" />
+                  Presencia Geográfica y Superficie de Operación ({geoData.length} empresas activas)
+                </h3>
+                {geoData.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-6 text-center">
+                    No se registran datos geográficos para las empresas.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>RUT Empresa</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Razón Social / Empresa</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Giro Comercial</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="right">Superficie Comunas (km²)</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {geoData.map((g) => (
+                          <TableRow key={`${g.runEmpresa}-${g.giro}`} hover>
+                            <TableCell className="font-mono font-bold text-xs">{g.runEmpresa}</TableCell>
+                            <TableCell className="text-xs font-semibold">{g.empresa}</TableCell>
+                            <TableCell align="center">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200">
+                                {g.giro}
+                              </span>
+                            </TableCell>
+                            <TableCell align="right" className="text-xs font-mono font-bold text-purple-800">
+                              {Number(g.superficieTotalComunas || 0).toLocaleString('es-CL')} km²
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-vista 6: Jerarquía de Categorías */}
+          {bd2SubTab === 'jerarquia' && (
+            <div className="space-y-6">
+              <div className="bg-teal-50/70 border border-teal-200 p-4 rounded-xl text-xs text-teal-900">
+                <p className="font-extrabold mb-1">
+                  🔍 Definición SQL: <code className="font-mono bg-teal-100 px-1 py-0.5 rounded">vista_categorias_jerarquia</code>
+                </p>
+                <p>
+                  Estructura la taxonomía multinivel de productos y servicios modelada en la relación autorreferente
+                  de subclasificación <code className="font-mono">subdivide</code> (<code className="font-mono">nombre_a_categoria</code> &rarr; <code className="font-mono">nombre_b_categoria</code>).
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4">
+                <h3 className="text-sm font-extrabold text-gray-900 mb-3 flex items-center gap-2">
+                  <FolderTree className="w-4 h-4 text-teal-600" />
+                  Taxonomía y Árbol de Subdivisión de Categorías ({jerarquiaData.length} ramas registradas)
+                </h3>
+                {jerarquiaData.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-6 text-center">
+                    No se registran jerarquías de subcategorías en la tabla subdivide.
+                  </p>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 800 }}>Categoría Padre (Nivel 1)</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Relación</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Subcategoría Hija (Nivel 2)</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }} align="center">Tipo Taxonomía</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {jerarquiaData.map((j, idx) => (
+                          <TableRow key={`${j.categoriaPadre}-${j.subcategoria}-${idx}`} hover>
+                            <TableCell className="text-xs font-bold text-gray-900">
+                              📁 {j.categoriaPadre}
+                            </TableCell>
+                            <TableCell align="center" className="text-xs text-gray-400 font-mono">
+                              &rarr;
+                            </TableCell>
+                            <TableCell className="text-xs font-semibold text-teal-700">
+                              📂 {j.subcategoria}
+                            </TableCell>
+                            <TableCell align="center">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-teal-50 text-teal-700 border border-teal-200">
+                                Subdivisión Especializada
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </div>
             </div>
           )}

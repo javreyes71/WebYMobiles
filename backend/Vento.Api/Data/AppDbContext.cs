@@ -57,6 +57,8 @@ public class AppDbContext : DbContext
     public DbSet<VistaInventarioCritico> VistaInventariosCriticos => Set<VistaInventarioCritico>();
     public DbSet<VistaRendimientoEmprendedor> VistaRendimientosEmprendedor => Set<VistaRendimientoEmprendedor>();
     public DbSet<VistaCatalogoUnificado> VistaCatalogosUnificados => Set<VistaCatalogoUnificado>();
+    public DbSet<VistaGeoEmpresas> VistaGeoEmpresas => Set<VistaGeoEmpresas>();
+    public DbSet<VistaCategoriasJerarquia> VistaCategoriasJerarquias => Set<VistaCategoriasJerarquia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -120,5 +122,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<VistaInventarioCritico>().HasNoKey().ToView("vista_inventario_critico");
         modelBuilder.Entity<VistaRendimientoEmprendedor>().HasNoKey().ToView("vista_rendimiento_emprendedor");
         modelBuilder.Entity<VistaCatalogoUnificado>().HasNoKey().ToView("vista_catalogo_unificado");
+        modelBuilder.Entity<VistaGeoEmpresas>().HasNoKey().ToView("vista_geo_empresas");
+        modelBuilder.Entity<VistaCategoriasJerarquia>().HasNoKey().ToView("vista_categorias_jerarquia");
     }
 }

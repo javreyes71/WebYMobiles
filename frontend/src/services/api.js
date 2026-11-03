@@ -1394,4 +1394,12 @@ export const analyticsApi = {
     if (API_URL) return apiFetch(`/analitica/catalogo-unificado${query ? `?q=${encodeURIComponent(query)}` : ''}`);
     return { success: true, data: [] };
   },
+  async getGeoEmpresas() {
+    if (API_URL) return apiFetch('/analitica/geo-empresas');
+    return { success: true, data: [] };
+  },
+  async getCategoriasJerarquia() {
+    if (API_URL) return apiFetch('/analitica/categorias-jerarquia');
+    return { success: true, data: [] };
+  },
 };
