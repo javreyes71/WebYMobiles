@@ -20,6 +20,8 @@ import CustomButton from '@/components/atoms/Button/CustomButton';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import QuoteModal from '@/components/molecules/QuoteModal/QuoteModal';
 import { formatCurrency } from '@/utils/validators';
+import { createProductMockImage } from '@/data/products';
+import { createServiceBanner } from '@/data/services';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -177,6 +179,15 @@ const ProductDetail = () => {
                   <img
                     src={selectedImage || item.image}
                     alt={item.title || item.nombre}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = createServiceBanner(
+                        item.title || item.nombre,
+                        item.categoria || 'Servicio Profesional',
+                        '#38bdf8',
+                        '#0c4a6e'
+                      );
+                    }}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -364,11 +375,19 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                <div className="flex-1 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center p-8 min-h-[340px] sm:min-h-[420px]">
+                <div className="flex-1 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center p-4 min-h-[340px] sm:min-h-[420px] overflow-hidden">
                   <img
                     src={selectedImage || item.image}
                     alt={item.title}
-                    className="w-full h-auto object-contain max-h-[380px]"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = createProductMockImage(
+                        item.title,
+                        item.categoria || 'Producto',
+                        item.brand || 'Vento'
+                      );
+                    }}
+                    className="w-full h-auto object-contain max-h-[400px] rounded-xl"
                   />
                 </div>
               </div>

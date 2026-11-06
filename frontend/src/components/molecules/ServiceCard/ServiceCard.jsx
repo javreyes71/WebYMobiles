@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock, MapPin, Heart, Star, ArrowUpRight, FileText } from 'lucide-react';
 import { useProducts } from '@/context/ProductContext';
 import { formatCurrency } from '@/utils/validators';
+import { createServiceBanner } from '@/data/services';
 
 /**
  * Molécula ServiceCard: diseñada específicamente para la Oferta de Servicios,
@@ -58,6 +59,15 @@ const ServiceCard = ({
             src={image}
             alt={displayTitle}
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = createServiceBanner(
+                displayTitle,
+                categoria || 'Servicio Profesional',
+                '#38bdf8',
+                '#0c4a6e'
+              );
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">

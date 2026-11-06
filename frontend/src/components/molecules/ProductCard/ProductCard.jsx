@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, Truck } from 'lucide-react';
 import { useProducts } from '@/context/ProductContext';
 import { formatCurrency } from '@/utils/validators';
+import { createProductMockImage } from '@/data/products';
 
 const ProductCard = ({
   id,
@@ -57,12 +58,20 @@ const ProductCard = ({
       </button>
 
       <Link to={`/producto/${id}`} className="flex flex-col flex-grow p-4">
-        <div className="w-full h-48 mb-4 bg-gray-50 flex items-center justify-center rounded-lg overflow-hidden p-3">
+        <div className="w-full h-48 mb-4 bg-gray-100 flex items-center justify-center rounded-lg overflow-hidden">
           <img
             src={image}
             alt={title}
             loading="lazy"
-            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = createProductMockImage(
+                title,
+                categoria || 'Producto',
+                brand || 'Vento'
+              );
+            }}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
 
