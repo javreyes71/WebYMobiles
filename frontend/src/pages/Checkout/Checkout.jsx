@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
-import { formatCurrency, validateEmail } from '@/utils/validators';
+import { formatCurrency, validateEmail, formatRUT, validateRUT, handleRutKeyDown } from '@/utils/validators';
 import { REGIONES_CHILE, getComunasByRegion } from '@/utils/chileGeo';
 
 const Checkout = () => {
@@ -33,6 +33,8 @@ const Checkout = () => {
     correo: '',
     nombre: '',
     apellido: '',
+    rut: '',
+    telefono: '',
     direccion: '',
     region: 'RM',
     ciudad: 'Santiago',
@@ -54,6 +56,8 @@ const Checkout = () => {
         correo: currentUser.correo || prev.correo,
         nombre: parts[0] || prev.nombre,
         apellido: parts.slice(1).join(' ') || prev.apellido,
+        rut: currentUser.rut || prev.rut,
+        telefono: currentUser.telefono || prev.telefono,
         direccion: defaultAddr?.calle || currentUser.direccion || prev.direccion,
         region: defaultAddr?.region || prev.region,
         ciudad: defaultAddr?.comuna || prev.ciudad,
@@ -122,6 +126,10 @@ const Checkout = () => {
     }
     if (!customer.nombre.trim() || !customer.apellido.trim() || !customer.direccion.trim()) {
       setError('Completa todos los datos personales y dirección de entrega.');
+      return;
+    }
+    if (!customer.rut || !validateRUT(customer.rut)) {
+      setError('Ingresa un RUT chileno válido (Módulo 11) para emitir tu boleta.');
       return;
     }
 
@@ -326,6 +334,29 @@ const Checkout = () => {
                     value={customer.apellido}
                     onChange={(e) => setCustomer({ ...customer, apellido: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <CustomTextField
+                    name="rut"
+                    label="RUT Chileno"
+                    placeholder="12.345.678-5"
+                    value={customer.rut}
+                    onChange={(e) =>
+                      setCustomer({ ...customer, rut: formatRUT(e.target.value) })
+                    }
+                    onKeyDown={handleRutKeyDown}
+                    inputProps={{ maxLength: 12 }}
+                    helperText="Solo números y K (máx. 9 dígitos). Puntos y guion automáticos."
+                    required
+                  />
+                  <CustomTextField
+                    name="telefono"
+                    label="Teléfono de Contacto"
+                    placeholder="+56 9 1234 5678"
+                    value={customer.telefono}
+                    onChange={(e) => setCustomer({ ...customer, telefono: e.target.value })}
                   />
                 </div>
 

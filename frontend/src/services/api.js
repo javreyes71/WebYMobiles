@@ -1,6 +1,8 @@
 import { mockProducts } from '@/data/products';
 import { mockServices } from '@/data/services';
 import { validateRUT, normalizeRUT, validateEmail, formatRUT } from '@/utils/validators';
+import { hashPasswordSHA256 } from '@/utils/crypto';
+import { logUserAction } from '@/utils/logger';
 import {
   ROLES,
   ACCOUNT_STATUS,
@@ -752,6 +754,28 @@ export const authApi = {
       ? APPROVAL_STATUS.PENDIENTE
       : APPROVAL_STATUS.NO_APLICA;
 
+    const passwordHash = await hashPasswordSHA256(formData.password);
+
+    const initialPhone = (formData.telefono || '').trim();
+    const phonesList = Array.isArray(formData.telefonos) && formData.telefonos.length > 0
+      ? formData.telefonos
+      : initialPhone ? [initialPhone] : [];
+
+    const addressesList = Array.isArray(formData.direcciones) && formData.direcciones.length > 0
+      ? formData.direcciones
+      : direccion
+        ? [
+            {
+              id: 'addr-1',
+              alias: 'Principal',
+              calle: direccion,
+              region: 'RM',
+              comuna: 'Santiago',
+              esPredeterminada: true,
+            },
+          ]
+        : [];
+
     const newUser = {
       id: Date.now(),
       nombre,
@@ -759,8 +783,10 @@ export const authApi = {
       rut: formatRUT(formData.rut),
       rutNormalized: cleanInputRut,
       correo,
-      telefono: (formData.telefono || '').trim(),
-      direccion,
+      telefono: phonesList[0] || '',
+      telefonos: phonesList,
+      direccion: addressesList[0]?.calle || direccion,
+      direcciones: addressesList,
       fechaNacimiento: formData.fechaNacimiento || '',
       tipoCuenta: rol,
       rol,
@@ -769,8 +795,15 @@ export const authApi = {
       estadoAprobacion,
       aprobacionesPorRol: isCommercial ? { [rol]: APPROVAL_STATUS.PENDIENTE } : {},
       verificado: false,
+      passwordHash,
       passwordHint: formData.password,
     };
+
+    logUserAction('Creación de Usuario Registrado', newUser, {
+      passwordHash,
+      telefonos: phonesList,
+      direcciones: addressesList,
+    });
 
     const updatedUsers = [...users, newUser];
     writeStorage(STORAGE_KEYS.USERS, updatedUsers);
@@ -926,6 +959,12 @@ export const authApi = {
     writeStorage(STORAGE_KEYS.USERS, nextUsers);
     const dto = sanitizeUserDto(updatedRecord || updatedData);
     this.saveSession(dto);
+
+    logUserAction('Modificación de Perfil de Usuario', updatedRecord || updatedData, {
+      cambios: Object.keys(updatedData),
+      telefonos: (updatedRecord || updatedData).telefonos,
+      direcciones: (updatedRecord || updatedData).direcciones,
+    });
 
     return {
       success: true,
@@ -1133,6 +1172,10 @@ export const usersApi = {
     const users = readStorage(STORAGE_KEYS.USERS, DEFAULT_USERS);
     const nextUsers = users.map((u) => (u.id === userId ? { ...u, ...changes } : u));
     writeStorage(STORAGE_KEYS.USERS, nextUsers);
+    const updated = nextUsers.find((u) => u.id === userId);
+    logUserAction('Modificación de Usuario por Administrador', updated || { id: userId, ...changes }, {
+      cambios: Object.keys(changes),
+    });
     return {
       success: true,
       status: 200,

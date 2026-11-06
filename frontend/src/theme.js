@@ -45,8 +45,9 @@ const theme = createTheme({
       'sans-serif',
     ].join(','),
     button: {
-      textTransform: 'none',
-      fontWeight: 600,
+      textTransform: 'uppercase',
+      fontWeight: 700,
+      letterSpacing: '0.05em',
     },
   },
   components: {

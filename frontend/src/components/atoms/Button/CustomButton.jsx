@@ -16,7 +16,7 @@ const CustomButton = ({
   ariaLabel,
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center gap-2 font-bold uppercase tracking-wider rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const sizeStyles = {
     sm: 'px-3.5 py-1.5 text-xs',
@@ -35,7 +35,7 @@ const CustomButton = ({
     outlineSecondary:
       'bg-transparent border border-sky-600 text-sky-700 hover:bg-sky-50 focus:ring-sky-600',
     ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-400',
-    navbar: 'bg-white text-gray-900 hover:bg-gray-100 font-semibold focus:ring-gray-400',
+    navbar: 'bg-white text-gray-900 hover:bg-gray-100 font-bold uppercase tracking-wider focus:ring-gray-400',
   };
 
   return (

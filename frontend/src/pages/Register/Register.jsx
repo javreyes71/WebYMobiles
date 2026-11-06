@@ -3,7 +3,7 @@ import { Alert, MenuItem } from '@mui/material';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useAuth } from '@/context/AuthContext';
-import { validateRUT, formatRUT, validateEmail } from '@/utils/validators';
+import { validateRUT, formatRUT, validateEmail, handleRutKeyDown } from '@/utils/validators';
 import { ROLES } from '@/utils/roles';
 
 const initialForm = {
@@ -160,9 +160,11 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                 placeholder="12.345.678-5"
                 value={formData.rut}
                 onChange={handleChange}
+                onKeyDown={handleRutKeyDown}
+                inputProps={{ maxLength: 12 }}
                 required
                 error={Boolean(errors.rut)}
-                helperText={errors.rut || 'Se formatea automáticamente'}
+                helperText={errors.rut || 'Solo números y K (máx. 9 dígitos). Puntos y guion automáticos.'}
               />
 
               <CustomTextField

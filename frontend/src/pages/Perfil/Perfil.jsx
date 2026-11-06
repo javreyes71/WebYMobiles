@@ -19,6 +19,7 @@ import {
   Trash2,
   Lock,
   MapPin,
+  Phone,
   Eye,
   EyeOff,
   ArrowUpCircle,
@@ -29,7 +30,7 @@ import {
 } from 'lucide-react';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
-import { getInitials, formatRUT, formatCurrency } from '@/utils/validators';
+import { getInitials, formatRUT, formatCurrency, handleRutKeyDown } from '@/utils/validators';
 import { getRoleLabel, ROLES, APPROVAL_STATUS, hasRole } from '@/utils/roles';
 import {
   REGIONES_CHILE,
@@ -87,6 +88,10 @@ const Perfil = () => {
     correo: '',
     telefono: '',
     direccion: '',
+    fechaNacimiento: '',
+    ciudadBase: '',
+    biografiaTienda: '',
+    especialidad: '',
   });
 
   /* ── Libreta de Direcciones Chilenas ── */
@@ -98,6 +103,15 @@ const Perfil = () => {
     region: 'RM',
     comuna: 'Santiago',
     esPredeterminada: false,
+  });
+
+  /* ── Libreta de Teléfonos de Contacto ── */
+  const [phones, setPhones] = useState([]);
+  const [showPhoneForm, setShowPhoneForm] = useState(false);
+  const [phoneForm, setPhoneForm] = useState({
+    numero: '',
+    tipo: 'Móvil (+56 9)',
+    esPrincipal: false,
   });
 
   /* ── Cambio de contraseña ── */
@@ -136,6 +150,10 @@ const Perfil = () => {
         correo: currentUser.correo || '',
         telefono: currentUser.telefono || '',
         direccion: currentUser.direccion || '',
+        fechaNacimiento: currentUser.fechaNacimiento || '',
+        ciudadBase: currentUser.ciudadBase || '',
+        biografiaTienda: currentUser.biografiaTienda || '',
+        especialidad: currentUser.especialidad || '',
       });
       if (Array.isArray(currentUser.direcciones) && currentUser.direcciones.length > 0) {
         setAddresses(currentUser.direcciones);
@@ -153,6 +171,32 @@ const Perfil = () => {
       } else {
         setAddresses([]);
       }
+
+      if (Array.isArray(currentUser.telefonos) && currentUser.telefonos.length > 0) {
+        const parsed = currentUser.telefonos.map((p, idx) =>
+          typeof p === 'object' && p !== null
+            ? p
+            : {
+                id: `phone-${idx}-${Date.now()}`,
+                numero: String(p),
+                tipo: idx === 0 ? 'Móvil (+56 9)' : 'Contacto Alternativo',
+                esPrincipal: idx === 0,
+              }
+        );
+        setPhones(parsed);
+      } else if (currentUser.telefono) {
+        setPhones([
+          {
+            id: 'phone-main',
+            numero: currentUser.telefono,
+            tipo: 'Móvil (+56 9)',
+            esPrincipal: true,
+          },
+        ]);
+      } else {
+        setPhones([]);
+      }
+
       setUpgradeForm((prev) => ({
         ...prev,
         nombreTienda: currentUser.nombreTienda || '',
@@ -246,6 +290,56 @@ const Perfil = () => {
       filtered[0].esPredeterminada = true;
     }
     await persistAddresses(filtered);
+  };
+
+  /* ── Gestión de Libreta de Teléfonos ── */
+  const persistPhones = async (nextPhones) => {
+    setPhones(nextPhones);
+    const primary = nextPhones.find((p) => p.esPrincipal) || nextPhones[0];
+    const mainPhoneText = primary ? primary.numero : formData.telefono;
+    await updateUserProfile({
+      ...formData,
+      telefono: mainPhoneText,
+      telefonos: nextPhones,
+    });
+  };
+
+  const handleAddPhone = async (e) => {
+    e.preventDefault();
+    if (!phoneForm.numero.trim()) {
+      showToast('Ingresa un número telefónico de contacto.', 'warning');
+      return;
+    }
+    const isFirst = phones.length === 0;
+    const makePrimary = isFirst || phoneForm.esPrincipal;
+    const newEntry = {
+      id: `phone-${Date.now()}`,
+      numero: phoneForm.numero.trim(),
+      tipo: phoneForm.tipo,
+      esPrincipal: makePrimary,
+    };
+    const next = makePrimary
+      ? [...phones.map((p) => ({ ...p, esPrincipal: false })), newEntry]
+      : [...phones, newEntry];
+    await persistPhones(next);
+    setPhoneForm({ numero: '', tipo: 'Móvil (+56 9)', esPrincipal: false });
+    setShowPhoneForm(false);
+  };
+
+  const handleSetPrimaryPhone = async (phoneId) => {
+    const next = phones.map((p) => ({
+      ...p,
+      esPrincipal: p.id === phoneId,
+    }));
+    await persistPhones(next);
+  };
+
+  const handleDeletePhone = async (phoneId) => {
+    const filtered = phones.filter((p) => p.id !== phoneId);
+    if (filtered.length > 0 && !filtered.some((p) => p.esPrincipal)) {
+      filtered[0].esPrincipal = true;
+    }
+    await persistPhones(filtered);
   };
 
   /* ── Cambio de Contraseña Seguro ── */
@@ -390,6 +484,7 @@ const Perfil = () => {
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: User },
     { id: 'direcciones', label: `Mis Direcciones (${addresses.length})`, icon: MapPin },
+    { id: 'telefonos', label: `Mis Teléfonos (${phones.length})`, icon: Phone },
     { id: 'seguridad', label: 'Seguridad y Clave', icon: Lock },
     { id: 'pedidos', label: `Mis Pedidos (${userOrders.length})`, icon: Package },
     { id: 'cotizaciones', label: `Mis Cotizaciones (${myQuotes.length})`, icon: FileText },
@@ -508,6 +603,9 @@ const Perfil = () => {
                       name="rut"
                       value={formData.rut}
                       onChange={handleChange}
+                      onKeyDown={handleRutKeyDown}
+                      inputProps={{ maxLength: 12 }}
+                      helperText="Solo números y K (máx. 9 dígitos). Puntos y guion automáticos."
                       disabled={!isEditing}
                       required
                     />
@@ -521,13 +619,49 @@ const Perfil = () => {
                       required
                     />
                     <CustomTextField
-                      label="Teléfono"
+                      label="Teléfono Principal"
                       name="telefono"
                       value={formData.telefono}
                       onChange={handleChange}
                       disabled={!isEditing}
                     />
+                    <CustomTextField
+                      label="Fecha de Nacimiento"
+                      name="fechaNacimiento"
+                      type="date"
+                      value={formData.fechaNacimiento}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <CustomTextField
+                      label="Ciudad Base"
+                      name="ciudadBase"
+                      placeholder="Ej: Concepción, Santiago"
+                      value={formData.ciudadBase}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
                   </div>
+
+                  {currentUser?.rol !== ROLES.COMPRADOR && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                      <CustomTextField
+                        label="Especialidad Profesional / Marca"
+                        name="especialidad"
+                        value={formData.especialidad}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                      />
+                      <CustomTextField
+                        label="Biografía / Presentación de Tienda"
+                        name="biografiaTienda"
+                        value={formData.biografiaTienda}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  )}
 
                   <CustomTextField
                     label="Dirección Principal de Envío"
@@ -536,6 +670,22 @@ const Perfil = () => {
                     onChange={handleChange}
                     disabled={!isEditing}
                   />
+
+                  {/* Atributos raíz BD2 informativos */}
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex flex-wrap items-center gap-3 text-xs">
+                    <span className="font-bold text-gray-500 uppercase">Clasificación BD2:</span>
+                    <span className="font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                      Tipo Cliente: Activo
+                    </span>
+                    <span className="font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                      Tipo Emprendedor: {currentUser?.rol !== ROLES.COMPRADOR ? 'Sí (Comercial)' : 'No (Consumidor)'}
+                    </span>
+                    {currentUser?.fechaRegistro && (
+                      <span className="text-gray-500">
+                        Registro: {currentUser.fechaRegistro}
+                      </span>
+                    )}
+                  </div>
 
                   {isEditing && (
                     <div className="pt-3 flex justify-end">
@@ -719,6 +869,142 @@ const Perfil = () => {
               </Paper>
             )}
 
+            {/* ═══════════ TAB LIBRETA DE TELÉFONOS ═══════════ */}
+            {activeTab === 'telefonos' && (
+              <Paper elevation={0} className="p-6 sm:p-8 border border-gray-200 rounded-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-3 border-b border-gray-100">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-gray-900">
+                      Libreta de Teléfonos
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      Gestiona múltiples números de contacto para envíos, cotizaciones y soporte
+                    </p>
+                  </div>
+                  <CustomButton
+                    variant="primary"
+                    size="sm"
+                    startIcon={<Plus className="w-4 h-4" />}
+                    onClick={() => setShowPhoneForm(!showPhoneForm)}
+                  >
+                    {showPhoneForm ? 'Cancelar' : 'Nuevo Teléfono'}
+                  </CustomButton>
+                </div>
+
+                {showPhoneForm && (
+                  <form
+                    onSubmit={handleAddPhone}
+                    className="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-4"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <CustomTextField
+                        label="Número Telefónico"
+                        name="numero"
+                        placeholder="Ej: +56 9 8765 4321 ó 41 223 4567"
+                        value={phoneForm.numero}
+                        onChange={(e) =>
+                          setPhoneForm({ ...phoneForm, numero: e.target.value })
+                        }
+                        required
+                      />
+                      <CustomTextField
+                        select
+                        label="Tipo de Contacto"
+                        name="tipo"
+                        value={phoneForm.tipo}
+                        onChange={(e) =>
+                          setPhoneForm({ ...phoneForm, tipo: e.target.value })
+                        }
+                      >
+                        <MenuItem value="Móvil (+56 9)">Móvil (+56 9)</MenuItem>
+                        <MenuItem value="WhatsApp Comercial">WhatsApp Comercial</MenuItem>
+                        <MenuItem value="Fijo / Oficina">Fijo / Oficina</MenuItem>
+                        <MenuItem value="Contacto Alternativo">Contacto Alternativo</MenuItem>
+                      </CustomTextField>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={phoneForm.esPrincipal}
+                            onChange={(e) =>
+                              setPhoneForm({ ...phoneForm, esPrincipal: e.target.checked })
+                            }
+                            size="small"
+                          />
+                        }
+                        label={
+                          <span className="text-xs font-semibold text-gray-700">
+                            Establecer como teléfono principal de la cuenta
+                          </span>
+                        }
+                      />
+                      <CustomButton type="submit" variant="success" size="sm">
+                        Guardar Teléfono
+                      </CustomButton>
+                    </div>
+                  </form>
+                )}
+
+                {phones.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No tienes números de teléfono registrados aún. Agrega uno para coordinar tus compras o despachos.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {phones.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          p.esPrincipal
+                            ? 'bg-sky-50/50 border-sky-300'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-600" />
+                            <span className="text-sm font-extrabold text-gray-900">
+                              {p.numero}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-800">
+                              {p.tipo || 'Teléfono'}
+                            </span>
+                            {p.esPrincipal && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                <CheckCircle2 className="w-3 h-3" /> Principal
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {!p.esPrincipal && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryPhone(p.id)}
+                              className="text-xs font-bold text-sky-700 hover:text-sky-900 underline px-2 py-1"
+                            >
+                              Hacer Principal
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePhone(p.id)}
+                            aria-label={`Eliminar teléfono ${p.numero}`}
+                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Paper>
+            )}
+
             {/* ═══════════ TAB SEGURIDAD (CAMBIO DE CONTRASEÑA) ═══════════ */}
             {activeTab === 'seguridad' && (
               <Paper elevation={0} className="p-6 sm:p-8 border border-gray-200 rounded-2xl">
@@ -736,39 +1022,30 @@ const Perfil = () => {
                 )}
 
                 <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-                  <div className="relative">
-                    <CustomTextField
-                      label="Contraseña actual"
-                      name="currentPw"
-                      type={showPw.current ? 'text' : 'password'}
-                      value={pwForm.current}
-                      onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
-                      required
-                    />
-                    {renderPwToggle('current', 'Mostrar u ocultar contraseña actual')}
-                  </div>
-                  <div className="relative">
-                    <CustomTextField
-                      label="Nueva contraseña (mín. 8 caracteres)"
-                      name="newPw"
-                      type={showPw.next ? 'text' : 'password'}
-                      value={pwForm.next}
-                      onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
-                      required
-                    />
-                    {renderPwToggle('next', 'Mostrar u ocultar nueva contraseña')}
-                  </div>
-                  <div className="relative">
-                    <CustomTextField
-                      label="Confirmar nueva contraseña"
-                      name="confirmPw"
-                      type={showPw.confirm ? 'text' : 'password'}
-                      value={pwForm.confirm}
-                      onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
-                      required
-                    />
-                    {renderPwToggle('confirm', 'Mostrar u ocultar confirmación de contraseña')}
-                  </div>
+                  <CustomTextField
+                    label="Contraseña actual"
+                    name="currentPw"
+                    type="password"
+                    value={pwForm.current}
+                    onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+                    required
+                  />
+                  <CustomTextField
+                    label="Nueva contraseña (mín. 8 caracteres)"
+                    name="newPw"
+                    type="password"
+                    value={pwForm.next}
+                    onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+                    required
+                  />
+                  <CustomTextField
+                    label="Confirmar nueva contraseña"
+                    name="confirmPw"
+                    type="password"
+                    value={pwForm.confirm}
+                    onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+                    required
+                  />
                   <CustomButton type="submit" variant="primary" isLoading={pwLoading}>
                     Actualizar Contraseña
                   </CustomButton>

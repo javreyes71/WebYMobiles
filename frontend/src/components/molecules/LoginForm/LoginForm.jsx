@@ -3,7 +3,7 @@ import { Checkbox, FormControlLabel, Alert } from '@mui/material';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useAuth } from '@/context/AuthContext';
-import { formatRUT, validateRUT } from '@/utils/validators';
+import { formatRUT, validateRUT, handleRutKeyDown } from '@/utils/validators';
 
 /**
  * Molécula LoginForm (cumple Estructura y Componentes.pptx.pdf págs. 9-12):
@@ -101,10 +101,12 @@ const LoginForm = ({ onSuccess, onForgotPassword, onSwitchToRegister }) => {
         placeholder="12.345.678-5"
         value={rut}
         onChange={handleRutChange}
+        onKeyDown={handleRutKeyDown}
+        inputProps={{ maxLength: 12 }}
         required
         autoComplete="username"
         error={Boolean(fieldErrors.rut)}
-        helperText={fieldErrors.rut || 'Formato automático con puntos y guion'}
+        helperText={fieldErrors.rut || 'Solo números y K (máx. 9 dígitos). Puntos y guion automáticos.'}
       />
 
       <CustomTextField

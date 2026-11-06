@@ -35,6 +35,7 @@ const Tienda = () => {
     const cat = searchParams.get('categoria');
     return cat ? [cat] : [];
   });
+  const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedGenders, setSelectedGenders] = useState(() => {
     const gen = searchParams.get('genero');
@@ -42,6 +43,7 @@ const Tienda = () => {
   });
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [onlyFreeShipping, setOnlyFreeShipping] = useState(false);
+  const [onlyOffers, setOnlyOffers] = useState(false);
   const [priceFilters, setPriceFilters] = useState({
     range1: false, // 10k - 50k
     range2: false, // 50k - 100k
@@ -53,14 +55,19 @@ const Tienda = () => {
     const q = searchParams.get('q');
     const cat = searchParams.get('categoria');
     const gen = searchParams.get('genero');
-    if (q !== null) setSearchTerm(q);
-    if (cat) setSelectedCategories([cat]);
-    if (gen) setSelectedGenders([gen]);
+    setSearchTerm(q !== null ? q : '');
+    setSelectedCategories(cat ? [cat] : []);
+    setSelectedGenders(gen ? [gen] : []);
+    setSelectedSubcategories([]);
   }, [searchParams]);
 
   // Opciones dinámicas extraídas de los productos en venta
   const availableCategories = useMemo(
     () => Array.from(new Set(productos.map((p) => p.categoria).filter(Boolean))),
+    [productos]
+  );
+  const availableSubcategories = useMemo(
+    () => Array.from(new Set(productos.map((p) => p.subcategoria).filter(Boolean))),
     [productos]
   );
   const availableBrands = useMemo(
@@ -81,10 +88,12 @@ const Tienda = () => {
   const handleClearAll = () => {
     setSearchTerm('');
     setSelectedCategories([]);
+    setSelectedSubcategories([]);
     setSelectedBrands([]);
     setSelectedGenders([]);
     setSelectedSizes([]);
     setOnlyFreeShipping(false);
+    setOnlyOffers(false);
     setPriceFilters({ range1: false, range2: false, range3: false });
     setSortBy('relevancia');
     setSearchParams({});
@@ -102,7 +111,8 @@ const Tienda = () => {
           !q ||
           product.title?.toLowerCase().includes(q) ||
           product.brand?.toLowerCase().includes(q) ||
-          product.categoria?.toLowerCase().includes(q);
+          product.categoria?.toLowerCase().includes(q) ||
+          product.subcategoria?.toLowerCase().includes(q);
 
         // 2. Precio
         const activeRanges = [];
@@ -118,26 +128,37 @@ const Tienda = () => {
         const matchesCat =
           selectedCategories.length === 0 || selectedCategories.includes(product.categoria);
 
-        // 4. Marca
+        // 4. Subcategoría
+        const matchesSubcat =
+          selectedSubcategories.length === 0 || selectedSubcategories.includes(product.subcategoria);
+
+        // 5. Ofertas especiales
+        const matchesOffers =
+          !onlyOffers ||
+          Boolean((product.originalPrice && product.originalPrice > product.price) || product.descuentoPorcentaje > 0);
+
+        // 6. Marca
         const matchesBrand =
           selectedBrands.length === 0 || selectedBrands.includes(product.brand);
 
-        // 5. Género
+        // 7. Género
         const matchesGender =
           selectedGenders.length === 0 || selectedGenders.includes(product.genero || 'Unisex');
 
-        // 6. Talla
+        // 8. Talla
         const matchesSize =
           selectedSizes.length === 0 ||
           (product.tallas && product.tallas.some((t) => selectedSizes.includes(t)));
 
-        // 7. Despacho gratis
+        // 9. Despacho gratis
         const matchesShipping = !onlyFreeShipping || Boolean(product.freeShipping);
 
         return (
           matchesSearch &&
           matchesPrice &&
           matchesCat &&
+          matchesSubcat &&
+          matchesOffers &&
           matchesBrand &&
           matchesGender &&
           matchesSize &&
@@ -156,6 +177,8 @@ const Tienda = () => {
     searchTerm,
     priceFilters,
     selectedCategories,
+    selectedSubcategories,
+    onlyOffers,
     selectedBrands,
     selectedGenders,
     selectedSizes,
@@ -166,6 +189,8 @@ const Tienda = () => {
   const hasActiveFilters =
     Boolean(searchTerm) ||
     selectedCategories.length > 0 ||
+    selectedSubcategories.length > 0 ||
+    onlyOffers ||
     selectedBrands.length > 0 ||
     selectedGenders.length > 0 ||
     selectedSizes.length > 0 ||
@@ -219,6 +244,62 @@ const Tienda = () => {
           </div>
         </header>
 
+        {/* Barra Rápida de Categorías y Ofertas */}
+        <nav
+          className="mb-8 flex flex-wrap items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm"
+          aria-label="Acceso rápido por categoría"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategories([]);
+              setSelectedSubcategories([]);
+              setSearchParams({});
+            }}
+            className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+              selectedCategories.length === 0
+                ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Todas las Categorías
+          </button>
+
+          {['Zapatos', 'Ropa', 'Accesorios', 'Instrumentos'].map((cat) => {
+            const isCatActive = selectedCategories.length === 1 && selectedCategories[0] === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategories([cat]);
+                  setSelectedSubcategories([]);
+                  setSearchParams({ categoria: cat });
+                }}
+                className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+                  isCatActive
+                    ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => setOnlyOffers(!onlyOffers)}
+            className={`ml-auto px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${
+              onlyOffers
+                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md ring-2 ring-red-400'
+                : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+            }`}
+          >
+            🔥 Solo Ofertas (-% OFF)
+          </button>
+        </nav>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar de Filtros */}
           <aside className="w-full lg:w-64 shrink-0" aria-label="Filtros de productos">
@@ -235,6 +316,19 @@ const Tienda = () => {
                   Limpiar filtros
                 </button>
               )}
+            </div>
+
+            {/* Ofertas Especiales rápido */}
+            <div className="bg-red-50/60 border border-red-200 rounded-xl px-4 py-3 mb-3">
+              <label className="flex items-center justify-between cursor-pointer text-sm font-bold text-red-900">
+                <span>🔥 En Oferta</span>
+                <input
+                  type="checkbox"
+                  checked={onlyOffers}
+                  onChange={(e) => setOnlyOffers(e.target.checked)}
+                  className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-600"
+                />
+              </label>
             </div>
 
             {/* Despacho Gratis rápido */}
@@ -299,6 +393,26 @@ const Tienda = () => {
                 ))}
               </div>
             </FilterSection>
+
+            {availableSubcategories.length > 0 && (
+              <FilterSection title="Subcategoría" defaultOpen>
+                <div className="space-y-2.5 text-sm text-gray-700">
+                  {availableSubcategories.map((subcat) => (
+                    <label key={subcat} className="flex items-center gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedSubcategories.includes(subcat)}
+                        onChange={() =>
+                          toggleArrayFilter(subcat, selectedSubcategories, setSelectedSubcategories)
+                        }
+                        className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                      />
+                      <span>{subcat}</span>
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+            )}
 
             <FilterSection title="Marca" defaultOpen>
               <div className="space-y-2.5 text-sm text-gray-700">

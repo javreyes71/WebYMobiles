@@ -4,6 +4,7 @@ import { ArrowLeft, KeyRound, MailCheck } from 'lucide-react';
 import LoginForm from '@/components/molecules/LoginForm/LoginForm';
 import CustomTextField from '@/components/atoms/TextField/CustomTextField';
 import CustomButton from '@/components/atoms/Button/CustomButton';
+import Logo from '@/components/atoms/Logo/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { formatRUT } from '@/utils/validators';
 
@@ -86,11 +87,14 @@ const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
 
         {mode === 'login' && (
           <>
-            <div className="text-center mb-6">
-              <h2 id="login-modal-title" className="text-2xl font-extrabold text-gray-900">
-                Inicia sesión
+            <div className="text-center mb-6 flex flex-col items-center">
+              <div className="mb-3">
+                <Logo className="h-10 w-auto" />
+              </div>
+              <h2 id="login-modal-title" className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">
+                Inicia Sesión
               </h2>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
                 Accede a tus compras, ventas y cotizaciones de servicios
               </p>
             </div>
@@ -105,10 +109,13 @@ const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
 
         {mode === 'recover' && (
           <div>
+            <div className="flex justify-center mb-4">
+              <Logo className="h-9 w-auto" />
+            </div>
             <button
               type="button"
               onClick={() => setMode('login')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black mb-4"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black mb-4 uppercase tracking-wider"
             >
               <ArrowLeft className="w-4 h-4" /> Volver al inicio de sesión
             </button>

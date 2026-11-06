@@ -33,14 +33,14 @@ const ProductCard = ({
   return (
     <article className="group relative flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all">
       {/* Badges superiores */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
         {hasDiscount && discountPct > 0 && (
-          <span className="bg-red-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
+          <span className="bg-gradient-to-r from-red-600 to-rose-600 text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg shadow-md tracking-wider">
             -{discountPct}% OFF
           </span>
         )}
         {stock !== undefined && stock <= 5 && stock > 0 && (
-          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shadow-xs">
             ¡Últimas {stock} un.!
           </span>
         )}
@@ -89,9 +89,14 @@ const ProductCard = ({
 
           <div className="mt-auto pt-2 border-t border-gray-100">
             {hasDiscount && (
-              <span className="block text-xs text-gray-400 line-through">
-                {formatCurrency(originalPrice)}
-              </span>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs text-gray-400 line-through">
+                  {formatCurrency(originalPrice)}
+                </span>
+                <span className="text-[10px] font-extrabold uppercase text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Ahorras {formatCurrency(originalPrice - price)}
+                </span>
+              </div>
             )}
             <div className="flex items-center justify-between">
               <span className="text-lg font-extrabold text-gray-900">

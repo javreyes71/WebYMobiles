@@ -4,6 +4,7 @@ import { Search, ArrowRight, Briefcase, ShieldCheck, Truck, Sparkles } from 'luc
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
 import CustomButton from '@/components/atoms/Button/CustomButton';
 import { useProducts } from '@/context/ProductContext';
+import { createProductMockImage } from '@/data/products';
 
 import heroBanner from '@/assets/inicio/hero_banner.png';
 import catHombre from '@/assets/inicio/cat_hombre.png';
@@ -27,22 +28,34 @@ const Home = () => {
 
   const categories = [
     {
-      label: 'Hombre',
-      image: catHombre,
-      to: '/tienda?genero=Hombre',
-      alt: 'Categoría calzado y moda Hombre',
-    },
-    {
       label: 'Zapatos',
-      image: catZapatos, // Corregido (antes estaba invertido con catRopa)
+      image: catZapatos,
       to: '/tienda?categoria=Zapatos',
       alt: 'Categoría Zapatillas y Calzado',
     },
     {
       label: 'Ropa',
-      image: catRopa, // Corregido
+      image: catRopa,
       to: '/tienda?categoria=Ropa',
       alt: 'Categoría Ropa Urbana',
+    },
+    {
+      label: 'Accesorios',
+      image: createProductMockImage('Accesorios Urbanos', 'Accesorios', 'Vento', '#f97316', '#18181b'),
+      to: '/tienda?categoria=Accesorios',
+      alt: 'Categoría Accesorios y Bolsos',
+    },
+    {
+      label: 'Instrumentos',
+      image: createProductMockImage('Pedales y Audio', 'Instrumentos', 'Vento Gear', '#8b5cf6', '#2e1065'),
+      to: '/tienda?categoria=Instrumentos',
+      alt: 'Categoría Instrumentos y Audio',
+    },
+    {
+      label: 'Hombre',
+      image: catHombre,
+      to: '/tienda?genero=Hombre',
+      alt: 'Categoría calzado y moda Hombre',
     },
   ];
 

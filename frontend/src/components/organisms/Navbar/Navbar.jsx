@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   ShoppingCart,
   Heart,
@@ -40,6 +40,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
   const { isLoggedIn, currentUser, logout } = useAuth();
   const { wishlistIds } = useProducts();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
@@ -79,34 +80,63 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
         </button>
       </div>
       <Divider />
-      <List className="flex-grow py-3">
-        <ListItemButton onClick={() => { navigate('/'); toggleMobileMenu(); }}>
+      <List className="flex-grow py-3 space-y-1">
+        <ListItemButton
+          onClick={() => { navigate('/'); toggleMobileMenu(); }}
+          selected={location.pathname === '/'}
+          sx={{ borderRadius: 2 }}
+        >
           <ListItemText
             primary="INICIO"
-            primaryTypographyProps={{ className: 'font-bold text-gray-900 text-sm' }}
+            primaryTypographyProps={{
+              className: `font-extrabold text-sm ${location.pathname === '/' ? 'text-black font-black' : 'text-gray-700'}`
+            }}
           />
         </ListItemButton>
-        <ListItemButton onClick={() => { navigate('/tienda'); toggleMobileMenu(); }}>
+        <ListItemButton
+          onClick={() => { navigate('/tienda'); toggleMobileMenu(); }}
+          selected={location.pathname === '/tienda'}
+          sx={{ borderRadius: 2 }}
+        >
           <ListItemText
             primary="TIENDA (PRODUCTOS)"
-            primaryTypographyProps={{ className: 'font-bold text-gray-900 text-sm' }}
+            primaryTypographyProps={{
+              className: `font-extrabold text-sm ${location.pathname === '/tienda' ? 'text-black font-black' : 'text-gray-700'}`
+            }}
           />
         </ListItemButton>
         <ListItemButton
           onClick={() => { navigate('/servicios'); toggleMobileMenu(); }}
-          sx={{ bgcolor: '#f0f9ff', borderRadius: 2, my: 0.5 }}
+          selected={location.pathname === '/servicios'}
+          sx={{
+            bgcolor: location.pathname === '/servicios' ? '#0284c7' : '#f0f9ff',
+            color: location.pathname === '/servicios' ? '#ffffff' : 'inherit',
+            borderRadius: 2,
+            my: 0.5,
+            '&:hover': { bgcolor: location.pathname === '/servicios' ? '#0369a1' : '#e0f2fe' }
+          }}
         >
           <ListItemText
             primary="SERVICIOS"
             secondary="Profesionales y cotizaciones"
-            primaryTypographyProps={{ className: 'font-extrabold text-sky-700 text-sm' }}
-            secondaryTypographyProps={{ className: 'text-xs text-sky-600' }}
+            primaryTypographyProps={{
+              className: `font-extrabold text-sm ${location.pathname === '/servicios' ? 'text-white' : 'text-sky-700'}`
+            }}
+            secondaryTypographyProps={{
+              className: `text-xs ${location.pathname === '/servicios' ? 'text-sky-100' : 'text-sky-600'}`
+            }}
           />
         </ListItemButton>
-        <ListItemButton onClick={() => { navigate('/contacto'); toggleMobileMenu(); }}>
+        <ListItemButton
+          onClick={() => { navigate('/contacto'); toggleMobileMenu(); }}
+          selected={location.pathname === '/contacto'}
+          sx={{ borderRadius: 2 }}
+        >
           <ListItemText
             primary="CONTACTO"
-            primaryTypographyProps={{ className: 'font-bold text-gray-900 text-sm' }}
+            primaryTypographyProps={{
+              className: `font-extrabold text-sm ${location.pathname === '/contacto' ? 'text-black font-black' : 'text-gray-700'}`
+            }}
           />
         </ListItemButton>
 
@@ -115,6 +145,8 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             <Divider sx={{ my: 1.5 }} />
             {showProductPanel && (
               <ListItemButton
+                selected={location.pathname.startsWith('/admin/productos')}
+                sx={{ borderRadius: 2 }}
                 onClick={() => {
                   navigate('/admin/productos');
                   toggleMobileMenu();
@@ -128,6 +160,8 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             )}
             {showServicePanel && (
               <ListItemButton
+                selected={location.pathname.startsWith('/admin/servicios')}
+                sx={{ borderRadius: 2 }}
                 onClick={() => {
                   navigate('/admin/servicios');
                   toggleMobileMenu();
@@ -141,6 +175,8 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             )}
             {isAdmin && (
               <ListItemButton
+                selected={location.pathname.startsWith('/admin/usuarios')}
+                sx={{ borderRadius: 2 }}
                 onClick={() => {
                   navigate('/admin/usuarios');
                   toggleMobileMenu();
@@ -217,31 +253,49 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
           {isLoggedIn && (showProductPanel || showServicePanel || isAdmin) && (
             <div className="hidden xl:flex items-center gap-2 pl-3 border-l border-gray-200">
               {showProductPanel && (
-                <Link
+                <NavLink
                   to="/admin/productos"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors"
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`
+                  }
                 >
                   <PackagePlus className="w-3.5 h-3.5" aria-hidden="true" />
                   Mis Productos
-                </Link>
+                </NavLink>
               )}
               {showServicePanel && (
-                <Link
+                <NavLink
                   to="/admin/servicios"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors"
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
+                        : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300'
+                    }`
+                  }
                 >
                   <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
                   Mis Servicios
-                </Link>
+                </NavLink>
               )}
               {isAdmin && (
-                <Link
+                <NavLink
                   to="/admin/usuarios"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-indigo-700 text-white shadow-md ring-2 ring-indigo-300'
+                        : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200'
+                    }`
+                  }
                 >
                   <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                   Admin
-                </Link>
+                </NavLink>
               )}
             </div>
           )}

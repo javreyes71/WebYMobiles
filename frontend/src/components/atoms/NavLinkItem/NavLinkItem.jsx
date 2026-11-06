@@ -9,18 +9,18 @@ const NavLinkItem = ({ to, children, badge = null, accent = false, onClick }) =>
       end={to === '/'}
       className={({ isActive }) => {
         const base =
-          'relative inline-flex items-center gap-1.5 py-1.5 text-xs lg:text-sm font-bold uppercase tracking-wider transition-colors';
+          'relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs lg:text-sm font-extrabold uppercase tracking-wider transition-all duration-200';
         if (accent) {
-          return `${base} px-3 rounded-full ${
+          return `${base} ${
             isActive
-              ? 'bg-sky-600 text-white shadow-sm'
-              : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200'
+              ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
+              : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300'
           }`;
         }
         return `${base} ${
           isActive
-            ? 'text-black after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-black'
-            : 'text-gray-600 hover:text-black'
+            ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`;
       }}
     >

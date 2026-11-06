@@ -54,6 +54,7 @@ import { API_URL, apiFetch, authApi, usersApi, storageApi, analyticsApi } from '
 import {
   validateRUT,
   formatRUT,
+  handleRutKeyDown,
   validateEmail,
   formatCurrency,
   getInitials,
@@ -1348,19 +1349,22 @@ const AdminUsuarios = () => {
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex-1 space-y-4">
                 <CustomTextField
+                  name="nombre"
+                  label="Razón Social / Nombre Empresa"
+                  value={empresa.nombre}
+                  onChange={(e) => setEmpresa({ ...empresa, nombre: e.target.value })}
+                  required
+                />
+                <CustomTextField
                   name="rut"
                   label="RUT Empresa"
                   value={empresa.rut}
                   onChange={(e) =>
                     setEmpresa({ ...empresa, rut: formatRUT(e.target.value) })
                   }
-                  required
-                />
-                <CustomTextField
-                  name="nombre"
-                  label="Razón Social / Nombre"
-                  value={empresa.nombre}
-                  onChange={(e) => setEmpresa({ ...empresa, nombre: e.target.value })}
+                  onKeyDown={handleRutKeyDown}
+                  inputProps={{ maxLength: 12 }}
+                  helperText="Solo números y K (máx. 9 dígitos). Puntos y guion automáticos."
                   required
                 />
                 <CustomTextField
@@ -1974,6 +1978,9 @@ const AdminUsuarios = () => {
               name="rut"
               value={userModal.rut}
               onChange={(e) => setUserModal({ ...userModal, rut: formatRUT(e.target.value) })}
+              onKeyDown={handleRutKeyDown}
+              inputProps={{ maxLength: 12 }}
+              helperText="Solo números y K (máx. 9 dígitos). Puntos y guion automáticos."
               required
             />
             <CustomTextField

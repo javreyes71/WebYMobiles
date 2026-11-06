@@ -413,11 +413,14 @@ const ProductDetail = () => {
                 {/* Precio */}
                 <div className="mb-6 pb-5 border-b border-gray-100">
                   {item.originalPrice && item.originalPrice > item.price && (
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className="text-sm text-gray-400 line-through">
                         {formatCurrency(item.originalPrice)}
                       </span>
-                      <span className="text-xs font-extrabold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-black bg-gradient-to-r from-red-600 to-rose-600 text-white px-2 py-0.5 rounded-md shadow-xs uppercase tracking-wider">
+                        -{Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}% OFF
+                      </span>
+                      <span className="text-xs font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                         Ahorras {formatCurrency(item.originalPrice - item.price)}
                       </span>
                     </div>

@@ -35,12 +35,18 @@ const Servicios = ({ onRequireLogin }) => {
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [contractType, setContractType] = useState('todos'); // 'todos' | 'fijo' | 'cotizacion'
   const [sortBy, setSortBy] = useState('destacados');
 
   const categories = useMemo(() => {
     const set = new Set(servicios.map((s) => s.categoria).filter(Boolean));
+    return Array.from(set);
+  }, [servicios]);
+
+  const subcategories = useMemo(() => {
+    const set = new Set(servicios.map((s) => s.subcategoria).filter(Boolean));
     return Array.from(set);
   }, [servicios]);
 
@@ -53,6 +59,7 @@ const Servicios = ({ onRequireLogin }) => {
   const clearAllFilters = () => {
     setSearchTerm('');
     setSelectedCategories([]);
+    setSelectedSubcategories([]);
     setSelectedModalities([]);
     setContractType('todos');
     setSortBy('destacados');
@@ -70,10 +77,14 @@ const Servicios = ({ onRequireLogin }) => {
           service.title?.toLowerCase().includes(q) ||
           service.descripcion?.toLowerCase().includes(q) ||
           service.categoria?.toLowerCase().includes(q) ||
+          service.subcategoria?.toLowerCase().includes(q) ||
           service.vendedorNombre?.toLowerCase().includes(q);
 
         const matchesCategory =
           selectedCategories.length === 0 || selectedCategories.includes(service.categoria);
+
+        const matchesSubcategory =
+          selectedSubcategories.length === 0 || selectedSubcategories.includes(service.subcategoria);
 
         const matchesModality =
           selectedModalities.length === 0 || selectedModalities.includes(service.modalidad);
@@ -83,7 +94,7 @@ const Servicios = ({ onRequireLogin }) => {
           (contractType === 'cotizacion' && service.permiteCotizacion === 'sí') ||
           (contractType === 'fijo' && service.permiteCotizacion === 'no');
 
-        return matchesSearch && matchesCategory && matchesModality && matchesContract;
+        return matchesSearch && matchesCategory && matchesSubcategory && matchesModality && matchesContract;
       })
       .sort((a, b) => {
         if (sortBy === 'precio-asc') return a.price - b.price;
@@ -91,7 +102,7 @@ const Servicios = ({ onRequireLogin }) => {
         if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
         return 0;
       });
-  }, [servicios, searchTerm, selectedCategories, selectedModalities, contractType, sortBy]);
+  }, [servicios, searchTerm, selectedCategories, selectedSubcategories, selectedModalities, contractType, sortBy]);
 
   const handlePublishServiceClick = () => {
     if (!isLoggedIn) {
@@ -171,6 +182,50 @@ const Servicios = ({ onRequireLogin }) => {
           </div>
         </section>
 
+        {/* Acceso rápido a categorías de servicios */}
+        <nav
+          className="mb-8 flex flex-wrap items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm"
+          aria-label="Acceso rápido por categoría de servicio"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategories([]);
+              setSelectedSubcategories([]);
+            }}
+            className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+              selectedCategories.length === 0
+                ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Todos los Servicios
+          </button>
+
+          {['Mantención y Limpieza', 'Personalización y Diseño', 'Luthería y Audio', 'Asesoría y Autenticación'].map(
+            (cat) => {
+              const isCatActive = selectedCategories.length === 1 && selectedCategories[0] === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategories([cat]);
+                    setSelectedSubcategories([]);
+                  }}
+                  className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+                    isCatActive
+                      ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
+                      : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            }
+          )}
+        </nav>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Barra lateral de filtros exclusivos de servicios */}
           <aside className="w-full lg:w-72 shrink-0" aria-label="Filtros de servicios">
@@ -186,6 +241,50 @@ const Servicios = ({ onRequireLogin }) => {
                 Limpiar todo
               </button>
             </div>
+
+            <FilterAccordion title="Categoría" defaultOpen>
+              <div className="space-y-2.5">
+                {categories.map((cat) => (
+                  <label
+                    key={cat}
+                    className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(cat)}
+                      onChange={() =>
+                        toggleItemInList(cat, selectedCategories, setSelectedCategories)
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-600"
+                    />
+                    <span>{cat}</span>
+                  </label>
+                ))}
+              </div>
+            </FilterAccordion>
+
+            {subcategories.length > 0 && (
+              <FilterAccordion title="Subcategoría" defaultOpen>
+                <div className="space-y-2.5">
+                  {subcategories.map((subcat) => (
+                    <label
+                      key={subcat}
+                      className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSubcategories.includes(subcat)}
+                        onChange={() =>
+                          toggleItemInList(subcat, selectedSubcategories, setSelectedSubcategories)
+                        }
+                        className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-600"
+                      />
+                      <span>{subcat}</span>
+                    </label>
+                  ))}
+                </div>
+              </FilterAccordion>
+            )}
 
             <FilterAccordion title="Modalidad de Atención" defaultOpen>
               <div className="space-y-2.5">

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { TextField, InputAdornment, IconButton } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { TextField, InputAdornment } from '@mui/material';
+import { Eye, EyeOff } from 'lucide-react';
 
 /**
  * Átomo CustomTextField basado en Material UI.
- * Si type="password", incorpora automáticamente el botón de "ojo" accesible
+ * Si type="password", incorpora automáticamente el botón de "ojo" accesible y de alto contraste
  * para alternar la visualización de los caracteres de la contraseña.
  */
 const CustomTextField = ({
@@ -35,7 +35,8 @@ const CustomTextField = ({
   const isPasswordField = type === 'password';
   const resolvedType = isPasswordField ? (showPassword ? 'text' : 'password') : type;
 
-  const handleTogglePassword = () => {
+  const handleTogglePassword = (e) => {
+    e.preventDefault();
     setShowPassword((prev) => !prev);
   };
 
@@ -50,16 +51,21 @@ const CustomTextField = ({
   if (isPasswordField) {
     computedInputProps.endAdornment = (
       <InputAdornment position="end">
-        <IconButton
+        <button
+          type="button"
           aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           onClick={handleTogglePassword}
           onMouseDown={(e) => e.preventDefault()}
-          edge="end"
-          size="small"
           tabIndex={0}
+          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
         >
-          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-        </IconButton>
+          {showPassword ? (
+            <EyeOff className="w-4 h-4 text-gray-700 shrink-0" aria-hidden="true" />
+          ) : (
+            <Eye className="w-4 h-4 text-gray-700 shrink-0" aria-hidden="true" />
+          )}
+        </button>
       </InputAdornment>
     );
   } else if (endAdornment) {
@@ -88,6 +94,10 @@ const CustomTextField = ({
       rows={rows}
       autoComplete={autoComplete}
       InputProps={computedInputProps}
+      slotProps={{
+        input: computedInputProps,
+        htmlInput: inputProps,
+      }}
       inputProps={inputProps}
       sx={{
         '& .MuiOutlinedInput-root': {
