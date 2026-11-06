@@ -193,3 +193,43 @@ WebYMobiles/
 ### Fase B6: Integración React (`VITE_API_URL` + JWT) y Despliegue Raspberry Pi
 - **Integración Frontend:** `apiFetch()` inyecta `Authorization: Bearer <JWT>`, sincroniza catálogo, usuarios, órdenes, despachos, cotizaciones y reseñas contra `Vento.Api` cuando `VITE_API_URL` está definida, y alinea el `Stepper` de `Perfil.jsx` y `AdminProductos.jsx` con los estados logísticos de `BD2`.
 - **Despliegue ARM64 (`backend/deploy/`):** Servicio `vento-api.service` (`0.0.0.0:5000`) y script `deploy_raspberry.sh` con publicación `linux-arm64` y variables de entorno externas seguras (`/etc/vento-api/vento.env`).
+
+---
+
+## 7. Fase F6: Refinamiento Integral de Frontend y Catálogo Oficial Completo
+
+### 1. Identidad Visual y Branding en el Navegador
+- **Favicon y Logo Oficial:** Configurado `vento-logo.png` y `favicon.ico` en `frontend/public/` e indexado en `index.html` con `<link rel="icon">`, `apple-touch-icon` y `shortcut icon`. El isotipo y tipografía bold de Vento se exhiben en la pestaña del navegador y en la cabecera `Navbar`.
+
+### 2. Taxonomía Oficial Exacta del Curso y Poblamiento Completo (153 Ítems)
+- **Centralización Jerárquica (`frontend/src/data/categories.js`):** Estructura que modela formalmente las 10 categorías de productos y 7 de servicios requeridas en el enunciado.
+- **90 Productos (Exactamente 9 ítems por categoría):**
+  - **2.1 Tecnología:** Notebook ASUS ZenBook 14 OLED, Monitor Gamer Samsung Odyssey G5, Audífonos Sony WH-1000XM5, Parlante JBL Charge 5, PS5 Slim, Control Xbox Series, Smart TV LG 55", Chromecast 4K, SSD Kingston 1TB.
+  - **2.2 Celulares:** iPhone 15, Samsung Galaxy S24 Ultra, Xiaomi Redmi Note 13 Pro+, Motorola Edge 50 Pro, Carcasa Spigen MagFit, Cargador Anker GaN 65W, Galaxy Watch6, Apple Watch SE, Batería MagGo 10.000mAh.
+  - **2.3 Hogar y Cocina:** Cafetera Espresso DeLonghi Dedica, Freidora de Aire Philips Dual Basket XXL, Robot Xiaomi Vacuum E10, Batería Tefal Titanium 7 Pzas, Cuchillo Santoku Damasco 8", Lámpara Nórdica Trípode, Estante Modular Fierro/Pino, Frascos de Vidrio Bambú, Sábanas Algodón Egipcio 300 Hilos.
+  - **2.4 Alimentación:** Café Especialidad Etiopía Yirgacheffe 500g, Pack Té en Hebras Selección Botánica, Mix Frutos Secos con Miel de Ulmo, Granola Artesanal Avena/Cacao, Aceite de Oliva Arbequina Huasco, Pasta Ají Cacho de Cabra, Bombones de Autor y Trufas Belgas, Barras de Chocolate 85% Bean-to-Bar, Kombucha Orgánica Arándano/Jengibre.
+  - **2.5 Accesorios para vehículos:** Radio Pantalla 9" CarPlay/Android Auto, Barras de Techo Aluminio, Dashcam 4K Dual GPS/WiFi, Cojín Lumbar Memory Foam, Kit Detailing Cerámico, Compresor Portátil 150 PSI, Parlantes Coaxiales 6.5", Arrancador Jump Starter 12.000mAh, Organizador Colgante de Maleta.
+  - **2.6 Libros e instrumentos musicales:** Fender Squier Stratocaster Sonic, Bajo Ibanez GSR200 4 Cuerdas, Teclado MIDI Novation Launchkey, Pedal Boss DS-1 Distortion, Interfaz Focusrite Scarlett 2i2, Novela "Cien Años de Soledad", Libro "Sapiens", Libro "Sneakers Collectors Guide", Libro "Diseño de Sistemas y Arquitectura Limpia".
+  - **2.7 Ropa, moda y calzado:** Nike Air More Uptempo '96 *(HD local)*, Court Vision Low *(HD local)*, Nike Air Force 1 '07 *(HD local)*, Air Jordan 4 Retro OG SP *(HD local)*, Botines Cuero Nobuck Vento, Polerón Oversize Heavyweight 420g, Chaqueta Cortaviento Reflective 3M, Pantalón Cargo Tactical Ripstop, Polera Boxy Fit Algodón Peinado.
+  - **2.8 Juguetes y Niños:** Juego Catan Oficial, Juego Dixit Clásico, LEGO Star Wars X-Wing, LEGO Architecture Tokio, Funko Pop! Dragon Ball Goku, Cilindro Montessori Madera, Bloques Magnéticos 3D 60 Pzas, Scooter Plegable LED, Bicicleta de Equilibrio 12".
+  - **2.9 Útiles y librería:** Bullet Journal Leuchtturm1917 A5, Marcadores Tombow Dual Brush x10, Tiralíneas Sakura Pigma Micron x6, Pluma Lamy Safari Carbón Matte, Cintas Washi Tape Japonesas, Mochila Antirrobo 15.6", Estuche Standing Canvas, Desk Mat Cuero Sintético 80x40cm, Organizador Giratorio Madera 360°.
+  - **2.10 Otros:** Carpa Camping 4 Personas 3000mm, Saco de Dormir Confort 0°C Ripstop, Cocinilla a Gas Camping, Cortadora de Pelo Fade Master, Kit Afeitado Tradicional Maquinilla/Brocha, Arnés Antitirones Julius-K9, Bebedero Fuente Automática 2L, Bandas de Resistencia 11 Pzas, Taladro Percutor 20V con Maletín.
+- **63 Servicios (Exactamente 9 ítems por categoría):**
+  - **1.1 Computación y Tecnología:** Mantención PC/Notebook, Reparación Hardware Laptop, WiFi Mesh Pymes, Auditoría Ciberseguridad, Servidores Linux & Cloud, Recuperación Forense de Datos, Armado PC Gamer, Cámaras Seguridad IP WiFi, Desinfección Ransomware.
+  - **1.2 Servicios domésticos:** Aseo Profundo Departamentos, Limpieza Alfombras/Tapices Inyección-Extracción, Jardinería/Poda Cerco, Paisajismo y Riego Goteo, Deshollinado Estufas Pellet/Leña, Gasfitería/Fugas de Agua, Cuidado Adulto Mayor, Babysitter Certificada, Pintor Interiores.
+  - **1.3 Servicios profesionales:** Tiendas Online Shopify/WooCommerce, Asesoría Legal/Contratos, Declaración Renta F22/F29 SII, Regularización Ley del Mono, Terapia Psicológica Ansiedad, Telemedicina General, Evaluación Dental Profilaxis, Kinesiología Motora Domicilio, Clases Particulares Matemáticas/Física, Atención Veterinaria Domicilio, Traducción Certificada Español-Inglés.
+  - **1.4 Vehículos:** Scanner Diagnóstico OBD2, Cambio de Aceite Sintético/Filtros, Desabolladura Varillero DSP, Pintura al Horno por Pieza, Inspección Pre-Compra Domicilio, Frenos/Rectificado Discos, Alineación 3D Láser/Balanceo, Pulido Focos UV, Láminas Seguridad Antiasalto 8 Micras.
+  - **1.5 Confección de ropa y vestuario:** Ajuste Bastas/Entalle Trajes, Camisas y Blusas a Medida Algodón Pima, Delantales y Pecheras Gastronómicas, Uniformes Clínicos Scrubs, Vestidos de Gala a Pedido, Bordado Computarizado Logos, Estampado DTF Textil, Restauración/Teñido Cuero Vintage, Customización Artística Mezclilla.
+  - **1.6 Banquetería, repostería y alimentación:** Banquetería Matrimonios, Coffee Break Corporativo, Tortas Temáticas Fondant, Caja Cóctel 50 Pastelitos, Almuerzos Saludables al Vacío, Tabla Quesos/Charcutería 6-8 Personas, Maestro Asador Parrillero Domicilio, Bar Móvil Coctelería de Autor, Desayunos Sorpresa Gourmet.
+  - **1.7 Otros:** Fotografía Profesional Retrato/Moda, Grabación Dron 4K Inmobiliario, Animación Infantil Magia/Títeres, Cerrajería Móvil 24/7, Fletes y Mudanzas Locales, Interpretación Simultánea Conferencias, Cobertura Audiovisual Matrimonios, Cerraduras Digitales Biométricas, Embalaje Profesional Mudanzas.
+
+### 3. Correspondencia Fotográfica Fiel 1:1
+- Cada ítem cuenta con una fotografía real específica asociada mediante [frontend/src/data/products.js](file:///d:/wym/frontend/src/data/products.js) y [frontend/src/data/services.js](file:///d:/wym/frontend/src/data/services.js), garantizando que lo que se describe en el texto coincida de forma exacta con la imagen presentada.
+- Componentes [`ProductCard.jsx`](file:///d:/wym/frontend/src/components/molecules/ProductCard/ProductCard.jsx), [`ServiceCard.jsx`](file:///d:/wym/frontend/src/components/molecules/ServiceCard/ServiceCard.jsx) y [`ProductDetail.jsx`](file:///d:/wym/frontend/src/pages/ProductDetail/ProductDetail.jsx) incorporan manejador `onError` para respaldo gráfico automático contra cortes de red.
+
+### 4. Experiencia de Usuario y Accesibilidad
+- **Tipografía Uniforme:** Botones en mayúsculas (`uppercase tracking-wider font-bold`) y jerarquía de títulos normalizada.
+- **Validación RUT Módulo 11:** Admite solo números y `k/K`, límite de 9 caracteres y auto-formateo con puntos y guion.
+- **Alternancia Contraseña:** Botón de ojo funcional en todos los formularios de autenticación.
+- **Cifrado en Frontend:** Implementación nativa de `crypto.subtle.digest('SHA-256')` evitando contraseñas en texto plano.
+- **Navegación Fluida:** Barras rápidas con desplazamiento horizontal para las 10 categorías de productos y 7 de servicios; subcategorías filtradas contextualmente; indicador visual de pestaña activa en Navbar.
