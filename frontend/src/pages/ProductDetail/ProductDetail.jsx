@@ -46,8 +46,8 @@ const ProductDetail = () => {
   useEffect(() => {
     if (item) {
       setSelectedImage(item.mainImage || item.image);
-      setTalla(item.tallas?.[0] || '10 US');
-      setColor(item.colores?.[0] || 'Negro');
+      setTalla(item.tallas?.[0] || '');
+      setColor(item.colores?.[0] || '');
       setQuantity(1);
     }
   }, [item]);
@@ -82,6 +82,20 @@ const ProductDetail = () => {
 
   const availableStock = isService ? 99 : Number(item.stock ?? 10);
 
+  const hasVariants = Boolean(
+    !isService &&
+      Array.isArray(item.tallas) &&
+      item.tallas.length > 0 &&
+      !(item.tallas.length === 1 && item.tallas[0] === 'Estándar')
+  );
+  const hasColors = Boolean(
+    !isService &&
+      Array.isArray(item.colores) &&
+      item.colores.length > 0 &&
+      !(item.colores.length === 1 && item.colores[0] === 'Único')
+  );
+  const variantLabel = item.variantLabel || 'Opción / Variante';
+
   const hasVerifiedTransaction = Boolean(
     isLoggedIn &&
       (myOrders?.some((o) => o.items?.some((it) => String(it.id) === String(item.id))) ||
@@ -99,8 +113,16 @@ const ProductDetail = () => {
     tipo: item.tipo,
     title: item.title || item.nombre,
     price: item.price,
-    talla: isService ? item.modalidad || 'Servicio' : talla,
-    color: isService ? item.tiempoEstimado || 'Horario flexible' : color,
+    talla: isService
+      ? item.modalidad || 'Servicio'
+      : hasVariants
+      ? talla || item.tallas[0]
+      : item.tallas?.[0] || 'Estándar',
+    color: isService
+      ? item.tiempoEstimado || 'Horario flexible'
+      : hasColors
+      ? color || item.colores[0]
+      : item.colores?.[0] || 'Estándar',
     stock: availableStock,
     image: item.image || item.mainImage,
   });
@@ -454,56 +476,62 @@ const ProductDetail = () => {
                   </p>
                 </div>
 
-                {/* Selectores de Talla, Color y Cantidad */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                  <div>
-                    <label
-                      htmlFor="product-size"
-                      className="block text-xs font-bold text-gray-700 uppercase mb-1.5"
-                    >
-                      Talla
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="product-size"
-                        value={talla}
-                        onChange={(e) => setTalla(e.target.value)}
-                        className="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 font-medium py-2.5 px-3.5 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900"
-                      >
-                        {(item.tallas || ['9 US', '10 US', '11 US']).map((sz) => (
-                          <option key={sz} value={sz}>
-                            {sz}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-                    </div>
-                  </div>
+                {/* Selectores dinámicos de Variante y Color según producto */}
+                {(hasVariants || hasColors) && (
+                  <div className={`grid grid-cols-1 ${hasVariants && hasColors ? 'sm:grid-cols-2' : ''} gap-4 mb-5`}>
+                    {hasVariants && (
+                      <div>
+                        <label
+                          htmlFor="product-variant"
+                          className="block text-xs font-bold text-gray-700 uppercase mb-1.5"
+                        >
+                          {variantLabel}
+                        </label>
+                        <div className="relative">
+                          <select
+                            id="product-variant"
+                            value={talla}
+                            onChange={(e) => setTalla(e.target.value)}
+                            className="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 font-medium py-2.5 px-3.5 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                          >
+                            {item.tallas.map((sz) => (
+                              <option key={sz} value={sz}>
+                                {sz}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+                        </div>
+                      </div>
+                    )}
 
-                  <div>
-                    <label
-                      htmlFor="product-color"
-                      className="block text-xs font-bold text-gray-700 uppercase mb-1.5"
-                    >
-                      Color
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="product-color"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                        className="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 font-medium py-2.5 px-3.5 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900"
-                      >
-                        {(item.colores || ['Negro', 'Blanco', 'Rojo']).map((col) => (
-                          <option key={col} value={col}>
-                            {col}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-                    </div>
+                    {hasColors && (
+                      <div>
+                        <label
+                          htmlFor="product-color"
+                          className="block text-xs font-bold text-gray-700 uppercase mb-1.5"
+                        >
+                          Color / Acabado
+                        </label>
+                        <div className="relative">
+                          <select
+                            id="product-color"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            className="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 font-medium py-2.5 px-3.5 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                          >
+                            {item.colores.map((col) => (
+                              <option key={col} value={col}>
+                                {col}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Stock y Cantidad */}
                 <div className="flex items-center justify-between mb-6 bg-gray-50 px-4 py-3 rounded-xl border border-gray-200">
