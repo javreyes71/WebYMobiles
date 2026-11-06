@@ -27,8 +27,8 @@ const STORAGE_KEYS = {
   USERS: 'vento_users_v2',
   SESSION: 'vento_session_v2',
   REMEMBER_RUT: 'vento_remember_rut_v2',
-  CATALOG_PRODUCTS: 'vento_products_v2',
-  CATALOG_SERVICES: 'vento_services_v2',
+  CATALOG_PRODUCTS: 'vento_products_v3',
+  CATALOG_SERVICES: 'vento_services_v3',
   CART: 'vento_cart_v2',
   ORDERS: 'vento_orders_v2',
   QUOTES: 'vento_quotes_v2',
@@ -48,7 +48,12 @@ const readStorage = (key, fallback) => {
       localStorage.setItem(key, JSON.stringify(fallback));
       return fallback;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(fallback) && Array.isArray(parsed) && parsed.length < fallback.length) {
+      localStorage.setItem(key, JSON.stringify(fallback));
+      return fallback;
+    }
+    return parsed;
   } catch {
     return fallback;
   }

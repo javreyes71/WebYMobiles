@@ -66,14 +66,20 @@ const Tienda = () => {
     () => Array.from(new Set(productos.map((p) => p.categoria).filter(Boolean))),
     [productos]
   );
-  const availableSubcategories = useMemo(
-    () => Array.from(new Set(productos.map((p) => p.subcategoria).filter(Boolean))),
-    [productos]
-  );
-  const availableBrands = useMemo(
-    () => Array.from(new Set(productos.map((p) => p.brand).filter(Boolean))),
-    [productos]
-  );
+  const availableSubcategories = useMemo(() => {
+    const pool =
+      selectedCategories.length > 0
+        ? productos.filter((p) => selectedCategories.includes(p.categoria))
+        : productos;
+    return Array.from(new Set(pool.map((p) => p.subcategoria).filter(Boolean)));
+  }, [productos, selectedCategories]);
+  const availableBrands = useMemo(() => {
+    const pool =
+      selectedCategories.length > 0
+        ? productos.filter((p) => selectedCategories.includes(p.categoria))
+        : productos;
+    return Array.from(new Set(pool.map((p) => p.brand).filter(Boolean)));
+  }, [productos, selectedCategories]);
   const availableGenders = ['Hombre', 'Mujer', 'Unisex'];
   const availableSizes = ['7 US', '8 US', '9 US', '10 US', '11 US', 'S', 'M', 'L', 'XL'];
 
@@ -246,7 +252,7 @@ const Tienda = () => {
 
         {/* Barra Rápida de Categorías y Ofertas */}
         <nav
-          className="mb-8 flex flex-wrap items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm"
+          className="mb-8 flex items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-x-auto scrollbar-thin"
           aria-label="Acceso rápido por categoría"
         >
           <button
@@ -256,7 +262,7 @@ const Tienda = () => {
               setSelectedSubcategories([]);
               setSearchParams({});
             }}
-            className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+            className={`whitespace-nowrap px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shrink-0 ${
               selectedCategories.length === 0
                 ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -265,7 +271,7 @@ const Tienda = () => {
             Todas las Categorías
           </button>
 
-          {['Zapatos', 'Ropa', 'Accesorios', 'Instrumentos'].map((cat) => {
+          {availableCategories.map((cat) => {
             const isCatActive = selectedCategories.length === 1 && selectedCategories[0] === cat;
             return (
               <button
@@ -276,7 +282,7 @@ const Tienda = () => {
                   setSelectedSubcategories([]);
                   setSearchParams({ categoria: cat });
                 }}
-                className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+                className={`whitespace-nowrap px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shrink-0 ${
                   isCatActive
                     ? 'bg-gray-900 text-white shadow-sm ring-2 ring-gray-900'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -290,7 +296,7 @@ const Tienda = () => {
           <button
             type="button"
             onClick={() => setOnlyOffers(!onlyOffers)}
-            className={`ml-auto px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`ml-auto whitespace-nowrap px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 shrink-0 ${
               onlyOffers
                 ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md ring-2 ring-red-400'
                 : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'

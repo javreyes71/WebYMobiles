@@ -46,9 +46,13 @@ const Servicios = ({ onRequireLogin }) => {
   }, [servicios]);
 
   const subcategories = useMemo(() => {
-    const set = new Set(servicios.map((s) => s.subcategoria).filter(Boolean));
+    const pool =
+      selectedCategories.length > 0
+        ? servicios.filter((s) => selectedCategories.includes(s.categoria))
+        : servicios;
+    const set = new Set(pool.map((s) => s.subcategoria).filter(Boolean));
     return Array.from(set);
-  }, [servicios]);
+  }, [servicios, selectedCategories]);
 
   const modalities = ['Presencial', 'Online', 'A domicilio'];
 
@@ -184,7 +188,7 @@ const Servicios = ({ onRequireLogin }) => {
 
         {/* Acceso rápido a categorías de servicios */}
         <nav
-          className="mb-8 flex flex-wrap items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm"
+          className="mb-8 flex items-center gap-2 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-x-auto scrollbar-thin"
           aria-label="Acceso rápido por categoría de servicio"
         >
           <button
@@ -193,7 +197,7 @@ const Servicios = ({ onRequireLogin }) => {
               setSelectedCategories([]);
               setSelectedSubcategories([]);
             }}
-            className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
+            className={`whitespace-nowrap px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shrink-0 ${
               selectedCategories.length === 0
                 ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -202,28 +206,26 @@ const Servicios = ({ onRequireLogin }) => {
             Todos los Servicios
           </button>
 
-          {['Mantención y Limpieza', 'Personalización y Diseño', 'Luthería y Audio', 'Asesoría y Autenticación'].map(
-            (cat) => {
-              const isCatActive = selectedCategories.length === 1 && selectedCategories[0] === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategories([cat]);
-                    setSelectedSubcategories([]);
-                  }}
-                  className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all ${
-                    isCatActive
-                      ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
-                      : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            }
-          )}
+          {categories.map((cat) => {
+            const isCatActive = selectedCategories.length === 1 && selectedCategories[0] === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategories([cat]);
+                  setSelectedSubcategories([]);
+                }}
+                className={`whitespace-nowrap px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shrink-0 ${
+                  isCatActive
+                    ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-300'
+                    : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-8">
