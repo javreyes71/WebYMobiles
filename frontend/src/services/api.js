@@ -27,8 +27,8 @@ const STORAGE_KEYS = {
   USERS: 'vento_users_v2',
   SESSION: 'vento_session_v2',
   REMEMBER_RUT: 'vento_remember_rut_v2',
-  CATALOG_PRODUCTS: 'vento_products_v6',
-  CATALOG_SERVICES: 'vento_services_v6',
+  CATALOG_PRODUCTS: 'vento_products_v7',
+  CATALOG_SERVICES: 'vento_services_v7',
   CART: 'vento_cart_v2',
   ORDERS: 'vento_orders_v2',
   QUOTES: 'vento_quotes_v2',
@@ -49,9 +49,19 @@ const readStorage = (key, fallback) => {
       return fallback;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(fallback) && Array.isArray(parsed) && parsed.length < fallback.length) {
-      localStorage.setItem(key, JSON.stringify(fallback));
-      return fallback;
+    if (Array.isArray(fallback) && Array.isArray(parsed)) {
+      if (parsed.length < fallback.length) {
+        localStorage.setItem(key, JSON.stringify(fallback));
+        return fallback;
+      }
+      // Detección y auto-reparación si la caché local almacenó imágenes de reloj duplicadas
+      const watchCount = parsed.filter(
+        (it) => typeof it.image === 'string' && it.image.includes('photo-1523275335684')
+      ).length;
+      if (watchCount > 2) {
+        localStorage.setItem(key, JSON.stringify(fallback));
+        return fallback;
+      }
     }
     return parsed;
   } catch {
