@@ -91,3 +91,24 @@ Este documento registra las sesiones de trabajo del equipo para el desarrollo de
 - **Javier:** Implementar `Vento.Api` (Fases B1–B4) y scripts SQL `00..05` alineados con `BD2`. (Completado)
 - **María:** Construir colección Postman v2.1 (`Fase B5`) con auto-guardado de JWT y validaciones negativas. (Completado)
 - **Pedro:** Integrar `VITE_API_URL` + JWT en `api.js`, alinear estados de despacho `BD2` en `Stepper` y documentar despliegue en Raspberry Pi (`Fase B6`). (Completado)
+
+
+---
+
+## Reunión 7: Preparación y Validación de Entrega del 50% de Avance del Backend
+**Fecha y Hora:** Domingo 22 de Noviembre de 2026, 23:30 hrs.  
+**Miembros Presentes:** Javier Reyes, María Silva, Pedro Pascal.
+
+**Temas Discutidos:**
+- Revisión exhaustiva de los criterios de evaluación y rúbrica para la entrega del 50% del Backend (arquitectura Web API ASP.NET Core en .NET 8, persistencia en PostgreSQL y validación mediante Postman).
+- Comprobación del entorno de desarrollo local: instalación y validación del SDK de .NET 8, compilación completa de `Vento.sln` (0 errores, 0 advertencias) y verificación del endpoint de salud (`/api/health`).
+- Validación del contrato JSON universal `{ success, message, data, errors }` y el middleware centralizado para captura de excepciones y errores de base de datos.
+- Ensayo del guion de presentación para el docente con las 3 pruebas prioritarias en Postman: caso de éxito (`200 OK` en Login), caso de error de validación (`400 Bad Request` en datos de entrada) y caso de conflicto (`409 Conflict` por duplicado de usuario/correo).
+- Verificación de la persistencia real en las tablas de PostgreSQL frente a consultas `GET`.
+- Redacción de la guía de verificación por consola (`GUIA_DEMO_RAPIDA.md`) usando comandos estándar (`dotnet run`, `npm run dev`, `psql`).
+- Limpieza integral y normalización de comentarios en el código fuente de cara a la revisión del repositorio en GitHub y VS Code.
+
+**Acuerdos y Tareas:**
+- **Javier:** Verificar la inicialización del esquema en PostgreSQL (`vento_bd2`) y la configuración de `appsettings.Development.json`. (Completado)
+- **María:** Importar y verificar el entorno y las 63 pruebas de la colección Postman para la demostración en vivo. (Completado)
+- **Pedro:** Sincronizar el Frontend con `VITE_API_URL`, actualizar `README.md` y publicar los cambios en el repositorio GitHub. (Completado)
