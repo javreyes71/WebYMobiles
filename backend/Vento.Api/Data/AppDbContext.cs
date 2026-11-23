@@ -4,8 +4,8 @@ using Vento.Api.Models;
 namespace Vento.Api.Data;
 
 /// <summary>
-/// Contexto de persistencia Entity Framework Core + Npgsql (Diap. 29-31 de Contenido backend-1.pdf).
-/// Mapea directamente el modelo relacional de Base de Datos Avanzadas (BD2) y sus vistas analíticas.
+/// Contexto de persistencia Entity Framework Core con Npgsql sobre PostgreSQL.
+/// Mapea el modelo relacional del sistema y sus vistas analíticas.
 /// </summary>
 public class AppDbContext : DbContext
 {

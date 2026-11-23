@@ -19,7 +19,7 @@ public class CambiarPasswordDto
 }
 
 /// <summary>
-/// DTO de creación (Diap. 28 de Contenido backend-1.pdf).
+/// DTO de creación de usuario.
 /// </summary>
 public class UsuarioCreateDto
 {
@@ -109,7 +109,7 @@ public class EstadoCuentaDto
 }
 
 /// <summary>
-/// DTO de respuesta segura al cliente (Diap. 28: NUNCA incluye ClaveAcceso / PasswordHash).
+/// DTO de respuesta segura al cliente (no incluye contraseña ni hash).
 /// Compatible con los nombres esperados por React (AuthContext, Perfil, AdminUsuarios).
 /// </summary>
 public class UsuarioDto

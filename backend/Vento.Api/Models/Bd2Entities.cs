@@ -39,7 +39,7 @@ public class Usuario
     public string Nombre { get; set; } = string.Empty;
 
     /// <summary>
-    /// Almacena el hash BCrypt de la contraseña (NUNCA se incluye en UsuarioDto, Diap. 28).
+    /// Almacena el hash BCrypt de la contraseña (no se expone en DTOs de salida).
     /// </summary>
     [Column("clave_acceso")]
     [MaxLength(255)]

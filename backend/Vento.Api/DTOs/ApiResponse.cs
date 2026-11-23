@@ -1,7 +1,7 @@
 namespace Vento.Api.DTOs;
 
 /// <summary>
-/// Contrato JSON estandarizado exigido por la asignatura (Diap. 35-37 de Contenido backend-1.pdf):
+/// Contrato JSON estandarizado para respuestas de la API:
 /// { "success": bool, "message": string, "data": T?, "errors": List&lt;string&gt;? }
 /// </summary>
 public class ApiResponse<T>

@@ -1,8 +1,7 @@
 -- =============================================================================
 -- 00_setup_usuario_bd.sql
 -- Configuración de base de datos y usuario dedicado de mínimo privilegio
--- Alineado con "Contenido backend-1.pdf" (Diap. 20: nunca usar superusuario postgres)
--- y con el modelo relacional de Base de Datos Avanzadas (BD2).
+-- (principio de seguridad: no usar el superusuario postgres para la aplicación)
 -- =============================================================================
 -- Ejecutar como administrador inicial (postgres) en pgAdmin o psql:
 --   psql -U postgres -f 00_setup_usuario_bd.sql

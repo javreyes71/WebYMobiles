@@ -6,11 +6,11 @@ using Vento.Api.Models;
 namespace Vento.Api.Seeds;
 
 /// <summary>
-/// Semilla Modo Dual (Seeds/ de la estructura recomendada en Diap. 25):
-/// - Idempotente y 100% compatible con una base BD2 poblada con los 1.000 registros de insertsll.txt
-///   (utiliza identificadores >= 5001 y SKUs con guion para cero colisión de claves primarias).
-/// - Crea las 5 cuentas RBAC de demostración con hash BCrypt real, geografía base, catálogo curado,
-///   cupones promocionales, órdenes, cotización inicial y tickets de soporte.
+/// Semilla de datos iniciales para el entorno de desarrollo:
+/// - Idempotente y compatible con registros preexistentes de base de datos
+///   (utiliza identificadores >= 5001 y SKUs con guion para evitar colisiones).
+/// - Crea las cuentas de demostración con hash BCrypt real, geografía base, catálogo,
+///   cupones promocionales, órdenes y cotizaciones.
 /// </summary>
 public static class DbSeeder
 {

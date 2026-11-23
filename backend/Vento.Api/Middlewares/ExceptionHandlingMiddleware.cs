@@ -6,9 +6,9 @@ using Vento.Api.DTOs;
 namespace Vento.Api.Middlewares;
 
 /// <summary>
-/// Middleware centralizado de excepciones (Diap. 37 de Contenido backend-1.pdf).
-/// Traduce además excepciones lanzadas por los 23 Triggers y 9 restricciones CHECK de BD2
-/// al sobre JSON estandarizado { success, message, data, errors } sin exponer trazas internas.
+/// Middleware centralizado para captura y manejo de excepciones.
+/// Traduce además excepciones lanzadas por restricciones y triggers de base de datos
+/// al contrato JSON { success, message, data, errors } sin exponer trazas internas.
 /// </summary>
 public class ExceptionHandlingMiddleware
 {

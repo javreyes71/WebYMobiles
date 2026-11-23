@@ -11,7 +11,7 @@ using Vento.Api.Seeds;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configuración de controladores y sobre JSON { success, message, data, errors } (Diap. 35-37)
+// Configuración de controladores y formato de respuesta JSON
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -21,7 +21,6 @@ builder.Services
     })
     .ConfigureApiBehaviorOptions(options =>
     {
-        // Reemplaza ProblemDetails por defecto para mantener el formato { success, message, data, errors } en 400 Bad Request
         options.InvalidModelStateResponseFactory = context =>
         {
             var errors = context.ModelState.Values
@@ -37,7 +36,7 @@ builder.Services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. Conexión a PostgreSQL mediante Entity Framework Core + Npgsql (Diap. 19 y 29)
+// Conexión a PostgreSQL mediante Entity Framework Core
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration.GetConnectionString("Default")
     ?? "Host=localhost;Port=5432;Database=vento_bd2;Username=vento_app;Password=CAMBIAR_PASSWORD_SEGURO";
@@ -45,7 +44,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 3. Autenticación JWT Bearer + Respuestas estandarizadas 401 y 403 (Diap. 14)
+// Autenticación JWT Bearer y autorización
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "Clave_Fallback_Solo_Desarrollo_Minimo_32_Bytes_2026!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "Vento.Api";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "Vento.Frontend";
@@ -90,7 +89,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<Vento.Api.Services.AuthAndUserService>();
 builder.Services.AddScoped<Vento.Api.Services.CatalogoService>();
 
-// 4. Política CORS explícita para Frontend Vite local y red LAN Raspberry Pi (Diap. 50-51)
+// Configuración de CORS para el frontend
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {

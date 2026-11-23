@@ -1,7 +1,7 @@
 # Backend — Vento Marketplace (`Vento.Api` · .NET 8 LTS + PostgreSQL `BD2`)
 
-API RESTful construida en **ASP.NET Core Web API (.NET 8.0 LTS)** con **Entity Framework Core + Npgsql**, alineada **100 %** con:
-1. Los lineamientos oficiales de *Tecnologías Web y Móviles* (`pdfs/Contenido backend-1.pdf`).
+API RESTful construida en **ASP.NET Core Web API (.NET 8.0 LTS)** con **Entity Framework Core + Npgsql**, que integra:
+1. Los requerimientos de la asignatura *Tecnologías Web y Móviles*.
 2. El modelo relacional completo del ramo *Base de Datos Avanzadas* (`BD2`): **49 tablas**, **9 restricciones `CHECK`**, **25 índices**, **23 triggers PL/pgSQL**, funciones almacenadas y las **6 vistas analíticas** (`vista_inventario_critico`, `vista_factura_cliente`, `vista_rendimiento_emprendedor`, `vista_catalogo_unificado`, `vista_geo_empresas`, `vista_categorias_jerarquia`).
 
 ---

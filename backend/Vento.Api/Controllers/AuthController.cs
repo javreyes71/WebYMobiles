@@ -203,7 +203,7 @@ public class AuthController : ControllerBase
     {
         var requestedProfile = (dto.Rol ?? dto.TipoCuenta ?? "Comprador").Trim();
 
-        // Regla de negocio explícita (Diap. 34 Contenido backend-1.pdf): prohibido autoasignarse Admin
+        // Regla de negocio: un usuario no puede autoasignarse permisos de Administrador
         if (!callerIsAdmin && string.Equals(requestedProfile, "Admin", StringComparison.OrdinalIgnoreCase))
         {
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(

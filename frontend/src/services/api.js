@@ -12,13 +12,13 @@ import {
 } from '@/utils/roles';
 
 /**
- * Capa de comunicación API REST alineada con "Contenido backend-1.pdf":
+ * Capa de comunicación API REST:
  * - Lee import.meta.env.VITE_API_URL
  * - Verifica explícitamente respuesta.ok en llamadas fetch()
  * - Emplea bloques try/catch y retorna el contrato JSON estandarizado:
  *   { success: boolean, message: string, data: any, errors: string[] | null, status: number }
- * - Si VITE_API_URL no está configurada, utiliza persistencia local en localStorage
- *   respetando exactamente los mismos códigos HTTP (200, 201, 400, 401, 403, 404, 409) y reglas RBAC.
+ * - Si VITE_API_URL no está configurada, utiliza respaldo local
+ *   respetando los mismos códigos HTTP (200, 201, 400, 401, 403, 404, 409) y reglas RBAC.
  */
 
 export const API_URL = import.meta.env.VITE_API_URL || '';
@@ -679,7 +679,7 @@ export const authApi = {
     const direccion = (formData.direccion || '').trim();
     const requestedProfile = formData.tipoCuenta || ROLES.COMPRADOR;
 
-    // Regla de negocio ("Contenido backend-1.pdf" p. 34): prohibido autoasignarse Admin
+    // Regla de negocio: prohibido autoasignarse permisos de Administrador
     if (requestedProfile === ROLES.ADMIN || formData.rol === ROLES.ADMIN) {
       return {
         success: false,

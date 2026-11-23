@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Script de Despliegue en Raspberry Pi (Linux ARM64) - Vento Marketplace
-# Cumple "Contenido backend-1.pdf" (Diapositivas 40 a 48):
 # 1. Compila publicación self-contained linux-arm64
-# 2. Inicializa PostgreSQL con rol dedicado vento_app (mínimo privilegio) y BD2
+# 2. Inicializa PostgreSQL con rol dedicado vento_app y base de datos
 # 3. Configura systemd escuchando en 0.0.0.0:5000 y abre firewall UFW
 # ==============================================================================
 set -euo pipefail

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "8d91c5d0-7a4b-4e90-b2a1-9f318500b501",
     "name": "Vento Marketplace API (.NET 8 + PostgreSQL BD2)",
-    "description": "Colección oficial de pruebas REST para Vento Marketplace (Web y Móviles + Base de Datos Avanzadas BD2).\n\nCumple estrictamente los lineamientos de Contenido backend-1.pdf:\n- Uso de variable {{baseUrl}} (por defecto http://localhost:5000 o http://IP_RASPBERRY:5000).\n- Separación estricta de Productos (/api/productos) y Servicios (/api/servicios).\n- Moderación RBAC de 4 perfiles (Admin, VendedorProducto, ProveedorServicio, Comprador).\n- Casos positivos (200/201/204) y al menos 2 casos negativos por recurso (400, 401, 403, 404, 409).\n- Sin credenciales sensibles de producción expuestas.",
+    "description": "Colección de pruebas REST para Vento Marketplace.\n\n- Uso de variable {{baseUrl}} (por defecto http://localhost:5000 o http://IP_RASPBERRY:5000).\n- Separación de Productos (/api/productos) y Servicios (/api/servicios).\n- Control de acceso RBAC de 4 perfiles (Admin, VendedorProducto, ProveedorServicio, Comprador).\n- Casos positivos (200/201/204) y casos negativos por recurso (400, 401, 403, 404, 409).\n- Sin credenciales sensibles de producción expuestas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -660,7 +660,7 @@
           "response": []
         },
         {
-          "name": "POST /api/auth/register - [403 Forbidden] Intento de auto-asignarse rol Admin (Diap. 34)",
+          "name": "POST /api/auth/register - [403 Forbidden] Intento de auto-asignarse rol Admin",
           "event": [
             {
               "listen": "test",
@@ -706,7 +706,7 @@
                 "register"
               ]
             },
-            "description": "Caso negativo 1 (Seguridad RBAC Diap. 34): Ningún usuario puede registrarse como Admin.",
+            "description": "Caso negativo 1 (Seguridad RBAC): Ningún usuario puede registrarse como Admin.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Atacante Escalada\",\n  \"rut\": \"16.543.210-K\",\n  \"correo\": \"escalada@vento.cl\",\n  \"password\": \"User1234!\",\n  \"tipoCuenta\": \"Admin\",\n  \"rol\": \"Admin\"\n}",

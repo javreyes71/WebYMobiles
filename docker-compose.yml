@@ -47,7 +47,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:5000
-      # Conecta usando exclusivamente el rol de mínimo privilegio vento_app (Diap. 20 PDF)
+      # Conecta usando el usuario de aplicación vento_app
       ConnectionStrings__DefaultConnection: >-
         Host=vento-db;Port=5432;Database=${POSTGRES_DB:-vento_bd2};Username=vento_app;Password=${VENTO_APP_PASSWORD:-CAMBIAR_PASSWORD_SEGURO}
       Jwt__Key: ${JWT_SECRET_KEY:-Clave_Desarrollo_Docker_Vento_Marketplace_2026_Segura!}

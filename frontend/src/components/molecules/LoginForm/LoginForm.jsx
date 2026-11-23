@@ -6,8 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { formatRUT, validateRUT, handleRutKeyDown } from '@/utils/validators';
 
 /**
- * Molécula LoginForm (cumple Estructura y Componentes.pptx.pdf págs. 9-12):
- * - Reutiliza átomos CustomTextField (con ojo mostrar/ocultar clave) y CustomButton
+ * Molécula LoginForm:
+ * - Reutiliza componentes CustomTextField (con alternancia de visibilidad de clave) y CustomButton
  * - Incluye casilla "Recordar usuario"
  * - Incluye acción "¿Olvidó su contraseña?"
  * - Valida RUT chileno con retroalimentación inmediata y soporta los 4 perfiles RBAC

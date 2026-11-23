@@ -11,7 +11,7 @@ using Vento.Api.Utils;
 namespace Vento.Api.Controllers;
 
 /// <summary>
-/// Endpoints RESTful para el recurso Usuario y Gobierno Admin RBAC (Diap. 15, 28-31 y 34 de Contenido backend-1.pdf).
+/// Endpoints RESTful para el recurso Usuario y gestión RBAC.
 /// </summary>
 [ApiController]
 [Route("api")]
@@ -465,7 +465,7 @@ public class UsuariosController : ControllerBase
         _context.Usuarios.Remove(usuario);
         await _context.SaveChangesAsync();
 
-        // Diap. 14, 15 y 43 de Contenido backend-1.pdf: DELETE exitoso retorna 204 No Content
+        // DELETE exitoso retorna 204 No Content
         return NoContent();
     }
 }
