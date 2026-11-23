@@ -1,0 +1,32 @@
+$kind: http-request
+name: POST /api/productos - [400 Bad Request] Precio negativo y datos faltantes
+description: ""
+url: "{{baseUrl}}/api/productos"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{vendedorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "",
+      "precio": -5000,
+      "stock": -2
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 400", function () {
+          pm.response.to.have.status(400);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", false);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 5000

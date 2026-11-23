@@ -1,0 +1,34 @@
+$kind: http-request
+name: POST /api/productos - [403 Forbidden] Proveedor de Servicios intenta publicar un Producto físico
+description: ""
+url: "{{baseUrl}}/api/productos"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{proveedorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Producto cruzado no permitido",
+      "categoria": "Tecnología",
+      "precio": 25000,
+      "stock": 5,
+      "descripcion": "Intento de cruce de dominio bloqueado por RBAC."
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 403", function () {
+          pm.response.to.have.status(403);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", false);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 6000

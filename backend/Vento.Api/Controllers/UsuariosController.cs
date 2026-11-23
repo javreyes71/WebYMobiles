@@ -26,6 +26,7 @@ public class UsuariosController : ControllerBase
         _userService = userService;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("usuarios")]
     public async Task<IActionResult> GetUsuarios([FromQuery] string? rol = null, [FromQuery] bool? pendientes = null)
     {
@@ -115,6 +116,7 @@ public class UsuariosController : ControllerBase
         return await authController.RegisterInternalAsync(dto, callerIsAdmin: User.IsInRole("Admin"));
     }
 
+    [Authorize]
     [HttpPut("usuarios/{id}")]
     public async Task<IActionResult> UpdateUsuario(string id, [FromBody] UsuarioUpdateDto dto)
     {
@@ -126,9 +128,7 @@ public class UsuariosController : ControllerBase
         }
 
         var callerRun = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(callerRun)
-            && !User.IsInRole("Admin")
-            && !string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase))
+        if (!User.IsInRole("Admin") && !string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase))
         {
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(
                 "Acceso denegado.",
@@ -249,6 +249,7 @@ public class UsuariosController : ControllerBase
         return Ok(ApiResponse<UsuarioDto>.Ok(updatedDto, "Usuario actualizado correctamente."));
     }
 
+    [Authorize]
     [HttpPost("usuarios/{id}/direcciones")]
     public async Task<IActionResult> AddDireccion(string id, [FromBody] DireccionCreateDto dto)
     {
@@ -257,6 +258,14 @@ public class UsuariosController : ControllerBase
         if (usuario is null)
         {
             return NotFound(ApiResponse.Fail("Usuario no encontrado."));
+        }
+
+        var callerRun = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!User.IsInRole("Admin") && !string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(
+                "Acceso denegado.",
+                "Solo el titular de la cuenta o un Administrador pueden agregar direcciones."));
         }
 
         if (string.IsNullOrWhiteSpace(dto.Calle) || string.IsNullOrWhiteSpace(dto.Comuna))
@@ -294,6 +303,7 @@ public class UsuariosController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, ApiResponse<UsuarioDto>.Ok(updatedUser, "Dirección guardada correctamente."));
     }
 
+    [Authorize]
     [HttpDelete("usuarios/{id}/direcciones/{direccionId:int}")]
     public async Task<IActionResult> DeleteDireccion(string id, int direccionId)
     {
@@ -304,11 +314,20 @@ public class UsuariosController : ControllerBase
             return NotFound(ApiResponse.Fail("Dirección no encontrada."));
         }
 
+        var callerRun = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!User.IsInRole("Admin") && !string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(
+                "Acceso denegado.",
+                "Solo el titular de la cuenta o un Administrador pueden eliminar direcciones."));
+        }
+
         _context.Direcciones.Remove(dir);
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
+    [Authorize]
     [HttpPost("usuarios/{id}/postulacion-comercial")]
     public async Task<IActionResult> PostularRolComercial(string id, [FromBody] PostulacionComercialDto dto)
     {
@@ -317,6 +336,14 @@ public class UsuariosController : ControllerBase
         if (usuario is null)
         {
             return NotFound(ApiResponse.Fail("Usuario no encontrado."));
+        }
+
+        var callerRun = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!User.IsInRole("Admin") && !string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Fail(
+                "Acceso denegado.",
+                "Solo el titular de la cuenta puede solicitar una postulación comercial."));
         }
 
         var target = (dto.TargetRole ?? string.Empty).Trim();
@@ -402,7 +429,7 @@ public class UsuariosController : ControllerBase
         if (string.Equals(callerRun, run, StringComparison.OrdinalIgnoreCase)
             && string.Equals(dto.EstadoCuenta, "Suspendido", StringComparison.OrdinalIgnoreCase))
         {
-            return Conflict(ApiResponse.Fail(
+            return BadRequest(ApiResponse.Fail(
                 "Operación bloqueada.",
                 "No puedes suspender tu propia cuenta de Administrador."));
         }

@@ -1,0 +1,33 @@
+$kind: http-request
+name: POST /api/auth/register - [409 Conflict] RUT o correo ya registrado
+description: "Caso negativo 2: Duplicidad de RUT/correo retorna 409 Conflict."
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Duplicado Demo",
+      "rut": "12.345.678-5",
+      "correo": "admin@vento.cl",
+      "password": "User1234!",
+      "tipoCuenta": "Comprador"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 409", function () {
+          pm.response.to.have.status(409);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", false);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 9000

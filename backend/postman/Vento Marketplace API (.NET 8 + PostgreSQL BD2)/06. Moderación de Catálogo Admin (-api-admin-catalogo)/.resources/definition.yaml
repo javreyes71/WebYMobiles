@@ -1,0 +1,4 @@
+$kind: collection
+name: 06. Moderación de Catálogo Admin (/api/admin/catalogo)
+description: Cola administrativa de aprobación previa para productos y servicios pendientes.
+order: 6000

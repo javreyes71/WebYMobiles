@@ -1,0 +1,22 @@
+$kind: http-request
+name: GET /api/ruta-inexistente - [404 Not Found] Ruta API no registrada
+description: "Caso negativo 1: Ruta no existente bajo /api."
+url: "{{baseUrl}}/api/ruta-inexistente"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 404", function () {
+          pm.response.to.have.status(404);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", false);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 2000

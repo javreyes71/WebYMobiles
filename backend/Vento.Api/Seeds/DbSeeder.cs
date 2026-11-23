@@ -105,7 +105,7 @@ public static class DbSeeder
                 {
                     Usuario = new Usuario
                     {
-                        Run = "11111111-1",
+                        Run = "16234567-2",
                         Nombre = "Javier Reyes",
                         ClaveAcceso = BCrypt.Net.BCrypt.HashPassword("vento1234"),
                         FechaNacimiento = new DateOnly(1999, 8, 20),
@@ -128,7 +128,7 @@ public static class DbSeeder
                 {
                     Usuario = new Usuario
                     {
-                        Run = "22222222-2",
+                        Run = "18345678-4",
                         Nombre = "María Silva",
                         ClaveAcceso = BCrypt.Net.BCrypt.HashPassword("servicio1234"),
                         FechaNacimiento = new DateOnly(1998, 3, 12),
@@ -153,7 +153,7 @@ public static class DbSeeder
                 {
                     Usuario = new Usuario
                     {
-                        Run = "15555555-6",
+                        Run = "15932486-9",
                         Nombre = "Pedro Pascal",
                         ClaveAcceso = BCrypt.Net.BCrypt.HashPassword("compra1234"),
                         FechaNacimiento = new DateOnly(1997, 11, 4),
@@ -172,7 +172,7 @@ public static class DbSeeder
                 {
                     Usuario = new Usuario
                     {
-                        Run = "18888888-7",
+                        Run = "19876543-0",
                         Nombre = "Camila Ríos",
                         ClaveAcceso = BCrypt.Net.BCrypt.HashPassword("pendiente1234"),
                         FechaNacimiento = new DateOnly(2000, 2, 18),
@@ -238,7 +238,7 @@ public static class DbSeeder
                         RegionCodigo = "IX",
                         ComunaNombre = "Temuco",
                         EsPredeterminada = true,
-                        RunUsuario = "15555555-6",
+                        RunUsuario = "15932486-9",
                         IdComuna = 5003
                     },
                     new Direccion
@@ -252,7 +252,7 @@ public static class DbSeeder
                         RegionCodigo = "RM",
                         ComunaNombre = "Providencia",
                         EsPredeterminada = false,
-                        RunUsuario = "15555555-6",
+                        RunUsuario = "15932486-9",
                         IdComuna = 5001
                     }
                 );
@@ -317,7 +317,7 @@ public static class DbSeeder
                     PrecioOriginal = 75000m,
                     Descuento = 13,
                     Stock = 15,
-                    OwnerRun = "11111111-1",
+                    OwnerRun = "16234567-2",
                     EmpresaRun = "76123456-0",
                     Moderacion = "Aprobado",
                     Destacado = true,
@@ -353,7 +353,7 @@ public static class DbSeeder
                     PrecioOriginal = 120000m,
                     Descuento = 17,
                     Stock = 3,
-                    OwnerRun = "11111111-1",
+                    OwnerRun = "16234567-2",
                     EmpresaRun = "76123456-0",
                     Moderacion = "Aprobado",
                     Destacado = true,
@@ -371,7 +371,7 @@ public static class DbSeeder
                     PrecioOriginal = 169990m,
                     Descuento = 18,
                     Stock = 2,
-                    OwnerRun = "11111111-1",
+                    OwnerRun = "16234567-2",
                     EmpresaRun = "76123456-0",
                     Moderacion = "Aprobado",
                     Destacado = true,
@@ -389,7 +389,7 @@ public static class DbSeeder
                     PrecioOriginal = 55000m,
                     Descuento = 13,
                     Stock = 14,
-                    OwnerRun = "11111111-1",
+                    OwnerRun = "16234567-2",
                     EmpresaRun = "76123456-0",
                     Moderacion = "Aprobado",
                     Destacado = false,
@@ -425,7 +425,7 @@ public static class DbSeeder
                     PrecioOriginal = 54990m,
                     Descuento = 0,
                     Stock = 8,
-                    OwnerRun = "18888888-7",
+                    OwnerRun = "19876543-0",
                     EmpresaRun = "76123456-0",
                     Moderacion = "Pendiente",
                     Destacado = false,
@@ -545,7 +545,7 @@ public static class DbSeeder
                     }),
                     Visible = true,
                     UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                    OwnerRun = "22222222-2",
+                    OwnerRun = "18345678-4",
                     EstadoModeracion = "Aprobado",
                     Destacado = true,
                     Descripcion = "Servicio especializado para zapatillas de cuero, gamuza, nubuck y malla técnica con productos biodegradables certificados."
@@ -571,7 +571,7 @@ public static class DbSeeder
                     }),
                     Visible = true,
                     UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                    OwnerRun = "22222222-2",
+                    OwnerRun = "18345678-4",
                     EstadoModeracion = "Aprobado",
                     Destacado = true,
                     Descripcion = "Transformamos tus zapatillas o chaquetas en piezas únicas hechas a medida con pintura Angelus y sellado UV impermeable."
@@ -649,7 +649,7 @@ public static class DbSeeder
                     }),
                     Visible = true,
                     UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                    OwnerRun = "22222222-2",
+                    OwnerRun = "18345678-4",
                     EstadoModeracion = "Aprobado",
                     Destacado = false,
                     Descripcion = "Construye un armario funcional con identidad propia. Diagnóstico de estilo, paleta de colores y guía curada de compras."
@@ -675,7 +675,7 @@ public static class DbSeeder
                     }),
                     Visible = true,
                     UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                    OwnerRun = "22222222-2",
+                    OwnerRun = "18345678-4",
                     EstadoModeracion = "Aprobado",
                     Destacado = false,
                     Descripcion = "Servicio técnico especializado de luthería para instrumentos eléctricos y acústicos con octavación y calibración de precisión."
@@ -701,7 +701,7 @@ public static class DbSeeder
                     }),
                     Visible = true,
                     UltimaActividad = DateOnly.FromDateTime(DateTime.Today),
-                    OwnerRun = "22222222-2",
+                    OwnerRun = "18345678-4",
                     EstadoModeracion = "Pendiente",
                     Destacado = false,
                     Descripcion = "Revisión exhaustiva de costuras, códigos QR, tipografías, etiquetas y luz UV para verificar autenticidad de pares limitados."
@@ -746,8 +746,8 @@ public static class DbSeeder
                 {
                     IdSolicitud = 5001,
                     IdCotizacion = 5001,
-                    RunUsuario = "15555555-6",
-                    ProveedorRun = "22222222-2",
+                    RunUsuario = "15932486-9",
+                    ProveedorRun = "18345678-4",
                     SkuServicio = "SRV-CLN-101",
                     Precio = 22990,
                     PrecioBase = 22990,
@@ -807,7 +807,7 @@ public static class DbSeeder
                 context.TicketsSoporte.Add(new TicketSoporte
                 {
                     Codigo = "TCK-1001",
-                    RunUsuario = "15555555-6",
+                    RunUsuario = "15932486-9",
                     Nombre = "Pedro Pascal",
                     Correo = "pedro@vento.cl",
                     Asunto = "Consulta sobre despacho a regiones del sur",

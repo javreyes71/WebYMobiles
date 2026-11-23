@@ -1,0 +1,49 @@
+$kind: http-request
+name: POST /api/productos - [201 Created] Vendedor crea producto (entra como Pendiente de moderación)
+description: ""
+url: "{{baseUrl}}/api/productos"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{vendedorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Mochila Urbana Impermeable 25L",
+      "marca": "Andes Craft",
+      "categoria": "Accesorios",
+      "precio": 42990,
+      "stock": 15,
+      "descripcion": "Mochila con compartimento acolchado para laptop de 16 pulgadas y costuras termoselladas.",
+      "tallas": [
+        "Única"
+      ],
+      "colores": [
+        "Negro",
+        "Verde Bosque"
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+      if (pm.response.code === 201) {
+          const json = pm.response.json();
+          if (json && json.data && json.data.sku) {
+              pm.collectionVariables.set("createdProductSku", String(json.data.sku));
+              pm.environment.set("createdProductSku", String(json.data.sku));
+          }
+      }
+    language: text/javascript
+order: 4000

@@ -1,0 +1,20 @@
+$kind: collection
+description: |-
+  Colección de pruebas REST para Vento Marketplace.
+
+  - Uso de variable {{baseUrl}} (por defecto http://localhost:5000 o http://IP_RASPBERRY:5000).
+  - Separación de Productos (/api/productos) y Servicios (/api/servicios).
+  - Control de acceso RBAC de 4 perfiles (Admin, VendedorProducto, ProveedorServicio, Comprador).
+  - Casos positivos (200/201/204) y casos negativos por recurso (400, 401, 403, 404, 409).
+  - Sin credenciales sensibles de producción expuestas.
+variables:
+  baseUrl: http://localhost:5000
+  adminToken: ""
+  vendedorToken: ""
+  proveedorToken: ""
+  compradorToken: ""
+  createdUserId: ""
+  createdProductSku: ""
+  createdServiceSku: ""
+  createdOrderId: "5001"
+  createdQuoteId: COT-5001

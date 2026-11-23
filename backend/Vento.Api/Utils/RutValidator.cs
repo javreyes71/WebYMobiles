@@ -12,10 +12,10 @@ public static partial class RutValidator
     private static readonly Dictionary<string, string> DemoNumericRunAliases = new(StringComparer.OrdinalIgnoreCase)
     {
         ["1"] = "12345678-5",
-        ["2"] = "11111111-1",
-        ["3"] = "22222222-2",
-        ["4"] = "15555555-6",
-        ["5"] = "18888888-7"
+        ["2"] = "16234567-2",
+        ["3"] = "18345678-4",
+        ["4"] = "15932486-9",
+        ["5"] = "19876543-0"
     };
 
     public static string CleanAlphanumeric(string? raw)

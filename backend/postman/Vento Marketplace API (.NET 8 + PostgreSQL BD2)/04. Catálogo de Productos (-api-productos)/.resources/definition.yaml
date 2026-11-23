@@ -1,0 +1,4 @@
+$kind: collection
+name: 04. Catálogo de Productos (/api/productos)
+description: Endpoint exclusivo para bienes físicos con inventario y despacho. Separado estrictamente de /api/servicios.
+order: 4000

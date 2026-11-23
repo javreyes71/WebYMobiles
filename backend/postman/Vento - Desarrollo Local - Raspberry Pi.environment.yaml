@@ -1,0 +1,15 @@
+name: Vento - Desarrollo Local / Raspberry Pi
+values:
+  - key: baseUrl
+    value: 'http://localhost:5000'
+  - key: raspberryUrlEjemplo
+    value: 'http://192.168.1.50:5000'
+    disabled: true
+  - key: adminToken
+    value: ''
+  - key: vendedorToken
+    value: ''
+  - key: proveedorToken
+    value: ''
+  - key: compradorToken
+    value: ''

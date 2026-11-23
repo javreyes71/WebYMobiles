@@ -1,0 +1,4 @@
+$kind: collection
+name: 02. Autenticación y Sesiones (/api/auth)
+description: Inicio de sesión con emisión de JWT por rol RBAC, registro validado con Módulo 11 y bloqueo de escalamiento Admin.
+order: 2000

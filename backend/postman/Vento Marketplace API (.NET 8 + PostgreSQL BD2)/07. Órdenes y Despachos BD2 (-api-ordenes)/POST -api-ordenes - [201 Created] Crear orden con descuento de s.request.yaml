@@ -1,0 +1,49 @@
+$kind: http-request
+name: POST /api/ordenes - [201 Created] Crear orden con descuento de stock e IVA 19% BD2
+description: ""
+url: "{{baseUrl}}/api/ordenes"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{compradorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "items": [
+        {
+          "sku": "VNT-P001",
+          "tipo": "Producto",
+          "quantity": 1
+        }
+      ],
+      "cuponCodigo": "VENTO10",
+      "direccionDespacho": "Av. Providencia 1234, Providencia",
+      "comuna": "Providencia",
+      "region": "Región Metropolitana",
+      "medioPago": "Tarjeta de Crédito",
+      "ultimos4DigitosTarjeta": "4242"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+      if (pm.response.code === 201) {
+          const json = pm.response.json();
+          if (json && json.data && json.data.id) {
+              pm.collectionVariables.set("createdOrderId", String(json.data.id));
+              pm.environment.set("createdOrderId", String(json.data.id));
+          }
+      }
+    language: text/javascript
+order: 1000

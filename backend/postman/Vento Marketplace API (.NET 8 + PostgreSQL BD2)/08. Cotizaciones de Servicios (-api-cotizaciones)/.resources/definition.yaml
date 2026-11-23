@@ -1,0 +1,4 @@
+$kind: collection
+name: 08. Cotizaciones de Servicios (/api/cotizaciones)
+description: Flujo completo de solicitud -> propuesta formal del proveedor -> aceptación del comprador sobre tablas cotizacion y solicita de BD2.
+order: 8000

@@ -261,7 +261,7 @@
             "description": "Autentica al Administrador general y almacena su JWT en {{adminToken}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rut\": \"12.345.678-5\",\n  \"password\": \"Admin123!\"\n}",
+              "raw": "{\n  \"rut\": \"12.345.678-5\",\n  \"password\": \"admin1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -328,7 +328,7 @@
             "description": "Autentica al Vendedor de Productos aprobado y almacena su JWT en {{vendedorToken}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rut\": \"11.222.333-9\",\n  \"password\": \"Vende123!\"\n}",
+              "raw": "{\n  \"rut\": \"16.234.567-2\",\n  \"password\": \"vento1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -395,7 +395,7 @@
             "description": "Autentica al Proveedor de Servicios aprobado y almacena su JWT en {{proveedorToken}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rut\": \"22.333.444-6\",\n  \"password\": \"Serv123!\"\n}",
+              "raw": "{\n  \"rut\": \"18.345.678-4\",\n  \"password\": \"servicio1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -462,7 +462,7 @@
             "description": "Autentica al Comprador demo y almacena su JWT en {{compradorToken}}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rut\": \"15.432.987-1\",\n  \"password\": \"Compra123!\"\n}",
+              "raw": "{\n  \"rut\": \"15.932.486-9\",\n  \"password\": \"compra1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1034,7 +1034,7 @@
           "response": []
         },
         {
-          "name": "GET /api/usuarios/11222333-9/publico - [200 OK] Vitrina pública de tienda",
+          "name": "GET /api/usuarios/16234567-2/publico - [200 OK] Vitrina pública de tienda",
           "event": [
             {
               "listen": "test",
@@ -1065,14 +1065,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/usuarios/11222333-9/publico",
+              "raw": "{{baseUrl}}/api/usuarios/16234567-2/publico",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "usuarios",
-                "11222333-9",
+                "16234567-2",
                 "publico"
               ]
             },
@@ -1081,7 +1081,7 @@
           "response": []
         },
         {
-          "name": "PUT /api/usuarios/15432987-1 - [200 OK] Actualizar perfil propio",
+          "name": "PUT /api/usuarios/15932486-9 - [200 OK] Actualizar perfil propio",
           "event": [
             {
               "listen": "test",
@@ -1122,14 +1122,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/usuarios/15432987-1",
+              "raw": "{{baseUrl}}/api/usuarios/15932486-9",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "usuarios",
-                "15432987-1"
+                "15932486-9"
               ]
             },
             "description": "",
@@ -1211,7 +1211,7 @@
           "response": []
         },
         {
-          "name": "POST /api/usuarios/15432987-1/postulacion-comercial - [200 OK] Postular a VendedorProducto (queda Pendiente)",
+          "name": "POST /api/usuarios/15932486-9/postulacion-comercial - [200 OK] Postular a VendedorProducto (queda Pendiente)",
           "event": [
             {
               "listen": "test",
@@ -1252,14 +1252,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/usuarios/15432987-1/postulacion-comercial",
+              "raw": "{{baseUrl}}/api/usuarios/15932486-9/postulacion-comercial",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "usuarios",
-                "15432987-1",
+                "15932486-9",
                 "postulacion-comercial"
               ]
             },
@@ -1277,7 +1277,7 @@
           "response": []
         },
         {
-          "name": "PATCH /api/admin/usuarios/18765432-K/aprobacion - [200 OK] Admin aprueba cuenta comercial pendiente",
+          "name": "PATCH /api/admin/usuarios/19876543-0/aprobacion - [200 OK] Admin aprueba cuenta comercial pendiente",
           "event": [
             {
               "listen": "test",
@@ -1318,7 +1318,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/usuarios/18765432-K/aprobacion",
+              "raw": "{{baseUrl}}/api/admin/usuarios/19876543-0/aprobacion",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1326,7 +1326,7 @@
                 "api",
                 "admin",
                 "usuarios",
-                "18765432-K",
+                "19876543-0",
                 "aprobacion"
               ]
             },

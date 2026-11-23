@@ -1,0 +1,4 @@
+$kind: collection
+name: 01. Salud y Diagnóstico (/api/health)
+description: Verificación de disponibilidad del servicio en desarrollo local o Raspberry Pi (0.0.0.0:5000).
+order: 1000

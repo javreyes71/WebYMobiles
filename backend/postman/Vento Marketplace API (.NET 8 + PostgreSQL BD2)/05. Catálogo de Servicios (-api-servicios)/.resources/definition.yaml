@@ -1,0 +1,4 @@
+$kind: collection
+name: 05. Catálogo de Servicios (/api/servicios)
+description: Endpoint exclusivo para servicios profesionales (modalidad, cobertura, cotización). Separado estrictamente de /api/productos.
+order: 5000

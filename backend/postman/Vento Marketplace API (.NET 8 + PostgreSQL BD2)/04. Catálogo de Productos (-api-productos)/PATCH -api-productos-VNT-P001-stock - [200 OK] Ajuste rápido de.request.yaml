@@ -1,0 +1,30 @@
+$kind: http-request
+name: PATCH /api/productos/VNT-P001/stock - [200 OK] Ajuste rápido de stock en BD2 sin perder aprobación
+description: ""
+url: "{{baseUrl}}/api/productos/VNT-P001/stock"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{vendedorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "stock": 20
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 7000

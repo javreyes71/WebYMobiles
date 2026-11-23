@@ -1,0 +1,4 @@
+$kind: collection
+name: 03. Usuarios y Moderación RBAC (/api/usuarios)
+description: CRUD completo de usuarios, postulación comercial y aprobación/suspensión por Admin.
+order: 3000

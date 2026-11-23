@@ -1,0 +1,34 @@
+$kind: http-request
+name: POST /api/auth/register - [403 Forbidden] Intento de auto-asignarse rol Admin
+description: "Caso negativo 1 (Seguridad RBAC): Ningún usuario puede registrarse como Admin."
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Atacante Escalada",
+      "rut": "16.543.210-K",
+      "correo": "escalada@vento.cl",
+      "password": "User1234!",
+      "tipoCuenta": "Admin",
+      "rol": "Admin"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 403", function () {
+          pm.response.to.have.status(403);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", false);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 8000

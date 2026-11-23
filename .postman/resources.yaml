@@ -1,0 +1,16 @@
+# Use this workspace to collaborate
+workspace:
+  id: b1eb20ff-5886-4c70-86ad-3c005bcac650
+
+localResources:
+  collections:
+    - ../backend/postman/Vento_Marketplace.postman_collection.json
+    - ../backend/postman/Vento Marketplace API (.NET 8 + PostgreSQL BD2)
+  environments:
+    - ../backend/postman/Vento - Desarrollo Local - Raspberry Pi.environment.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../backend/postman/Vento Marketplace API (.NET 8 + PostgreSQL BD2): 8d91c5d0-7a4b-4e90-b2a1-9f318500b501

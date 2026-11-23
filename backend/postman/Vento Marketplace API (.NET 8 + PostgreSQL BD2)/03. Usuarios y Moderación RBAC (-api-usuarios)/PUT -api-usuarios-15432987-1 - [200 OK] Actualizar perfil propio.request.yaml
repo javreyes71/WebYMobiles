@@ -1,0 +1,32 @@
+$kind: http-request
+name: PUT /api/usuarios/15932486-9 - [200 OK] Actualizar perfil propio
+description: ""
+url: "{{baseUrl}}/api/usuarios/15932486-9"
+method: PUT
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{compradorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Camila Rojas",
+      "telefono": "+56991234567",
+      "ciudadBase": "Santiago"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 5000

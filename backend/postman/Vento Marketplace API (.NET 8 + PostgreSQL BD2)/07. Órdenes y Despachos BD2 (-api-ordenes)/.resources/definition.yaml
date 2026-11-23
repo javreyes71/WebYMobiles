@@ -1,0 +1,4 @@
+$kind: collection
+name: 07. Órdenes y Despachos BD2 (/api/ordenes)
+description: Transacciones ACID sobre venta, compra, medio_pago, despacho y triggers de stock e IVA (19%) de BD2.
+order: 7000

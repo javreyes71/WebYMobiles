@@ -1,0 +1,22 @@
+$kind: http-request
+name: GET /api/health - [200 OK] Estado de API y conexión PostgreSQL BD2
+description: Verifica que Vento.Api esté activo y responda con el sobre JSON estándar.
+url: "{{baseUrl}}/api/health"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 1000

@@ -1,0 +1,30 @@
+$kind: http-request
+name: PATCH /api/cotizaciones/{{createdQuoteId}}/estado - [200 OK] Comprador acepta propuesta
+description: ""
+url: "{{baseUrl}}/api/cotizaciones/{{createdQuoteId}}/estado"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{compradorToken}}
+body:
+  type: json
+  content: |-
+    {
+      "estado": "Aceptada"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP Status esperado: 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Formato JSON estándar { success, message, data, errors }", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success", true);
+          pm.expect(json).to.have.property("message");
+          pm.expect(json).to.have.property("errors");
+          pm.expect(json.errors).to.be.an("array");
+      });
+    language: text/javascript
+order: 5000

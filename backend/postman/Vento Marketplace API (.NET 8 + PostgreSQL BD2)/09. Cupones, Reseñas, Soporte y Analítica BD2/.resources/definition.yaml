@@ -1,0 +1,3 @@
+$kind: collection
+description: Validación de cupones, reseñas verificadas BD2 (tablas reseña/reseñar/critica) y vistas analíticas de Base de Datos Avanzadas.
+order: 9000
